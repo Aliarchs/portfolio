@@ -194,6 +194,8 @@ a:hover {
   color: var(--accent-color);
 }
 
+/* ... [Your existing CSS above remains unchanged] ... */
+
 /* 9) Responsive for Mobile – One Column, Square Boxes */
 @media (max-width: 768px) {
   .project-grid {
@@ -214,12 +216,17 @@ a:hover {
     max-width: 80% !important;
     aspect-ratio: 1 / 1;
     margin: 0 auto 3vh auto !important;
-    transition: none !important;
-    animation: none !important;
+    
+    /* Lock the item so it stays in place */
+    position: static !important;
     transform: none !important;
+    animation: none !important;
+    transition: none !important;
     cursor: default !important;
-    user-select: auto !important;
-    touch-action: manipulation !important;
+    user-select: none !important;
+    
+    /* Disable dragging/swiping */
+    pointer-events: auto !important;
+    touch-action: none !important;
   }
 }
-

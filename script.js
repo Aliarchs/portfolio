@@ -36,8 +36,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const items = [...document.querySelectorAll('.project-item')];
     const isMobile = window.innerWidth <= 768;
 
-    if (isMobile) return; // Disable animations and drag on mobile
+    if (isMobile) {
+      // On mobile: only attach a basic click event for navigation.
+      items.forEach(item => {
+        item.addEventListener('click', () => {
+          location.href = item.dataset.link;
+        });
+      });
+      return; // Do not attach drag or gravity interactions on mobile.
+    }
 
+    // Desktop-only interactions (drag, gravity, etc.)
     const gravityDur = parseFloat(getComputedStyle(document.documentElement)
       .getPropertyValue('--gravity-duration')) * 1000;
     const tol = parseInt(getComputedStyle(document.documentElement)
