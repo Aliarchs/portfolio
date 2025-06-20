@@ -194,34 +194,52 @@ a:hover {
   color: var(--accent-color);
 }
 
-/* 9) Responsive for Mobile – Vertical Gallery */
+/* 9) Responsive for Mobile – Completely Different UI */
 @media (max-width: 768px) {
+  /* Override grid for mobile: vertical stack, full width */
   .project-grid {
-    display: flex !important;
-    flex-direction: column;
-    align-items: center;
+    display: block !important;
     width: 100vw !important;
-    margin: 0 auto;
-    padding: 0;
-    overscroll-behavior: none;
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #fafafa;
   }
-  
+
   .project-item {
-    width: 80% !important;
-    max-width: 80% !important;
+    width: 90vw !important;
+    max-width: 90vw !important;
+    margin: 5vw auto !important;
+    border-radius: 0 !important;           /* Remove rounded corners */
+    box-shadow: none !important;           /* Remove shadow */
+    border: 1px solid #000 !important;     /* Black border like desktop */
     aspect-ratio: 1 / 1;
-    margin: 0 auto 3vh auto !important;
-    
-    /* Lock the box in place – no dragging or interactive animations */
+    height: auto !important;
+    display: block !important;
     position: static !important;
-    transform: none !important;
-    animation: none !important;
-    transition: none !important;
+    overflow: hidden;
     cursor: pointer !important;
     user-select: auto !important;
     pointer-events: auto !important;
     touch-action: auto !important;
+    background: #fff;
+  }
+
+  /* Example: Make nav horizontal and always visible on mobile */
+  .nav-dropdown {
+    position: static;
+    display: flex !important;
+    flex-direction: row;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    top: auto;
+    right: auto;
+    margin-top: 1rem;
+    justify-content: center;
+    width: 100%;
+  }
+  .nav-dropdown a {
+    padding: 0.5rem 1rem;
+    font-size: 1.1rem;
   }
 }
