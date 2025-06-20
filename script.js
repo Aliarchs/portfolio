@@ -8,12 +8,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     headings.forEach((h, i) => {
       setTimeout(() => {
-        h.animate([
-          { transform: 'scale(1)' },
-          { transform: `scale(${getComputedStyle(document.documentElement)
-            .getPropertyValue('--heading-scale')})` },
-          { transform: 'scale(1)' }
-        ], { duration: delay, fill: 'forwards' });
+        h.animate(
+          [
+            { transform: 'scale(1)' },
+            {
+              transform: `scale(${getComputedStyle(document.documentElement)
+                .getPropertyValue('--heading-scale')})`
+            },
+            { transform: 'scale(1)' }
+          ],
+          { duration: delay, fill: 'forwards' }
+        );
       }, i * delay);
 
       h.addEventListener('click', () => {
@@ -28,13 +33,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* SITE-NAME → HOME */
   document.querySelectorAll('.site-name').forEach(el =>
-    el.addEventListener('click', () => location.href = 'index.html')
+    el.addEventListener('click', () => (location.href = 'index.html'))
   );
 
   /* PROJECTS PAGE */
   if (body.classList.contains('projects-page')) {
     const items = [...document.querySelectorAll('.project-item')];
-    const isMobile = window.innerWidth <= 768;
+
+    // Use matchMedia for a more reliable mobile check.
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
 
     if (isMobile) {
       // On mobile: only attach a basic click event for navigation.
@@ -43,45 +50,54 @@ document.addEventListener('DOMContentLoaded', () => {
           location.href = item.dataset.link;
         });
       });
-      return; // Do not attach drag or gravity interactions on mobile.
+      return; // Do not attach any drag or gravity interactions.
     }
 
-    // Desktop-only interactions (drag, gravity, etc.)
-    const gravityDur = parseFloat(getComputedStyle(document.documentElement)
-      .getPropertyValue('--gravity-duration')) * 1000;
-    const tol = parseInt(getComputedStyle(document.documentElement)
-      .getPropertyValue('--drag-tolerance'), 10);
+    // Desktop-only interactions
+    const gravityDur = parseFloat(
+      getComputedStyle(document.documentElement).getPropertyValue('--gravity-duration')
+    ) * 1000;
+    const tol = parseInt(
+      getComputedStyle(document.documentElement).getPropertyValue('--drag-tolerance'),
+      10
+    );
     let gravityDropped = false;
 
     const triggerDrop = () => {
       gravityDropped = true;
       items.forEach((item, idx) => {
-        const anim = item.animate([
-          { transform: 'translateY(0)' },
-          { transform: 'translateY(200vh)' }
-        ], {
-          duration: gravityDur,
-          easing: 'ease-in',
-          fill: 'both',
-          delay: idx * 50
-        });
-        anim.onfinish = () => item.style.transform = 'translateY(200vh)';
+        const anim = item.animate(
+          [
+            { transform: 'translateY(0)' },
+            { transform: 'translateY(200vh)' }
+          ],
+          {
+            duration: gravityDur,
+            easing: 'ease-in',
+            fill: 'both',
+            delay: idx * 50
+          }
+        );
+        anim.onfinish = () => (item.style.transform = 'translateY(200vh)');
       });
     };
 
     const triggerReset = () => {
       gravityDropped = false;
       items.forEach((item, idx) => {
-        const anim = item.animate([
-          { transform: 'translateY(200vh)' },
-          { transform: 'translateY(0)' }
-        ], {
-          duration: gravityDur,
-          easing: 'ease-out',
-          fill: 'both',
-          delay: idx * 50
-        });
-        anim.onfinish = () => item.style.transform = '';
+        const anim = item.animate(
+          [
+            { transform: 'translateY(200vh)' },
+            { transform: 'translateY(0)' }
+          ],
+          {
+            duration: gravityDur,
+            easing: 'ease-out',
+            fill: 'both',
+            delay: idx * 50
+          }
+        );
+        anim.onfinish = () => (item.style.transform = '');
       });
     };
 
