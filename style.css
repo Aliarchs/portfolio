@@ -45,7 +45,7 @@ header {
   width: 100%;
   display: flex;
   justify-content: flex-end;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255,255,255,0.8);
   padding: 1rem;
   z-index: 100;
 }
@@ -105,7 +105,7 @@ main {
   transform: scale(var(--heading-scale));
 }
 
-/* 6) Projects Page – Fixed Grid on Desktop */
+/* 6) Projects Page – Desktop Grid */
 body.projects-page {
   padding-top: 4rem;
   display: flex;
@@ -131,7 +131,7 @@ body.projects-page {
   user-select: none;
   transition: transform 0.2s ease;
 }
-/* Explicit grid cell anchors for desktop */
+/* Explicit grid cell positions for desktop */
 .project-item:nth-child(1) { grid-row: 1; grid-column: 1; }
 .project-item:nth-child(2) { grid-row: 1; grid-column: 2; }
 .project-item:nth-child(3) { grid-row: 1; grid-column: 3; }
@@ -178,7 +178,7 @@ body.projects-page {
   display: flex;
 }
 
-/* 7) About & Contact */
+/* 7) About & Contact Pages */
 body.other-page {
   padding-top: 4rem;
 }
@@ -194,39 +194,34 @@ a:hover {
   color: var(--accent-color);
 }
 
-/* ... [Your existing CSS above remains unchanged] ... */
-
-/* 9) Responsive for Mobile – One Column, Square Boxes */
+/* 9) Responsive for Mobile – Vertical Gallery */
 @media (max-width: 768px) {
   .project-grid {
     display: flex !important;
     flex-direction: column;
     align-items: center;
     width: 100vw !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    margin: 0 auto;
+    padding: 0;
     overscroll-behavior: none;
-    -webkit-overflow-scrolling: auto;
-    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
   }
-
+  
   .project-item {
     width: 80% !important;
     max-width: 80% !important;
     aspect-ratio: 1 / 1;
     margin: 0 auto 3vh auto !important;
     
-    /* Lock the item so it stays in place */
+    /* Lock the box in place – no dragging or interactive animations */
     position: static !important;
     transform: none !important;
     animation: none !important;
     transition: none !important;
-    cursor: default !important;
-    user-select: none !important;
-    
-    /* Disable dragging/swiping */
+    cursor: pointer !important;
+    user-select: auto !important;
     pointer-events: auto !important;
-    touch-action: none !important;
+    touch-action: auto !important;
   }
 }

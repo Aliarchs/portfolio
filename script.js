@@ -11,10 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
         h.animate(
           [
             { transform: 'scale(1)' },
-            {
-              transform: `scale(${getComputedStyle(document.documentElement)
-                .getPropertyValue('--heading-scale')})`
-            },
+            { transform: `scale(${getComputedStyle(document.documentElement)
+              .getPropertyValue('--heading-scale')})` },
             { transform: 'scale(1)' }
           ],
           { duration: delay, fill: 'forwards' }
@@ -33,36 +31,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* SITE-NAME → HOME */
   document.querySelectorAll('.site-name').forEach(el =>
-    el.addEventListener('click', () => (location.href = 'index.html'))
+    el.addEventListener('click', () => {
+      location.href = 'index.html';
+    })
   );
 
   /* PROJECTS PAGE */
   if (body.classList.contains('projects-page')) {
     const items = [...document.querySelectorAll('.project-item')];
 
-    // Use matchMedia for a more reliable mobile check.
+    // Use matchMedia for reliable mobile detection.
     const isMobile = window.matchMedia('(max-width: 768px)').matches;
-
     if (isMobile) {
-      // On mobile: only attach a basic click event for navigation.
+      // On mobile, only attach a simple click event for navigation; no animations.
       items.forEach(item => {
         item.addEventListener('click', () => {
           location.href = item.dataset.link;
         });
       });
-      return; // Do not attach any drag or gravity interactions.
+      return; // Do not initialize desktop interactions on mobile.
     }
 
-    // Desktop-only interactions
+    // Desktop-only interactions:
     const gravityDur = parseFloat(
       getComputedStyle(document.documentElement).getPropertyValue('--gravity-duration')
     ) * 1000;
     const tol = parseInt(
-      getComputedStyle(document.documentElement).getPropertyValue('--drag-tolerance'),
-      10
+      getComputedStyle(document.documentElement).getPropertyValue('--drag-tolerance'), 10
     );
     let gravityDropped = false;
 
+    // Gravity effect: Triggered only on SHIFT + click.
     const triggerDrop = () => {
       gravityDropped = true;
       items.forEach((item, idx) => {
@@ -78,10 +77,13 @@ document.addEventListener('DOMContentLoaded', () => {
             delay: idx * 50
           }
         );
-        anim.onfinish = () => (item.style.transform = 'translateY(200vh)');
+        anim.onfinish = () => {
+          item.style.transform = 'translateY(200vh)';
+        };
       });
     };
 
+    // Reset: When the user releases the SHIFT key.
     const triggerReset = () => {
       gravityDropped = false;
       items.forEach((item, idx) => {
@@ -97,29 +99,42 @@ document.addEventListener('DOMContentLoaded', () => {
             delay: idx * 50
           }
         );
-        anim.onfinish = () => (item.style.transform = '');
+        anim.onfinish = () => {
+          item.style.transform = '';
+        };
       });
     };
 
-    window.addEventListener('keyup', e => {
+    window.addEventListener('keyup', (e) => {
       if (e.key === 'Shift' && gravityDropped) {
         triggerReset();
       }
     });
 
     items.forEach(item => {
-      /* hover preview/title */
+      /* Hover preview/title (desktop only) */
       item.addEventListener('mouseenter', () => {
-        item.querySelector('.preview').style.display = 'flex';
-        item.querySelector('.title').style.display = 'flex';
+        const preview = item.querySelector('.preview');
+        const title = item.querySelector('.title');
+        if (preview && title) {
+          preview.style.display = 'flex';
+          title.style.display = 'flex';
+        }
       });
       item.addEventListener('mouseleave', () => {
-        item.querySelector('.preview').style.display = 'none';
-        item.querySelector('.title').style.display = 'none';
+        const preview = item.querySelector('.preview');
+        const title = item.querySelector('.title');
+        if (preview && title) {
+          preview.style.display = 'none';
+          title.style.display = 'none';
+        }
       });
 
-      /* click vs shift-click */
-      item.addEventListener('click', e => {
+      /* Click event on a project box: 
+         - If the user holds SHIFT while clicking, trigger the gravity drop.
+         - Otherwise, navigate to the project page.
+      */
+      item.addEventListener('click', (e) => {
         if (e.shiftKey) {
           triggerDrop();
         } else if (!item.isDragging) {
@@ -127,9 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      /* drag logic for desktop only */
-      item.addEventListener('pointerdown', e => {
-        if (e.pointerType === 'touch') return;
+      /* Desktop drag logic */
+      item.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'touch') return; // Do nothing for touch input
 
         e.preventDefault();
         const rect = item.getBoundingClientRect();
@@ -147,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let isDragging = false;
         item.isDragging = false;
 
-        const onPointerMove = ev => {
+        const onPointerMove = (ev) => {
           const dx = ev.clientX - (rect.left + offsetX);
           const dy = ev.clientY - (rect.top + offsetY);
           if (!isDragging && Math.hypot(dx, dy) > tol) {
@@ -160,11 +175,13 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         };
 
-        const onPointerUp = ev => {
+        const onPointerUp = (ev) => {
           item.releasePointerCapture(ev.pointerId);
           document.removeEventListener('pointermove', onPointerMove);
           document.removeEventListener('pointerup', onPointerUp);
-          setTimeout(() => (item.isDragging = false), 0);
+          setTimeout(() => {
+            item.isDragging = false;
+          }, 0);
         };
 
         document.addEventListener('pointermove', onPointerMove);
