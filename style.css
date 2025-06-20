@@ -27,6 +27,7 @@
 /* Global Overscroll Behavior */
 html, body {
   overscroll-behavior: none;
+  -webkit-overflow-scrolling: auto;
 }
 
 /* 3) Base */
@@ -34,7 +35,7 @@ body {
   font-family: 'Bahnschrift', sans-serif;
   color: var(--text-color);
   background: var(--bg-color);
-  overflow-x: hidden; /* Prevent horizontal scroll issues */
+  overflow-x: hidden;
 }
 
 /* 4) Header & Nav */
@@ -193,25 +194,32 @@ a:hover {
   color: var(--accent-color);
 }
 
-/* 9) Responsive for Mobile – 80% Width, Proportional Boxes with Improved Touch Behavior */
+/* 9) Responsive for Mobile – One Column, Square Boxes */
 @media (max-width: 768px) {
   .project-grid {
-    display: block !important;
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
     width: 100vw !important;
     margin: 0 !important;
     padding: 0 !important;
-    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: auto;
     touch-action: pan-y;
     scroll-behavior: smooth;
   }
+
   .project-item {
     width: 80% !important;
     max-width: 80% !important;
-    margin: 0 auto 3vh auto !important;
-    /* Use aspect-ratio to keep boxes square */
     aspect-ratio: 1 / 1;
+    margin: 0 auto 3vh auto !important;
     transition: none !important;
-    cursor: pointer;
-    touch-action: pan-y;
+    animation: none !important;
+    transform: none !important;
+    cursor: default !important;
+    user-select: auto !important;
+    touch-action: manipulation !important;
   }
 }
+
