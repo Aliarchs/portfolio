@@ -21,7 +21,7 @@
 * {
   box-sizing: border-box;
   margin: 0;
-  padding: 0
+  padding: 0;
 }
 
 /* Global Overscroll Behavior */
@@ -188,6 +188,19 @@ a:hover {
 
 /* 9) Responsive for Mobile – Completely Different UI */
 @media (max-width: 768px) {
+   .headings-container {
+    min-height: 70vh;
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+    height: auto;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  
   html, body {
     overflow-x: hidden;
     width: 100%;
