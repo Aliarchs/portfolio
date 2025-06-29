@@ -215,16 +215,17 @@ a:hover {
     display: flex !important;
     flex-direction: column;
     align-items: center;
-    width: 100% !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
     padding: 0 !important;
     margin: 0 !important;
     background: #fafafa;
   }
 
   .project-item {
-    width: 95vw !important;
-    max-width: 400px !important;
-    min-width: 200px !important;
+    width: 98vw !important;
+    max-width: 98vw !important;
+    min-width: 0 !important;
     margin: 1rem auto !important;
     border-radius: 0 !important;           /* Remove rounded corners */
     box-shadow: none !important;           /* Remove shadow */
