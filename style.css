@@ -200,7 +200,7 @@ a:hover {
     align-items: center;
     text-align: center;
   }
-  
+
   html, body {
     overflow-x: hidden;
     width: 100%;
@@ -279,4 +279,8 @@ a:hover {
   .landing-heading {
     font-size: 1.2rem;
   }
+  body.landing .nav-dropdown {
+  display: none !important;
+  }
+
 }
