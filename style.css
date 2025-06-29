@@ -210,7 +210,7 @@ a:hover {
     align-items: flex-start;
     padding: 0.5rem 1vw;
   }
-  
+
   .project-grid {
     display: block !important;
     width: 100% !important;
@@ -221,8 +221,9 @@ a:hover {
 
   .project-item {
     width: 90% !important;
-    max-width: 90% !important;
-    margin: 5% auto !important;
+    max-width: 400px !important;
+    min-width: 200px !important;
+    margin: 1rem auto !important;
     border-radius: 0 !important;           /* Remove rounded corners */
     box-shadow: none !important;           /* Remove shadow */
     border: 1px solid #000 !important;     /* Black border like desktop */
