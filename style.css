@@ -212,7 +212,9 @@ a:hover {
   }
 
   .project-grid {
-    display: block !important;
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
     width: 100% !important;
     padding: 0 !important;
     margin: 0 !important;
@@ -220,7 +222,7 @@ a:hover {
   }
 
   .project-item {
-    width: 90% !important;
+    width: 95vw !important;
     max-width: 400px !important;
     min-width: 200px !important;
     margin: 1rem auto !important;
