@@ -78,7 +78,10 @@ header:hover .nav-dropdown,
 
 /* 5) Landing Page */
 body.landing {
-  background: var(--bg-color) center/cover no-repeat;
+  background-image: url('images/Background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 main {
   margin-top: 4rem;
