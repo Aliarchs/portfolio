@@ -93,6 +93,7 @@ main {
   justify-content: center;
   align-items: center;
   text-align: center;
+  color: #fff;
 }
 .landing-heading {
   font-weight: bold;
