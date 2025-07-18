@@ -300,3 +300,6 @@ a:hover {
   }
 
 }
+body.landing header {
+  display: none !important;
+}
