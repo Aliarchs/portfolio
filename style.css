@@ -119,7 +119,7 @@ body.projects-page {
 .project-grid {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);      /* Use fractions for flexible columns */
+  grid-template-columns: repeat(2, 1fr);      /* <-- Change 3 to 2 columns */
   grid-template-rows: none;                   /* Let rows size automatically */
   gap: 3vw;                                   /* Responsive gap */
   margin: 0 auto;
