@@ -265,7 +265,7 @@ a:hover {
     margin: 1rem auto !important;
     border-radius: 0 !important;           /* Remove rounded corners */
     box-shadow: none !important;           /* Remove shadow */
-    border: 1px solid #000 !important;     /* Black border like desktop */
+    border: none !important;                /* Remove black border on mobile */
     aspect-ratio: 1 / 1;
     height: auto !important;
     display: block !important;
