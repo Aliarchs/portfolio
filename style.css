@@ -131,7 +131,7 @@ body.projects-page {
   position: relative;
   width: 100%;                                /* Fill grid cell */
   aspect-ratio: 1 / 1;                        /* Keep square shape */
-  border: 1px solid #000;
+  border: none;
   overflow: hidden;
   cursor: grab;
   user-select: none;
