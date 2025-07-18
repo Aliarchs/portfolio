@@ -208,7 +208,9 @@ a:hover {
   .project-item .preview {
     display: none !important;
   }
-
+ .project-item .preview {
+    display: none !important;
+  }
   .headings-container {
     min-height: 70vh;
     padding-top: 4rem;
