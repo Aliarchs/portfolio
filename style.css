@@ -299,6 +299,9 @@ a:hover {
   display: none !important;
   }
   
+  .project-item .preview {
+    display: none !important;
+  }
 
 }
 body.landing > header {
