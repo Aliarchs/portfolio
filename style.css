@@ -21,7 +21,7 @@
 * {
   box-sizing: border-box;
   margin: 0;
-  padding: 0;
+  padding:0 ;
 }
 
 /* Global Overscroll Behavior */
@@ -112,6 +112,7 @@ main {
 /* 6) Projects Page – Desktop Grid */
 body.projects-page {
   padding-top: 4rem;
+  padding-bottom: 6rem ;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -121,10 +122,10 @@ body.projects-page {
   display: grid;
   grid-template-columns: repeat(2, 1fr);      /* <-- Change 3 to 2 columns */
   grid-template-rows: none;                   /* Let rows size automatically */
-  gap: 3vw;                                   /* Responsive gap */
+  gap: 10vw;                                   /* Responsive gap */
   margin: 0 auto;
   width: 90vw;                                /* Fill more of the screen */
-  max-width: 1400px;                          /* Optional: limit max width */
+  max-width: 1200px;                          /* Optional: limit max width */
   justify-content: center;
 }
 .project-item {
@@ -170,12 +171,12 @@ body.projects-page {
   background: rgba(184, 183, 183, 0.461);
   text-align: center;
   padding: 0.75rem 0;
-  font-size: 1.15rem;
-  font-weight: bold;
+  font-size: 1.2rem;
+  font-weight: light;
   color: #222;
   letter-spacing: 0.05em;
-  border-top: 2px solid #1d1d1d2d;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.07);
+  border-top: 2px solid #1d1d1d00;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.116);
   transition: background 0.2s, color 0.2s;
   display: flex;
   align-items: center;
