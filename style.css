@@ -169,9 +169,18 @@ body.projects-page {
   padding: 0.5rem 0;
   display: none;
 }
+.project-item .preview,
+.project-item .title {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  display: flex;
+}
+
 .project-item:hover .preview,
 .project-item:hover .title {
-  display: flex;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* 7) About & Contact Pages */
