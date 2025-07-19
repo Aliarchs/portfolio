@@ -43,7 +43,7 @@
       transition: background 0.2s;
       position: relative;
       z-index: 1;
-      background: none;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.8) 100%);
       box-shadow: none;
       border: none;
       border-radius: 0;
@@ -90,14 +90,14 @@
 <div class="book">
   <!-- Desktop: two pages -->
   <div class="page left" id="desktop-left" onclick="flip(-1)">
-    <img id="img-left" src="images/project1-1.jpg" alt="Left Page">
+    <img id="img-left" src="images/project1-0.jpg" alt="Left Page">
   </div>
   <div class="page right" id="desktop-right" onclick="flip(1)">
-    <img id="img-right" src="images/project1-2.jpg" alt="Right Page">
+    <img id="img-right" src="images/project1-1.jpg" alt="Right Page">
   </div>
   <!-- Mobile: single page -->
   <div class="page" id="mobile-single">
-    <img id="img-single" src="images/project1-1.jpg" alt="Page">
+    <img id="img-single" src="images/project1-0.jpg" alt="Page">
   </div>
 </div>
     </div>
@@ -146,7 +146,32 @@
       document.getElementById('img-right').src = images[page+1] || "";
       document.getElementById('label-left').textContent = page + 1;
       document.getElementById('label-right').textContent = page + 2 <= images.length ? page + 2 : "";
+      updateGradientHeight(); // <-- Add this line
     }
+
+function updateGradientHeight() {
+  // Get the left and right images
+  const imgLeft = document.getElementById('img-left');
+  const imgRight = document.getElementById('img-right');
+  const book = document.querySelector('.book');
+  const gradient = book.querySelector('::before'); // pseudo-element can't be selected directly
+
+  // Get the tallest visible image
+  const leftRect = imgLeft ? imgLeft.getBoundingClientRect() : { height: 0 };
+  const rightRect = imgRight ? imgRight.getBoundingClientRect() : { height: 0 };
+  const maxHeight = Math.max(leftRect.height, rightRect.height);
+
+  // Set a CSS variable on .book for the gradient height
+  book.style.setProperty('--gradient-height', maxHeight + 'px');
+}
+
+// Listen for image load and window resize
+window.addEventListener('resize', updateGradientHeight);
+document.getElementById('img-left').addEventListener('load', updateGradientHeight);
+document.getElementById('img-right').addEventListener('load', updateGradientHeight);
+
+// Initial call
+updateGradientHeight();
   </script>
 </body>
 </html>
