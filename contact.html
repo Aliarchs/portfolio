@@ -5,39 +5,31 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Contact – ALI SHABESTARY</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body class="other-page">
   <header>
-    <div class="site-name">ALI SHABESTARY</div>
-    <nav class="nav-dropdown">
-      <a href="projects.html">Projects</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
+    <a href="index.html" class="site-name" aria-label="Home">ALI SHABESTARY</a>
+    <nav class="nav-dropdown" role="navigation" aria-label="Main navigation">
+      <a href="projects.html" aria-label="Projects page">Projects</a>
+      <a href="about.html" aria-label="About page">About</a>
+      <a href="contact.html" aria-label="Contact page">Contact</a>
     </nav>
   </header>
   <main class="content-page">
     <h1>Get in Touch</h1>
     <p>You can reach out via email at <a href="mailto:alishabestary1@gmail.com">alishabestary1@gmail.com</a>,
        or use the form below:</p>
-    <form method="POST" action="https://formspree.io/f/your-form-id">
-      <label>Name:<br><input type="text" name="name" required></label><br><br>
-      <label>Email:<br><input type="email" name="_replyto" required></label><br><br>
-      <label>Message:<br><textarea name="message" rows="6" required></textarea></label><br><br>
-      <button type="submit">Send</button>
+    <form method="POST" action="https://formspree.io/f/your-form-id" aria-label="Contact form">
+      <label for="name">Name:</label><br>
+      <input type="text" id="name" name="name" required aria-required="true"><br><br>
+      <label for="email">Email:</label><br>
+      <input type="email" id="email" name="_replyto" required aria-required="true"><br><br>
+      <label for="message">Message:</label><br>
+      <textarea id="message" name="message" rows="6" required aria-required="true"></textarea><br><br>
+      <button type="submit" aria-label="Send message">Send</button>
     </form>
   </main>
   <script src="script.js"></script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Contact – ALI SHABESTARY</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="icon" type="image/png" href="favicon.png">
-</head>
-<body class="other-page">
 </body>
 </html>

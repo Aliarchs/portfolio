@@ -147,4 +147,14 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   });
+
+  // Make site-name clickable and link to index.html on all pages
+  var siteName = document.querySelector('.site-name');
+  if (siteName && siteName.tagName.toLowerCase() !== 'a') {
+    var link = document.createElement('a');
+    link.href = 'index.html';
+    link.className = siteName.className;
+    link.textContent = siteName.textContent;
+    siteName.replaceWith(link);
+  }
 });
