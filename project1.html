@@ -20,6 +20,9 @@
     <h1 style="text-align:center;">EXTENDED PORTFOLIO</h1>
     <div id="cover-container">
       <img id="cover-img" src="images/project1-1.jpg" alt="Portfolio Cover">
+      <div class="book-controls">
+        <button id="cover-next-btn" class="book-arrow" aria-label="Next page">&gt;</button>
+      </div>
     </div>
     <div class="book-container" style="display:none;">
       <div class="book">
@@ -37,8 +40,20 @@
     </div>
   </main>
   <footer>
-    <p>&copy; 2023 ALI SHABESTARY. All rights reserved.</p>
+    <p style="text-align:center;">For desktop: Use arrows or click the pages to navigate</p>
+    <p style="text-align:center;">For mobile: Swipe left or right to turn pages</p>
+    <p style="margin-bottom: 5rem; text-align: center; ">&nbsp;</p>
+    <p style="color: #60606060; text-align: center; font-size: 0.8em;">&copy; 2025 Ali Shabestary. All rights reserved.</p>
   </footer>
   <script src="script.js"></script>
 </body>
 </html>
+
+<style>
+.book-controls {
+  width: 100%;
+  text-align: center;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+</style>

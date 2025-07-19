@@ -9,11 +9,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const coverImg = document.getElementById('cover-img');
     const coverContainer = document.getElementById('cover-container');
     const bookContainer = document.querySelector('.book-container');
+    const coverNextBtn = document.getElementById('cover-next-btn');
 
-    coverImg.addEventListener('click', function() {
+    function showBook() {
       coverContainer.style.display = 'none';
       bookContainer.style.display = 'flex';
-    });
+      // Reset to first spread
+      if (window.page !== undefined) window.page = 0;
+      if (typeof updatePages === "function") updatePages();
+    }
+
+    coverImg.addEventListener('click', showBook);
+    coverNextBtn.addEventListener('click', showBook);
   }
 
   // FLIPBOOK LOGIC (desktop)
@@ -22,7 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('img-left') &&
     document.getElementById('img-right')
   ) {
-    // Images for book mode: start with blank left page
     const images = [
       "images/blank.jpg",        // blank left page at start
       "images/project1-2.jpg",   // first real page
@@ -57,12 +63,12 @@ document.addEventListener('DOMContentLoaded', function() {
       "images/project1-31.jpg",
       "images/project1-32.jpg"   // last page!
     ];
-    // If odd number of images, add a blank page to keep spreads
     if (images.length % 2 !== 0) {
       images.push("images/blank.jpg");
     }
 
-    let page = 0; // Always even, left page index
+    // Make page variable global for cover logic
+    window.page = 0;
 
     const leftPage = document.getElementById('desktop-left');
     const rightPage = document.getElementById('desktop-right');
@@ -70,44 +76,49 @@ document.addEventListener('DOMContentLoaded', function() {
     const imgRight = document.getElementById('img-right');
     const prevBtn = document.getElementById('prev-btn');
     const nextBtn = document.getElementById('next-btn');
+    const coverContainer = document.getElementById('cover-container');
+    const bookContainer = document.querySelector('.book-container');
 
     function updatePages() {
-      imgLeft.src = images[page] || "";
-      imgRight.src = images[page + 1] || "";
+      imgLeft.src = images[window.page] || "";
+      imgRight.src = images[window.page + 1] || "";
     }
 
     leftPage.addEventListener('click', function() {
-      if (page > 0) {
-        page -= 2;
+      if (window.page > 0) {
+        window.page -= 2;
         updatePages();
       }
     });
 
     rightPage.addEventListener('click', function() {
-      if (page < images.length - 2) {
-        page += 2;
+      if (window.page < images.length - 2) {
+        window.page += 2;
         updatePages();
       }
     });
 
     prevBtn.addEventListener('click', function() {
-      if (page > 0) {
-        page -= 2;
+      // If on first spread, go back to cover
+      if (window.page === 0) {
+        bookContainer.style.display = 'none';
+        coverContainer.style.display = 'block';
+      } else if (window.page > 0) {
+        window.page -= 2;
         updatePages();
       }
-      prevBtn.blur(); // Remove focus highlight after click
+      prevBtn.blur();
     });
 
     nextBtn.addEventListener('click', function() {
-      if (page < images.length - 2) {
-        page += 2;
+      if (window.page < images.length - 2) {
+        window.page += 2;
         updatePages();
       }
-      nextBtn.blur(); // Remove focus highlight after click
+      nextBtn.blur();
     });
 
     // Only initialize book if bookContainer is visible
-    const bookContainer = document.querySelector('.book-container');
     if (bookContainer && bookContainer.style.display !== 'none') {
       updatePages();
     }
@@ -115,6 +126,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Also update pages when entering book mode
     if (document.getElementById('cover-img')) {
       document.getElementById('cover-img').addEventListener('click', function() {
+        window.page = 0;
+        updatePages();
+      });
+    }
+    if (document.getElementById('cover-next-btn')) {
+      document.getElementById('cover-next-btn').addEventListener('click', function() {
+        window.page = 0;
         updatePages();
       });
     }
