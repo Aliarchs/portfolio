@@ -1,219 +1,120 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
   const body = document.body;
 
-  /* LANDING PAGE */
-  if (body.classList.contains('landing')) {
-    const headings = [...document.querySelectorAll('.landing-heading')];
-    const delay = 1000;
+  // COVER LOGIC
+  if (
+    body.classList.contains('projects-page') &&
+    document.getElementById('cover-img')
+  ) {
+    const coverImg = document.getElementById('cover-img');
+    const coverContainer = document.getElementById('cover-container');
+    const bookContainer = document.querySelector('.book-container');
 
-    headings.forEach((h, i) => {
-      setTimeout(() => {
-        h.animate(
-          [
-            { transform: 'scale(1)' },
-            { transform: `scale(${getComputedStyle(document.documentElement)
-              .getPropertyValue('--heading-scale')})` },
-            { transform: 'scale(1)' }
-          ],
-          { duration: delay, fill: 'forwards' }
-        );
-      }, i * delay);
-
-      h.addEventListener('click', () => {
-        const key = h.textContent.trim().toLowerCase();
-        if (key === 'projects') location.href = 'projects.html';
-        else if (key === 'about') location.href = 'about.html';
-        else if (key === 'contact') location.href = 'contact.html';
-        else location.href = 'index.html';
-      });
+    coverImg.addEventListener('click', function() {
+      coverContainer.style.display = 'none';
+      bookContainer.style.display = 'flex';
     });
   }
 
-  /* SITE-NAME → HOME */
-  document.querySelectorAll('.site-name').forEach(el =>
-    el.addEventListener('click', () => {
-      location.href = 'index.html';
-    })
-  );
-
-  /* PROJECTS PAGE */
-  if (body.classList.contains('projects-page')) {
-    const items = [...document.querySelectorAll('.project-item')];
-
-    // Use matchMedia for reliable mobile detection.
-    const isMobile = window.matchMedia('(max-width: 768px)').matches;
-    if (isMobile) {
-      // On mobile, only attach a simple click event for navigation; no animations.
-      items.forEach(item => {
-        item.addEventListener('click', () => {
-          location.href = item.dataset.link;
-        });
-      });
-      return; // Do not initialize desktop interactions on mobile.
+  // FLIPBOOK LOGIC (desktop)
+  if (
+    body.classList.contains('projects-page') &&
+    document.getElementById('img-left') &&
+    document.getElementById('img-right')
+  ) {
+    // Images for book mode: start with blank left page
+    const images = [
+      "images/blank.jpg",        // blank left page at start
+      "images/project1-2.jpg",   // first real page
+      "images/project1-3.jpg",
+      "images/project1-4.jpg",
+      "images/project1-5.jpg",
+      "images/project1-6.jpg",
+      "images/project1-7.jpg",
+      "images/project1-8.jpg",
+      "images/project1-9.jpg",
+      "images/project1-10.jpg",
+      "images/project1-11.jpg",
+      "images/project1-12.jpg",
+      "images/project1-13.jpg",
+      "images/project1-14.jpg",
+      "images/project1-15.jpg",
+      "images/project1-16.jpg",
+      "images/project1-17.jpg",
+      "images/project1-18.jpg",
+      "images/project1-19.jpg",
+      "images/project1-20.jpg",
+      "images/project1-21.jpg",
+      "images/project1-22.jpg",
+      "images/project1-23.jpg",
+      "images/project1-24.jpg",
+      "images/project1-25.jpg",
+      "images/project1-26.jpg",
+      "images/project1-27.jpg",
+      "images/project1-28.jpg",
+      "images/project1-29.jpg",
+      "images/project1-30.jpg",
+      "images/project1-31.jpg",
+      "images/project1-32.jpg"   // last page!
+    ];
+    // If odd number of images, add a blank page to keep spreads
+    if (images.length % 2 !== 0) {
+      images.push("images/blank.jpg");
     }
 
-    // Desktop-only interactions:
-    const gravityDur = parseFloat(
-      getComputedStyle(document.documentElement).getPropertyValue('--gravity-duration')
-    ) * 1000;
-    const tol = parseInt(
-      getComputedStyle(document.documentElement).getPropertyValue('--drag-tolerance'), 10
-    );
-    let gravityDropped = false;
+    let page = 0; // Always even, left page index
 
-    // Gravity effect: Triggered only on SHIFT + click.
-    const triggerDrop = () => {
-      gravityDropped = true;
-      items.forEach((item, idx) => {
-        const anim = item.animate(
-          [
-            { transform: 'translateY(0)' },
-            { transform: 'translateY(200vh)' }
-          ],
-          {
-            duration: gravityDur,
-            easing: 'ease-in',
-            fill: 'both',
-            delay: idx * 50
-          }
-        );
-        anim.onfinish = () => {
-          item.style.transform = 'translateY(200vh)';
-        };
-      });
-    };
+    const leftPage = document.getElementById('desktop-left');
+    const rightPage = document.getElementById('desktop-right');
+    const imgLeft = document.getElementById('img-left');
+    const imgRight = document.getElementById('img-right');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
 
-    // Reset: When the user releases the SHIFT key.
-    const triggerReset = () => {
-      gravityDropped = false;
-      items.forEach((item, idx) => {
-        const anim = item.animate(
-          [
-            { transform: 'translateY(200vh)' },
-            { transform: 'translateY(0)' }
-          ],
-          {
-            duration: gravityDur,
-            easing: 'ease-out',
-            fill: 'both',
-            delay: idx * 50
-          }
-        );
-        anim.onfinish = () => {
-          item.style.transform = '';
-        };
-      });
-    };
+    function updatePages() {
+      imgLeft.src = images[page] || "";
+      imgRight.src = images[page + 1] || "";
+    }
 
-    window.addEventListener('keyup', (e) => {
-      if (e.key === 'Shift' && gravityDropped) {
-        triggerReset();
+    leftPage.addEventListener('click', function() {
+      if (page > 0) {
+        page -= 2;
+        updatePages();
       }
     });
 
-    items.forEach(item => {
-      /* Hover preview/title (desktop only) */
-      item.addEventListener('mouseenter', () => {
-        const preview = item.querySelector('.preview');
-        const title = item.querySelector('.title');
-        if (preview && title) {
-          preview.style.display = 'flex';
-          title.style.display = 'flex';
-        }
-      });
-      item.addEventListener('mouseleave', () => {
-        const preview = item.querySelector('.preview');
-        const title = item.querySelector('.title');
-        if (preview && title) {
-          preview.style.display = 'none';
-          title.style.display = 'none';
-        }
-      });
-
-      /* Click event on a project box: 
-         - If the user holds SHIFT while clicking, trigger the gravity drop.
-         - Otherwise, navigate to the project page.
-      */
-      item.addEventListener('click', (e) => {
-        if (e.shiftKey) {
-          triggerDrop();
-        } else if (!item.isDragging) {
-          location.href = item.dataset.link;
-        }
-      });
-
-      /* Desktop drag logic */
-      item.addEventListener('pointerdown', (e) => {
-        if (e.pointerType === 'touch') return; // Do nothing for touch input
-
-        e.preventDefault();
-        const rect = item.getBoundingClientRect();
-        const offsetX = e.clientX - rect.left;
-        const offsetY = e.clientY - rect.top;
-
-        item.setPointerCapture(e.pointerId);
-        item.style.position = 'fixed';
-        item.style.zIndex = 1000;
-        item.style.width = `${rect.width}px`;
-        item.style.height = `${rect.height}px`;
-        item.style.left = `${rect.left}px`;
-        item.style.top = `${rect.top}px`;
-
-        let isDragging = false;
-        item.isDragging = false;
-
-        const onPointerMove = (ev) => {
-          const dx = ev.clientX - (rect.left + offsetX);
-          const dy = ev.clientY - (rect.top + offsetY);
-          if (!isDragging && Math.hypot(dx, dy) > tol) {
-            isDragging = true;
-            item.isDragging = true;
-          }
-          if (isDragging) {
-            item.style.left = `${ev.clientX - offsetX}px`;
-            item.style.top = `${ev.clientY - offsetY}px`;
-          }
-        };
-
-        const onPointerUp = (ev) => {
-          item.releasePointerCapture(ev.pointerId);
-          document.removeEventListener('pointermove', onPointerMove);
-          document.removeEventListener('pointerup', onPointerUp);
-          setTimeout(() => {
-            item.isDragging = false;
-          }, 0);
-        };
-
-        document.addEventListener('pointermove', onPointerMove);
-        document.addEventListener('pointerup', onPointerUp);
-      });
-    });
-  }
-
-  function showSinglePage(idx) {
-    document.getElementById('img-single').src = images[idx];
-    document.getElementById('label-single').textContent = idx + 1;
-  }
-  let singlePageIdx = 0;
-  const isMobile = window.matchMedia('(max-width: 768px)').matches;
-  if (isMobile) {
-    showSinglePage(singlePageIdx);
-    const singlePage = document.getElementById('mobile-single');
-    let touchStartX = null;
-    singlePage.addEventListener('touchstart', e => {
-      touchStartX = e.touches[0].clientX;
-    });
-    singlePage.addEventListener('touchend', e => {
-      if (touchStartX === null) return;
-      const touchEndX = e.changedTouches[0].clientX;
-      if (touchEndX < touchStartX - 30 && singlePageIdx < images.length - 1) {
-        singlePageIdx++;
-        showSinglePage(singlePageIdx);
-      } else if (touchEndX > touchStartX + 30 && singlePageIdx > 0) {
-        singlePageIdx--;
-        showSinglePage(singlePageIdx);
+    rightPage.addEventListener('click', function() {
+      if (page < images.length - 2) {
+        page += 2;
+        updatePages();
       }
-      touchStartX = null;
     });
+
+    prevBtn.addEventListener('click', function() {
+      if (page > 0) {
+        page -= 2;
+        updatePages();
+      }
+    });
+
+    nextBtn.addEventListener('click', function() {
+      if (page < images.length - 2) {
+        page += 2;
+        updatePages();
+      }
+    });
+
+    // Only initialize book if bookContainer is visible
+    const bookContainer = document.querySelector('.book-container');
+    if (bookContainer && bookContainer.style.display !== 'none') {
+      updatePages();
+    }
+
+    // Also update pages when entering book mode
+    if (document.getElementById('cover-img')) {
+      document.getElementById('cover-img').addEventListener('click', function() {
+        updatePages();
+      });
+    }
   }
 });
