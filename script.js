@@ -95,6 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
         page -= 2;
         updatePages();
       }
+      prevBtn.blur(); // Remove focus highlight after click
     });
 
     nextBtn.addEventListener('click', function() {
@@ -102,6 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
         page += 2;
         updatePages();
       }
+      nextBtn.blur(); // Remove focus highlight after click
     });
 
     // Only initialize book if bookContainer is visible
@@ -117,4 +119,14 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
   }
+
+  // Make project grid items clickable
+  document.querySelectorAll('.project-item[data-link]').forEach(function(item) {
+    item.addEventListener('click', function() {
+      const link = item.getAttribute('data-link');
+      if (link) {
+        window.location.href = link;
+      }
+    });
+  });
 });
