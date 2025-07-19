@@ -189,4 +189,31 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
+
+  function showSinglePage(idx) {
+    document.getElementById('img-single').src = images[idx];
+    document.getElementById('label-single').textContent = idx + 1;
+  }
+  let singlePageIdx = 0;
+  const isMobile = window.matchMedia('(max-width: 768px)').matches;
+  if (isMobile) {
+    showSinglePage(singlePageIdx);
+    const singlePage = document.getElementById('mobile-single');
+    let touchStartX = null;
+    singlePage.addEventListener('touchstart', e => {
+      touchStartX = e.touches[0].clientX;
+    });
+    singlePage.addEventListener('touchend', e => {
+      if (touchStartX === null) return;
+      const touchEndX = e.changedTouches[0].clientX;
+      if (touchEndX < touchStartX - 30 && singlePageIdx < images.length - 1) {
+        singlePageIdx++;
+        showSinglePage(singlePageIdx);
+      } else if (touchEndX > touchStartX + 30 && singlePageIdx > 0) {
+        singlePageIdx--;
+        showSinglePage(singlePageIdx);
+      }
+      touchStartX = null;
+    });
+  }
 });
