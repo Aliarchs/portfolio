@@ -87,13 +87,17 @@ button:active,
 header {
   position: fixed;
   top: 0;
-  width: 100%;
+  left: 0;
+  width: 100vw;
+  min-width: 0;
+  box-sizing: border-box;
   display: flex;
   justify-content: flex-start;
   align-items: center;
   background: rgba(255,255,255,0.8);
   padding: 1rem 2vw;
   z-index: 100;
+  overflow-x: hidden;
 }
 .site-name {
   flex: 0 0 auto;
@@ -536,8 +540,9 @@ textarea:focus,
   max-width: 1400px;
   margin: 2rem 0;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
 }
 
 .slideshow-image {
@@ -550,6 +555,39 @@ textarea:focus,
   background: none;
   border: none;
   display: block;
+  margin-bottom: 1rem;
+}
+.slideshow-arrows-mobile {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+.slideshow-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  color: #636363;
+  border: none;
+  border-radius: 50%;
+  font-size: 2.2rem;
+  width: 2.8rem;
+  height: 2.8rem;
+  margin: 0 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.1s;
+  outline: none;
+  box-sizing: border-box;
+}
+.slideshow-arrow:hover,
+.slideshow-arrow:focus,
+.slideshow-arrow:active {
+  background: #eee;
+  color: #7b7b7b;
+  transform: scale(1.12);
+  cursor: pointer;
 }
 
 /* --- Gallery Styles --- */
@@ -697,6 +735,82 @@ body.landing .landing-heading {
 }
 body.landing .site-name {
   font-size: 1.4rem;
+}
+
+/* Ensure main content and buttons are always within the viewport on mobile by constraining widths and removing excess margins/padding */
+@media (max-width: 600px) {
+  header,
+  main,
+  .content-page,
+  .project-grid,
+  .slideshow-container,
+  .gallery {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    box-sizing: border-box;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    overflow-x: hidden !important;
+  }
+  button,
+  .book-arrow,
+  .slideshow-arrow {
+    max-width: 90vw;
+    width: auto;
+    box-sizing: border-box;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+  }
+  .slideshow-container {
+    flex-direction: column;
+    align-items: center;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+    padding: 0 0.5rem;
+    overflow-x: hidden;
+  }
+  .slideshow-image {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-bottom: 1rem;
+    box-sizing: border-box;
+  }
+  .slideshow-arrows-mobile {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    width: 100%;
+    margin-bottom: 1.5rem;
+  }
+  .slideshow-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    color: #636363;
+    border: none;
+    border-radius: 50%;
+    font-size: 2.2rem;
+    width: 2.8rem;
+    height: 2.8rem;
+    margin: 0 0.5rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, transform 0.1s;
+    outline: none;
+    box-sizing: border-box;
+  }
+  .slideshow-arrow:hover,
+  .slideshow-arrow:focus,
+  .slideshow-arrow:active {
+    background: #eee;
+    color: #7b7b7b;
+    transform: scale(1.12);
+    cursor: pointer;
+  }
 }
 
 /* Remove font-size from .landing-heading and .project-item .title if present */
