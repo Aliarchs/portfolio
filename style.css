@@ -288,10 +288,58 @@ body.other-page {
   padding-top: 4rem;
 }
 .content-page {
-  max-width: 800px;
-  margin: 6rem auto 2rem;
-  padding: 1rem;
-  line-height: 1.6;
+  width: 100%;
+  max-width: 1800px;      /* Match gallery max-width */
+  margin: 0 auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  box-sizing: border-box;
+}
+.content-page form {
+  width: 100%;
+  max-width: 500px;
+  margin: 2rem auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  align-items: stretch;
+}
+
+.content-page label {
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+}
+
+.content-page input,
+.content-page textarea,
+.content-page button {
+  font-size: 1rem;
+  padding: 0.7rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.content-page button[type="submit"] {
+  background: var(--accent-color);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.8rem 1.2rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: background 0.2s;
+}
+
+.content-page button[type="submit"]:hover,
+.content-page button[type="submit"]:focus {
+  background: #222;
 }
 
 /* --- Book/Portfolio Styles --- */
@@ -366,6 +414,37 @@ body.other-page {
   cursor: url('images/cursor-hover.svg'), pointer;
 }
 
+/* --- Unified Arrow Styles --- */
+.book-arrow,
+.slideshow-arrow {
+  background: none;
+  color: #636363;
+  border: none;
+  border-radius: 50%;
+  font-size: 2.2rem;
+  width: 2.8rem;
+  height: 2.8rem;
+  margin: 0 0.5rem;
+  cursor: url('images/cursor-pointer.svg'), pointer;
+  transition: background 0.2s, color 0.2s, transform 0.1s;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.book-arrow:hover,
+.book-arrow:focus,
+.book-arrow:active,
+.slideshow-arrow:hover,
+.slideshow-arrow:focus,
+.slideshow-arrow:active {
+  background: #eee;
+  color: #7b7b7b;
+  transform: scale(1.12);
+  cursor: url('images/cursor-hover.svg'), pointer;
+}
+
 /* --- Utility --- */
 a:hover {
   color: var(--accent-color);
@@ -426,4 +505,132 @@ textarea:focus,
 .site-name:focus {
   outline: 2px solid var(--accent-color);
   outline-offset: 2px;
+}
+
+/* --- Slideshow Styles --- */
+.slideshow-container {
+  width: 95vw;
+  max-width: 1400px;
+  margin: 2rem 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.slideshow-image {
+  width: 100%;
+  max-width: 1200px;
+  height: 400px;
+  border-radius: 0;
+  box-shadow: none;
+  object-fit: contain;
+  background: none;
+  border: none;
+  display: block;
+}
+
+/* --- Gallery Styles --- */
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin: 2.5rem auto 0 auto;
+  justify-content: center;
+  align-items: flex-start;
+  width: 80vw;
+  max-width: 1800px;
+  background: none;
+  border: none;
+  box-shadow: none;
+  position: relative;
+}
+.gallery img {
+  max-width: 420px;
+  width: 420px;
+  height: 290px;
+  border-radius: 0;
+  box-shadow: none;
+  transition: transform 0.2s;
+  cursor: url('images/cursor-pointer.svg'), pointer;
+  background: none;
+  border: none;
+  object-fit: contain;
+  margin: 0;
+  padding: 0;
+  display: block;
+}
+
+/* --- Lightbox Styles --- */
+.lightbox {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  background: rgba(0,0,0,0.7); /* Dim background */
+}
+
+.lightbox-img {
+  max-width: 60vw;
+  max-height: 80vh;
+  width: 60vw;
+  height: auto;
+  border-radius: 0;
+  box-shadow: none; /* No dropshadow in lightbox mode */
+  background: none;
+  border: none;
+  display: block;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  font-size: 2.5rem;
+  color: #fff;
+  cursor: pointer;
+  z-index: 10000;
+  background: none;
+  border: none;
+  display: block;
+}
+
+.lightbox-close:hover,
+.lightbox-close:focus {
+  color: var(--accent-color);
+}
+
+/* Dim gallery when lightbox is open */
+.gallery.lightbox-active {
+  opacity: 0.3;
+  pointer-events: none;
+}
+button.slideshow-arrow,
+button.book-arrow {
+  background: none !important;
+  color: #636363 !important;
+  border: none !important;
+  border-radius: 50% !important;
+  font-size: 2.2rem !important;
+  width: 2.8rem !important;
+  height: 2.8rem !important;
+  margin: 0 0.5rem !important;
+  cursor: url('images/cursor-pointer.svg'), pointer !important;
+  transition: background 0.2s, color 0.2s, transform 0.1s !important;
+  outline: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+button.slideshow-arrow:hover,
+button.slideshow-arrow:focus,
+button.slideshow-arrow:active,
+button.book-arrow:hover,
+button.book-arrow:focus,
+button.book-arrow:active {
+  background: #eee !important;
+  color: #7b7b7b !important;
+  transform: scale(1.12) !important;
+  cursor: url('images/cursor-hover.svg'), pointer !important;
 }

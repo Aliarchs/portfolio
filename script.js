@@ -138,6 +138,39 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // Book navigation logic for project1.html
+  const prevBtn = document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-btn');
+  const coverNextBtn = document.getElementById('cover-next-btn');
+
+  function goToPrevPage() {
+    // Your page navigation logic here
+  }
+
+  function goToNextPage() {
+    // Your page navigation logic here
+  }
+
+  // Accessibility: allow keyboard navigation and focus feedback
+  [prevBtn, nextBtn, coverNextBtn].forEach(btn => {
+    if (!btn) return;
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      btn.blur(); // Remove focus after click for mouse users
+    });
+    btn.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        btn.click();
+      }
+    });
+    btn.setAttribute('tabindex', '0'); // Ensure focusable
+    btn.setAttribute('aria-label', btn.textContent.trim() === '>' ? 'Next page' : 'Previous page');
+  });
+
+  if (prevBtn) prevBtn.addEventListener('click', goToPrevPage);
+  if (nextBtn) nextBtn.addEventListener('click', goToNextPage);
+  if (coverNextBtn) coverNextBtn.addEventListener('click', goToNextPage);
+
   // Make project grid items clickable
   document.querySelectorAll('.project-item[data-link]').forEach(function(item) {
     item.addEventListener('click', function() {

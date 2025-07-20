@@ -16,3 +16,26 @@
     <a href="contact.html" aria-label="Contact page">Contact</a>
   </nav>
 </header>
+<main class="content-page">
+  <h1>RSPB Lochwinnoch Gallery</h1>
+  <div class="slideshow-container" aria-label="Slideshow gallery">
+    <button class="slideshow-arrow prev" aria-label="Previous image">&#10094;</button>
+    <img class="slideshow-image" src="images/project2-1.png" alt="Project 2 Slide 1" tabindex="0">
+    <button class="slideshow-arrow next" aria-label="Next image">&#10095;</button>
+  </div>
+  <div class="gallery" aria-label="Image gallery" style="margin-top:3.5rem;">
+    <img src="images/project2-1.png" alt="Project 2 Image 1" tabindex="0">
+    <img src="images/project2-2.png" alt="Project 2 Image 2" tabindex="0">
+    <img src="images/project2-3.png" alt="Project 2 Image 3" tabindex="0">
+    <!-- Add more images as needed -->
+  </div>
+
+  <!-- Lightbox Modal -->
+  <div id="lightbox" class="lightbox" tabindex="-1" aria-modal="true" style="display:none;">
+    <span class="lightbox-close" aria-label="Close" style="display:none;">&times;</span>
+    <img class="lightbox-img" src="" alt="">
+  </div>
+</main>
+<script src="gallery.js"></script>
+</body>
+</html>
