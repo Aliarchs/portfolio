@@ -634,3 +634,54 @@ button.book-arrow:active {
   transform: scale(1.12) !important;
   cursor: url('images/cursor-hover.svg'), pointer !important;
 }
+
+/* --- Heading Styles --- */
+h1, .main-title, .about-heading {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1.5em;
+  text-align: center;
+  opacity: 0.9;
+  letter-spacing: 0.02em;
+}
+h2, .section-title {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 1em;
+  text-align: left;
+  opacity: 0.85;
+  letter-spacing: 0.01em;
+}
+
+/* --- Header Font Size --- */
+.site-name,
+.nav-dropdown a {
+  font-size: 1.25rem;
+}
+
+/* --- Main Body Font Size (larger everywhere except landing page and header) --- */
+body:not(.landing) .content-page,
+body:not(.landing) .about-content,
+body:not(.landing) .project-item .title,
+body:not(.landing) .landing-heading,
+body:not(.landing) {
+  font-size: 1.15rem;
+}
+
+/* --- Larger fonts for landing page only --- */
+body.landing .landing-heading {
+  font-size: 2.5rem;
+}
+body.landing .site-name {
+  font-size: 1.7rem;
+}
+
+/* Remove font-size from .landing-heading and .project-item .title if present */
+.landing-heading {
+  font-size: 1rem;
+  /* ...existing code... */
+}
+.project-item .title {
+  font-size: 1rem;
+  /* ...existing code... */
+}
