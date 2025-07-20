@@ -19,24 +19,41 @@
   </header>
   <main>
     <h1 class="main-title" style="text-align:center; margin-bottom:2rem; opacity:0.7;">EXTENDED PORTFOLIO</h1>
+    <!-- Cover container for cover page -->
     <div id="cover-container">
-      <img id="cover-img" src="images/project1-1.jpg" alt="Portfolio Cover">
-      <div class="book-controls">
-        <button id="cover-next-btn" class="book-arrow" aria-label="Next page">&gt;</button>
+      <div class="cover-page">
+        <img id="cover-img" src="images/project1-1.jpg" alt="Portfolio Cover">
+        <div class="book-controls">
+          <button id="cover-next-btn" class="book-arrow" aria-label="Next page">&gt;</button>
+        </div>
       </div>
     </div>
+    <!-- Blank page (optional, can be hidden) -->
+    <div class="blank-page" style="display:none;"></div>
+    <!-- Book container for flipbook pages -->
     <div class="book-container" style="display:none;">
-      <div class="book">
-        <div class="page left" id="desktop-left">
-          <img id="img-left" src="" alt="Left Page">
+      <!-- Desktop flipbook -->
+      <div class="book-page first-page">
+        <div class="book">
+          <div class="page left" id="desktop-left">
+            <img id="img-left" src="" alt="Left Page">
+          </div>
+          <div class="page right" id="desktop-right">
+            <img id="img-right" src="" alt="Right Page">
+          </div>
         </div>
-        <div class="page right" id="desktop-right">
-          <img id="img-right" src="" alt="Right Page">
+        <div class="book-controls">
+          <button id="prev-btn" class="book-arrow" aria-label="Previous page">&lt;</button>
+          <button id="next-btn" class="book-arrow" aria-label="Next page">&gt;</button>
         </div>
       </div>
-      <div class="book-controls">
-        <button id="prev-btn" class="book-arrow" aria-label="Previous page">&lt;</button>
-        <button id="next-btn" class="book-arrow" aria-label="Next page">&gt;</button>
+      <!-- Mobile flipbook -->
+      <div class="book-mobile" style="display:none;">
+        <img id="img-mobile" src="images/project1-1.jpg" alt="Mobile Page" style="width:100vw; max-width:100vw; height:auto; display:block; margin:0 auto;">
+        <div class="book-controls">
+          <button id="prev-btn-mobile" class="book-arrow" aria-label="Previous page">&lt;</button>
+          <button id="next-btn-mobile" class="book-arrow" aria-label="Next page">&gt;</button>
+        </div>
       </div>
     </div>
   </main>
@@ -57,5 +74,4 @@
   margin-top: 2rem;
   margin-bottom: 2rem;
 }
-</style>
 </style>

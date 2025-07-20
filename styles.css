@@ -1,0 +1,21 @@
+/* ...existing code... */
+
+/* Mobile styles */
+@media (max-width: 600px) {
+    .cover-page,
+    .blank-page {
+        display: none !important;
+    }
+    .first-page {
+        display: block !important;
+        /* Add mobile-specific styles if needed */
+    }
+    /* Optional: Adjust book-page layout for mobile */
+    .book-page {
+        width: 100vw;
+        min-height: 100vh;
+        /* ...other mobile styles... */
+    }
+}
+
+/* ...existing code... */

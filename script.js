@@ -12,11 +12,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const coverNextBtn = document.getElementById('cover-next-btn');
 
     function showBook() {
-      coverContainer.style.display = 'none';
-      bookContainer.style.display = 'flex';
       // Reset to first spread
       if (window.page !== undefined) window.page = 0;
-      if (typeof updatePages === "function") updatePages();
+      if (window.mobilePage !== undefined) window.mobilePage = 0;
+      coverContainer.style.display = 'none';
+      bookContainer.style.display = 'block';
+      if (window.innerWidth <= 600) {
+        document.querySelector('.book-mobile').style.display = 'block';
+        document.querySelector('.book-page.first-page').style.display = 'none';
+        if (typeof updateMobilePage === "function") updateMobilePage();
+      } else {
+        document.querySelector('.book-mobile').style.display = 'none';
+        document.querySelector('.book-page.first-page').style.display = 'block';
+        if (typeof updatePages === "function") updatePages();
+      }
     }
 
     coverImg.addEventListener('click', showBook);
@@ -138,17 +147,171 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // FLIPBOOK LOGIC (mobile)
+  if (
+    body.classList.contains('projects-page') &&
+    window.matchMedia("(max-width: 768px)").matches &&
+    document.getElementById('img-mobile')
+  ) {
+    const images = [
+      "images/project1-1.jpg",   // cover
+      "images/project1-2.jpg",
+      "images/project1-3.jpg",
+      "images/project1-4.jpg",
+      "images/project1-5.jpg",
+      "images/project1-6.jpg",
+      "images/project1-7.jpg",
+      "images/project1-8.jpg",
+      "images/project1-9.jpg",
+      "images/project1-10.jpg",
+      "images/project1-11.jpg",
+      "images/project1-12.jpg",
+      "images/project1-13.jpg",
+      "images/project1-14.jpg",
+      "images/project1-15.jpg",
+      "images/project1-16.jpg",
+      "images/project1-17.jpg",
+      "images/project1-18.jpg",
+      "images/project1-19.jpg",
+      "images/project1-20.jpg",
+      "images/project1-21.jpg",
+      "images/project1-22.jpg",
+      "images/project1-23.jpg",
+      "images/project1-24.jpg",
+      "images/project1-25.jpg",
+      "images/project1-26.jpg",
+      "images/project1-27.jpg",
+      "images/project1-28.jpg",
+      "images/project1-29.jpg",
+      "images/project1-30.jpg",
+      "images/project1-31.jpg",
+      "images/project1-32.jpg"
+    ];
+    window.mobilePage = 0;
+
+    const imgMobile = document.getElementById('img-mobile');
+    const prevBtnMobile = document.getElementById('prev-btn-mobile');
+    const nextBtnMobile = document.getElementById('next-btn-mobile');
+    const coverContainer = document.getElementById('cover-container');
+    const bookContainer = document.querySelector('.book-container');
+
+    function updateMobilePage() {
+      imgMobile.src = images[window.mobilePage] || "";
+    }
+
+    if (imgMobile) updateMobilePage();
+
+    prevBtnMobile && prevBtnMobile.addEventListener('click', function() {
+      if (window.mobilePage === 0) {
+        bookContainer.style.display = 'none';
+        coverContainer.style.display = 'block';
+      } else if (window.mobilePage > 0) {
+        window.mobilePage -= 1;
+        updateMobilePage();
+      }
+      prevBtnMobile.blur();
+    });
+
+    nextBtnMobile && nextBtnMobile.addEventListener('click', function() {
+      if (window.mobilePage < images.length - 1) {
+        window.mobilePage += 1;
+        updateMobilePage();
+      }
+      nextBtnMobile.blur();
+    });
+
+    // Block page click navigation for mobile
+    document.querySelectorAll('.page').forEach(function(page) {
+      page.onclick = null;
+      page.style.pointerEvents = 'none';
+    });
+
+    // Swipe logic for mobile
+    let touchStartX = null;
+    let touchEndX = null;
+
+    function handleSwipe() {
+      if (touchStartX === null || touchEndX === null) return;
+      const deltaX = touchEndX - touchStartX;
+      if (Math.abs(deltaX) < 50) return; // Minimum swipe distance
+      if (deltaX > 0) {
+        // Swipe left-to-right: go back a page
+        if (window.mobilePage === 0) {
+          bookContainer.style.display = 'none';
+          coverContainer.style.display = 'block';
+        } else if (window.mobilePage > 0) {
+          window.mobilePage -= 1;
+          updateMobilePage();
+        }
+      } else {
+        // Swipe right-to-left: go forward a page
+        if (window.mobilePage < images.length - 1) {
+          window.mobilePage += 1;
+          updateMobilePage();
+        }
+      }
+    }
+
+    document.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchEndX = null;
+      }
+    });
+
+    document.addEventListener('touchmove', function(e) {
+      if (e.touches.length === 1) {
+        touchEndX = e.touches[0].clientX;
+      }
+    });
+
+    document.addEventListener('touchend', function(e) {
+      handleSwipe();
+      touchStartX = null;
+      touchEndX = null;
+    });
+
+    // Also update page when entering book mode
+    if (document.getElementById('cover-img')) {
+      document.getElementById('cover-img').addEventListener('click', function() {
+        window.mobilePage = 0;
+        updateMobilePage();
+      });
+    }
+    if (document.getElementById('cover-next-btn')) {
+      document.getElementById('cover-next-btn').addEventListener('click', function() {
+        window.mobilePage = 0;
+        updateMobilePage();
+      });
+    }
+  }
+
   // Book navigation logic for project1.html
   const prevBtn = document.getElementById('prev-btn');
   const nextBtn = document.getElementById('next-btn');
   const coverNextBtn = document.getElementById('cover-next-btn');
 
+  // Desktop navigation functions
   function goToPrevPage() {
-    // Your page navigation logic here
+    const bookContainer = document.querySelector('.book-container');
+    const coverContainer = document.getElementById('cover-container');
+    if (window.page === 0) {
+      bookContainer.style.display = 'none';
+      coverContainer.style.display = 'block';
+    } else if (window.page > 0) {
+      window.page -= 2;
+      if (typeof updatePages === "function") updatePages();
+    }
   }
 
   function goToNextPage() {
-    // Your page navigation logic here
+    const images = [
+      "images/blank.jpg", "images/project1-2.jpg", "images/project1-3.jpg", "images/project1-4.jpg", "images/project1-5.jpg", "images/project1-6.jpg", "images/project1-7.jpg", "images/project1-8.jpg", "images/project1-9.jpg", "images/project1-10.jpg", "images/project1-11.jpg", "images/project1-12.jpg", "images/project1-13.jpg", "images/project1-14.jpg", "images/project1-15.jpg", "images/project1-16.jpg", "images/project1-17.jpg", "images/project1-18.jpg", "images/project1-19.jpg", "images/project1-20.jpg", "images/project1-21.jpg", "images/project1-22.jpg", "images/project1-23.jpg", "images/project1-24.jpg", "images/project1-25.jpg", "images/project1-26.jpg", "images/project1-27.jpg", "images/project1-28.jpg", "images/project1-29.jpg", "images/project1-30.jpg", "images/project1-31.jpg", "images/project1-32.jpg"
+    ];
+    if (window.page < images.length - 2) {
+      window.page += 2;
+      if (typeof updatePages === "function") updatePages();
+    }
   }
 
   // Accessibility: allow keyboard navigation and focus feedback
@@ -190,4 +353,17 @@ document.addEventListener('DOMContentLoaded', function() {
     link.textContent = siteName.textContent;
     siteName.replaceWith(link);
   }
+
+  const isMobile = () => window.innerWidth <= 600;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    if (isMobile()) {
+        ['cover-page', 'blank-page'].forEach(cls => {
+            document.querySelector(`.${cls}`)?.classList.add('hidden');
+        });
+        document.querySelector('.first-page')?.classList.remove('hidden');
+    } else {
+      // Desktop logic (unchanged)
+    }
+  });
 });

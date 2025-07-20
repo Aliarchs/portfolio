@@ -13,8 +13,8 @@
   --text-color: #333;
   --accent-color: #000000;
   --heading-scale: 1.1;
-  --heading-size: 2rem;
-  --main-heading-size: 3rem;
+  --heading-size: 1.7rem;
+  --main-heading-size: 2.4rem;
   --gravity-duration: 0.6s;
 }
 * {
@@ -35,7 +35,7 @@ body {
   color: var(--text-color);
   background: var(--bg-color);
   overflow-x: hidden;
-  font-size: 1rem;
+  font-size: 0.92rem;
   cursor: url('images/cursor-pointer.svg'), pointer;
 }
 
@@ -215,6 +215,14 @@ body.projects-page {
   width: 70vw;
   max-width: 1200px;
   justify-content: center;
+}
+
+@media (max-width: 500px) {
+  .project-grid {
+    grid-template-columns: 1fr;
+    gap: 4vw;
+    width: 95vw;
+  }
 }
 .project-item {
   position: relative;
@@ -414,6 +422,14 @@ body.other-page {
   cursor: url('images/cursor-hover.svg'), pointer;
 }
 
+/* Show mobile flipbook only on mobile, desktop flipbook only on desktop */
+.book-mobile { display: none; }
+.book-page.first-page { display: block; }
+@media (max-width: 600px) {
+  .book-mobile { display: block !important; }
+  .book-page.first-page { display: none !important; }
+}
+
 /* --- Unified Arrow Styles --- */
 .book-arrow,
 .slideshow-arrow {
@@ -497,6 +513,13 @@ a:hover {
   max-width: min(2vw, 20px);
   overflow: hidden;
   clip-path: inset(0);
+}
+
+@media (max-width: 768px) {
+  .book::before {
+    display: none;
+    content: none;
+  }
 }
 a:focus,
 button:focus,
@@ -637,7 +660,7 @@ button.book-arrow:active {
 
 /* --- Heading Styles --- */
 h1, .main-title, .about-heading {
-  font-size: 2rem;
+  font-size: 1.2rem;
   font-weight: bold;
   margin-bottom: 1.5em;
   text-align: center;
@@ -656,7 +679,7 @@ h2, .section-title {
 /* --- Header Font Size --- */
 .site-name,
 .nav-dropdown a {
-  font-size: 1.25rem;
+  font-size: 1.08rem;
 }
 
 /* --- Main Body Font Size (larger everywhere except landing page and header) --- */
@@ -665,23 +688,15 @@ body:not(.landing) .about-content,
 body:not(.landing) .project-item .title,
 body:not(.landing) .landing-heading,
 body:not(.landing) {
-  font-size: 1.15rem;
+  font-size: 1.02rem;
 }
 
 /* --- Larger fonts for landing page only --- */
 body.landing .landing-heading {
-  font-size: 2.5rem;
+  font-size: 2.1rem;
 }
 body.landing .site-name {
-  font-size: 1.7rem;
+  font-size: 1.4rem;
 }
 
 /* Remove font-size from .landing-heading and .project-item .title if present */
-.landing-heading {
-  font-size: 1rem;
-  /* ...existing code... */
-}
-.project-item .title {
-  font-size: 1rem;
-  /* ...existing code... */
-}
