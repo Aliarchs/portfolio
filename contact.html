@@ -18,18 +18,24 @@
   </header>
   <main class="content-page">
     <h1>Get in Touch</h1>
-    <p>You can reach out via email at <a href="mailto:alishabestary1@gmail.com">alishabestary1@gmail.com</a>,
-       or use the form below:</p>
-    <form method="POST" action="https://formspree.io/f/your-form-id" aria-label="Contact form">
+    <p>
+      You can reach out via email or linkedin at 
+      <a href="mailto:alishabestary1@gmail.com">alishabestary1@gmail.com</a>,
+       Connect on 
+      <a href="https://www.linkedin.com/in/ali-s-5845712b3" target="_blank" rel="noopener" aria-label="Ali Shabestary on LinkedIn">
+        LinkedIn
+      </a>.
+      or use the form below:<br>
+    </p>
+    <form action="https://formspree.io/f/your-form-id" method="POST">
       <label for="name">Name:</label><br>
       <input type="text" id="name" name="name" required aria-required="true"><br><br>
       <label for="email">Email:</label><br>
+      <!-- The name="_replyto" attribute is required by Formspree to identify the sender's email address -->
       <input type="email" id="email" name="_replyto" required aria-required="true"><br><br>
       <label for="message">Message:</label><br>
       <textarea id="message" name="message" rows="6" required aria-required="true"></textarea><br><br>
       <button type="submit" aria-label="Send message">Send</button>
     </form>
-  </main>
-  <script src="script.js"></script>
+    <script src="script.js" defer></script>
 </body>
-</html>
