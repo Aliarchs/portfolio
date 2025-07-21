@@ -430,8 +430,24 @@ body.other-page {
 .book-mobile { display: none; }
 .book-page.first-page { display: block; }
 @media (max-width: 600px) {
-  .book-mobile { display: block !important; }
-  .book-page.first-page { display: none !important; }
+  .book-mobile { display: none !important; }
+  .book-page.first-page { display: block !important; }
+}
+@media (max-width: 600px) and (orientation: portrait) {
+  .book-mobile {
+    display: block !important;
+  }
+  .book-page.first-page {
+    display: none !important;
+  }
+}
+@media (max-width: 600px) and (orientation: landscape) {
+  .book-mobile {
+    display: none !important;
+  }
+  .book-page.first-page {
+    display: block !important;
+  }
 }
 
 /* --- Unified Arrow Styles --- */
@@ -812,5 +828,3 @@ body.landing .site-name {
     cursor: pointer;
   }
 }
-
-/* Remove font-size from .landing-heading and .project-item .title if present */
