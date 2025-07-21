@@ -1,4 +1,164 @@
 document.addEventListener('DOMContentLoaded', function() {
+
+  // Helper to detect mobile
+  function isMobile() {
+    return window.innerWidth <= 600;
+  }
+
+  // Mobile flipbook logic: single page in portrait, double spread in landscape
+  function setupMobileFlipbook() {
+    if (!isMobile() || (!document.getElementById('img-mobile-portrait') && !document.getElementById('img-mobile-left'))) return;
+    // Images array: project1-1.jpg to project1-32.jpg
+    const images = [];
+    for (let i = 1; i <= 32; i++) {
+      images.push(`images/project1-${i}.jpg`);
+    }
+    window.mobilePage = window.mobilePage || 0;
+    const imgMobilePortrait = document.getElementById('img-mobile-portrait');
+    const imgMobileLeft = document.getElementById('img-mobile-left');
+    const imgMobileRight = document.getElementById('img-mobile-right');
+    const mobileLandscape = document.getElementById('mobile-landscape');
+    const prevBtnMobile = document.getElementById('prev-btn-mobile');
+    const nextBtnMobile = document.getElementById('next-btn-mobile');
+    const coverContainer = document.getElementById('cover-container');
+    const bookContainer = document.querySelector('.book-container');
+
+    function isPortrait() {
+      return window.matchMedia('(orientation: portrait)').matches;
+    }
+
+    function updateMobilePage() {
+      if (isPortrait()) {
+        // Portrait: show single image
+        if (imgMobilePortrait) {
+          imgMobilePortrait.style.display = 'block';
+          if (window.mobilePage < 0) window.mobilePage = 0;
+          if (window.mobilePage > 30) window.mobilePage = 30;
+          imgMobilePortrait.src = images[window.mobilePage];
+        }
+        if (mobileLandscape) mobileLandscape.style.display = 'none';
+      } else {
+        // Landscape: show two images side by side
+        if (imgMobilePortrait) imgMobilePortrait.style.display = 'none';
+        if (mobileLandscape) {
+          mobileLandscape.style.display = 'flex';
+          let leftIdx = window.mobilePage;
+          let rightIdx = window.mobilePage + 1;
+          if (leftIdx < 0) leftIdx = 0;
+          if (rightIdx > 31) rightIdx = 31;
+          if (imgMobileLeft) imgMobileLeft.src = images[leftIdx];
+          if (imgMobileRight) imgMobileRight.src = images[rightIdx];
+        }
+      }
+    }
+
+    // Navigation logic (arrow buttons below)
+    function goPrev() {
+      const isPortrait = window.matchMedia('(orientation: portrait)').matches;
+      if (window.mobilePage === 0) {
+        bookContainer.style.display = 'none';
+        coverContainer.style.display = 'block';
+      } else if (window.mobilePage > 0) {
+        if (isPortrait) {
+          window.mobilePage -= 1;
+        } else {
+          window.mobilePage -= 2;
+          if (window.mobilePage < 0) window.mobilePage = 0;
+        }
+        updateMobilePage();
+      }
+      if (prevBtnMobile) prevBtnMobile.blur();
+    }
+    function goNext() {
+      const isPortrait = window.matchMedia('(orientation: portrait)').matches;
+      if (isPortrait) {
+        if (window.mobilePage < images.length - 1) {
+          window.mobilePage += 1;
+          updateMobilePage();
+        }
+      } else {
+        // Landscape: advance by 2 (pair)
+        if (window.mobilePage < images.length - 2) {
+          window.mobilePage += 2;
+          updateMobilePage();
+        }
+      }
+      if (nextBtnMobile) nextBtnMobile.blur();
+    }
+
+    if (prevBtnMobile) prevBtnMobile.addEventListener('click', goPrev);
+    if (nextBtnMobile) nextBtnMobile.addEventListener('click', goNext);
+
+    // Block page click navigation for mobile only
+    if (isMobile()) {
+      document.querySelectorAll('.page').forEach(function(page) {
+        page.onclick = null;
+        page.style.pointerEvents = 'none';
+      });
+    }
+
+    // Swipe logic for mobile (both orientations)
+    let touchStartX = null;
+    let touchEndX = null;
+
+    function handleSwipe() {
+      if (touchStartX === null || touchEndX === null) return;
+      const deltaX = touchEndX - touchStartX;
+      if (Math.abs(deltaX) < 50) return; // Minimum swipe distance
+      // Only advance one page/spread per swipe event
+      const isPortrait = window.matchMedia('(orientation: portrait)').matches;
+      if (deltaX > 0) {
+        goPrev();
+      } else if (deltaX < 0) {
+        goNext();
+      }
+    }
+
+    document.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchEndX = null;
+      }
+    });
+
+    document.addEventListener('touchmove', function(e) {
+      if (e.touches.length === 1) {
+        touchEndX = e.touches[0].clientX;
+      }
+    });
+
+    document.addEventListener('touchend', function(e) {
+      handleSwipe();
+      touchStartX = null;
+      touchEndX = null;
+    });
+
+    // Also update page when entering book mode
+    if (document.getElementById('cover-img')) {
+      document.getElementById('cover-img').addEventListener('click', function() {
+        window.mobilePage = 0;
+        updateMobilePage();
+      });
+    }
+    if (document.getElementById('cover-next-btn')) {
+      document.getElementById('cover-next-btn').addEventListener('click', function() {
+        window.mobilePage = 0;
+        updateMobilePage();
+      });
+    }
+
+    // Initial update
+    updateMobilePage();
+
+    // Listen for orientation change to update layout and force correct display
+    window.addEventListener('orientationchange', function() {
+      setTimeout(updateMobilePage, 300);
+    });
+  }
+
+  // Run mobile flipbook logic on load and on resize
+  setupMobileFlipbook();
+  window.addEventListener('resize', setupMobileFlipbook);
   const body = document.body;
 
   // COVER LOGIC
@@ -380,7 +540,6 @@ document.addEventListener('DOMContentLoaded', function() {
     siteName.replaceWith(link);
   }
 
-  const isMobile = () => window.innerWidth <= 600;
 
   window.addEventListener('DOMContentLoaded', () => {
     if (isMobile()) {
