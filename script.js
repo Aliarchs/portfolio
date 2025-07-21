@@ -33,12 +33,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (imgMobilePortrait) {
           imgMobilePortrait.style.display = 'block';
           if (window.mobilePage < 0) window.mobilePage = 0;
-          if (window.mobilePage > 30) window.mobilePage = 30;
+          if (window.mobilePage > 31) window.mobilePage = 31;
           imgMobilePortrait.src = images[window.mobilePage];
         }
         if (mobileLandscape) mobileLandscape.style.display = 'none';
       } else {
-        // Landscape: show two images side by side
+        // Landscape: show two images side by side, sized for mobile
         if (imgMobilePortrait) imgMobilePortrait.style.display = 'none';
         if (mobileLandscape) {
           mobileLandscape.style.display = 'flex';
@@ -60,85 +60,55 @@ document.addEventListener('DOMContentLoaded', function() {
         window.mobilePage = Math.max(0, window.mobilePage - 2);
       }
       updateMobilePage();
+      if (prevBtnMobile) prevBtnMobile.blur();
     }
     function goNext() {
       if (isPortrait()) {
-        window.mobilePage = Math.min(30, window.mobilePage + 1);
+        window.mobilePage = Math.min(31, window.mobilePage + 1);
       } else {
         window.mobilePage = Math.min(30, window.mobilePage + 2);
       }
       updateMobilePage();
+      if (nextBtnMobile) nextBtnMobile.blur();
     }
 
     if (prevBtnMobile) prevBtnMobile.onclick = goPrev;
     if (nextBtnMobile) nextBtnMobile.onclick = goNext;
 
     // Swipe logic for mobile (both orientations)
-    // ...existing code...
+    let touchStartX = null;
+    let touchEndX = null;
 
-    function handleSwipe() {
-      if (touchStartX === null || touchEndX === null) return;
-      const dx = touchEndX - touchStartX;
-      if (Math.abs(dx) > 50) {
-        if (dx < 0) {
-          goNext(); // swipe left
-        } else {
-          goPrev(); // swipe right
-        }
-      }
-      touchStartX = null;
-      touchEndX = null;
+  function handleSwipe() {
+    if (touchStartX === null || touchEndX === null) return;
+    const deltaX = touchEndX - touchStartX;
+    if (Math.abs(deltaX) < 50) return; // Minimum swipe distance
+    if (deltaX > 0) {
+      goPrev();
+    } else {
+      goNext();
     }
+    touchStartX = null;
+    touchEndX = null;
+  }
 
     document.addEventListener('touchstart', function(e) {
       if (!isMobile()) return;
-      touchStartX = e.touches[0].clientX;
+      if (e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchEndX = null;
+      }
     });
     document.addEventListener('touchmove', function(e) {
       if (!isMobile()) return;
-      touchEndX = e.touches[0].clientX;
+      if (e.touches.length === 1) {
+        touchEndX = e.touches[0].clientX;
+      }
     });
     document.addEventListener('touchend', function(e) {
       if (!isMobile()) return;
       handleSwipe();
     });
-
-    // Navigation logic (arrow buttons below)
-    function goPrev() {
-      const isPortrait = window.matchMedia('(orientation: portrait)').matches;
-      if (window.mobilePage === 0) {
-        bookContainer.style.display = 'none';
-        coverContainer.style.display = 'block';
-      } else if (window.mobilePage > 0) {
-        if (isPortrait) {
-          window.mobilePage -= 1;
-        } else {
-          window.mobilePage -= 2;
-          if (window.mobilePage < 0) window.mobilePage = 0;
-        }
-        updateMobilePage();
-      }
-      if (prevBtnMobile) prevBtnMobile.blur();
-    }
-    function goNext() {
-      const isPortrait = window.matchMedia('(orientation: portrait)').matches;
-      if (isPortrait) {
-        if (window.mobilePage < images.length - 1) {
-          window.mobilePage += 1;
-          updateMobilePage();
-        }
-      } else {
-        // Landscape: advance by 2 (pair)
-        if (window.mobilePage < images.length - 2) {
-          window.mobilePage += 2;
-          updateMobilePage();
-        }
-      }
-      if (nextBtnMobile) nextBtnMobile.blur();
-    }
-
-    if (prevBtnMobile) prevBtnMobile.addEventListener('click', goPrev);
-    if (nextBtnMobile) nextBtnMobile.addEventListener('click', goNext);
 
     // Block page click navigation for mobile only
     if (isMobile()) {
@@ -147,42 +117,6 @@ document.addEventListener('DOMContentLoaded', function() {
         page.style.pointerEvents = 'none';
       });
     }
-
-    // Swipe logic for mobile (both orientations)
-    let touchStartX = null;
-    let touchEndX = null;
-
-    function handleSwipe() {
-      if (touchStartX === null || touchEndX === null) return;
-      const deltaX = touchEndX - touchStartX;
-      if (Math.abs(deltaX) < 50) return; // Minimum swipe distance
-      // Only advance one page/spread per swipe event
-      const isPortrait = window.matchMedia('(orientation: portrait)').matches;
-      if (deltaX > 0) {
-        goPrev();
-      } else if (deltaX < 0) {
-        goNext();
-      }
-    }
-
-    document.addEventListener('touchstart', function(e) {
-      if (e.touches.length === 1) {
-        touchStartX = e.touches[0].clientX;
-        touchEndX = null;
-      }
-    });
-
-    document.addEventListener('touchmove', function(e) {
-      if (e.touches.length === 1) {
-        touchEndX = e.touches[0].clientX;
-      }
-    });
-
-    document.addEventListener('touchend', function(e) {
-      handleSwipe();
-      touchStartX = null;
-      touchEndX = null;
-    });
 
     // Also update page when entering book mode
     if (document.getElementById('cover-img')) {
@@ -592,14 +526,14 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
 
-  window.addEventListener('DOMContentLoaded', () => {
-    if (isMobile()) {
-        ['cover-page', 'blank-page'].forEach(cls => {
-            document.querySelector(`.${cls}`)?.classList.add('hidden');
-        });
-        document.querySelector('.first-page')?.classList.remove('hidden');
-    } else {
-      // Desktop logic (unchanged)
-    }
+    window.addEventListener('DOMContentLoaded', () => {
+      if (isMobile()) {
+          ['cover-page', 'blank-page'].forEach(cls => {
+              document.querySelector(`.${cls}`)?.classList.add('hidden');
+          });
+          document.querySelector('.first-page')?.classList.remove('hidden');
+      } else {
+        // Desktop logic (unchanged)
+      }
+    });
   });
-});

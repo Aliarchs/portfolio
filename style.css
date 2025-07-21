@@ -33,6 +33,8 @@
     max-width: 100vw !important;
     margin: 0 auto !important;
     padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
   }
   .book {
     flex-direction: row !important;
@@ -42,6 +44,8 @@
     min-height: 0 !important;
     margin: 0 auto !important;
     padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
   }
   .page.left, .page.right {
     width: 50vw !important;
@@ -53,6 +57,8 @@
     justify-content: center !important;
     margin: 0 !important;
     padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
   }
   .page img {
     width: 100% !important;
@@ -62,6 +68,8 @@
     display: block !important;
     margin: 0 !important;
     padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
   }
   .book-controls {
     width: 100vw !important;
@@ -69,6 +77,8 @@
     margin: 0 auto 2rem auto !important;
     padding: 0 !important;
     text-align: center !important;
+    background: transparent !important;
+    box-shadow: none !important;
   }
 }
 /* 1) Self-hosted Bahnschrift */
@@ -524,6 +534,8 @@ body.other-page {
     max-width: 100vw !important;
     margin: 0 auto !important;
     padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
   }
   .book {
     flex-direction: row !important;
@@ -533,6 +545,8 @@ body.other-page {
     min-height: 0 !important;
     margin: 0 auto !important;
     padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
   }
   .page.left, .page.right {
     width: 50vw !important;
@@ -544,6 +558,8 @@ body.other-page {
     justify-content: center !important;
     margin: 0 !important;
     padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
   }
   .page img {
     width: 100% !important;
@@ -553,6 +569,8 @@ body.other-page {
     display: block !important;
     margin: 0 !important;
     padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
   }
   .book-controls {
     width: 100vw !important;
@@ -560,6 +578,8 @@ body.other-page {
     margin: 0 auto 2rem auto !important;
     padding: 0 !important;
     text-align: center !important;
+    background: transparent !important;
+    box-shadow: none !important;
   }
 }
 
