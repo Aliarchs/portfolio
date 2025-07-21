@@ -54,6 +54,57 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Navigation logic (arrow buttons below)
     function goPrev() {
+      if (isPortrait()) {
+        window.mobilePage = Math.max(0, window.mobilePage - 1);
+      } else {
+        window.mobilePage = Math.max(0, window.mobilePage - 2);
+      }
+      updateMobilePage();
+    }
+    function goNext() {
+      if (isPortrait()) {
+        window.mobilePage = Math.min(30, window.mobilePage + 1);
+      } else {
+        window.mobilePage = Math.min(30, window.mobilePage + 2);
+      }
+      updateMobilePage();
+    }
+
+    if (prevBtnMobile) prevBtnMobile.onclick = goPrev;
+    if (nextBtnMobile) nextBtnMobile.onclick = goNext;
+
+    // Swipe logic for mobile (both orientations)
+    // ...existing code...
+
+    function handleSwipe() {
+      if (touchStartX === null || touchEndX === null) return;
+      const dx = touchEndX - touchStartX;
+      if (Math.abs(dx) > 50) {
+        if (dx < 0) {
+          goNext(); // swipe left
+        } else {
+          goPrev(); // swipe right
+        }
+      }
+      touchStartX = null;
+      touchEndX = null;
+    }
+
+    document.addEventListener('touchstart', function(e) {
+      if (!isMobile()) return;
+      touchStartX = e.touches[0].clientX;
+    });
+    document.addEventListener('touchmove', function(e) {
+      if (!isMobile()) return;
+      touchEndX = e.touches[0].clientX;
+    });
+    document.addEventListener('touchend', function(e) {
+      if (!isMobile()) return;
+      handleSwipe();
+    });
+
+    // Navigation logic (arrow buttons below)
+    function goPrev() {
       const isPortrait = window.matchMedia('(orientation: portrait)').matches;
       if (window.mobilePage === 0) {
         bookContainer.style.display = 'none';
