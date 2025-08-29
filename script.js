@@ -30,26 +30,35 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateMobilePage() {
-      if (isPortrait()) {
+      const portrait = isPortrait();
+      const bc = document.querySelector('.book-container');
+      if (portrait) {
         // Portrait: show single image
         if (imgMobilePortrait) {
           imgMobilePortrait.style.display = 'block';
           if (window.mobilePage < 0) window.mobilePage = 0;
-          if (window.mobilePage > 31) window.mobilePage = 31;
+          if (window.mobilePage > images.length - 1) window.mobilePage = images.length - 1;
           imgMobilePortrait.src = images[window.mobilePage];
         }
         if (mobileLandscape) mobileLandscape.style.display = 'none';
+        // remove double-spread styling when in portrait
+        if (bc) bc.classList.remove('double-spread');
       } else {
-        // Landscape: show two images side by side, sized for mobile
+        // Landscape: always show even-left spreads (1+2, 3+4, ...)
         if (imgMobilePortrait) imgMobilePortrait.style.display = 'none';
         if (mobileLandscape) {
           mobileLandscape.style.display = 'flex';
-          let leftIdx = window.mobilePage;
-          let rightIdx = window.mobilePage + 1;
+          // Normalize to even left index so spreads are (0,1), (2,3), (4,5), ...
+          let leftIdx = Math.floor(window.mobilePage / 2) * 2;
+          let rightIdx = leftIdx + 1;
           if (leftIdx < 0) leftIdx = 0;
-          if (rightIdx > 31) rightIdx = 31;
+          if (rightIdx > images.length - 1) rightIdx = images.length - 1;
+          // Keep window.mobilePage aligned to leftIdx for consistency
+          window.mobilePage = leftIdx;
           if (imgMobileLeft) imgMobileLeft.src = images[leftIdx];
           if (imgMobileRight) imgMobileRight.src = images[rightIdx];
+          // add double-spread styling when showing two pages
+          if (bc) bc.classList.add('double-spread');
         }
       }
     }
@@ -106,13 +115,54 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Listen for orientation change to update layout and force correct display
     window.addEventListener('orientationchange', function() {
-      setTimeout(updateMobilePage, 300);
+      // When switching to landscape, align the page to an even left index
+      setTimeout(function() {
+        if (!isPortrait()) {
+          window.mobilePage = Math.floor(window.mobilePage / 2) * 2;
+        }
+        updateMobilePage();
+      }, 300);
     });
   }
 
   // Run mobile flipbook logic on load and on resize
   setupMobileFlipbook();
   window.addEventListener('resize', setupMobileFlipbook);
+  
+  // Ensure arrow buttons use the always-visible class so CSS will keep them on-screen
+  function addAlwaysVisibleClass() {
+    ['prev-btn', 'next-btn', 'prev-btn-mobile', 'next-btn-mobile'].forEach(function(id) {
+      const el = document.getElementById(id);
+      if (el && !el.classList.contains('always-visible')) el.classList.add('always-visible');
+    });
+    // Also mark any .book-arrow elements if needed
+    document.querySelectorAll('.book-arrow').forEach(function(b) {
+      if (!b.classList.contains('always-visible')) b.classList.add('always-visible');
+    });
+  }
+
+  // Auto-hide arrows after short inactivity to reduce distraction
+  let arrowHideTimer = null;
+  function showArrows() {
+    clearTimeout(arrowHideTimer);
+    document.querySelectorAll('.book-arrow.always-visible').forEach(function(el) {
+      el.classList.remove('arrow-hidden');
+    });
+    // hide after 2.5s of inactivity
+    arrowHideTimer = setTimeout(function() {
+      document.querySelectorAll('.book-arrow.always-visible').forEach(function(el) {
+        el.classList.add('arrow-hidden');
+      });
+    }, 2500);
+  }
+
+  // show arrows on any user interaction
+  ['mousemove', 'touchstart', 'keydown', 'click'].forEach(function(evt) {
+    window.addEventListener(evt, showArrows, { passive: true });
+  });
+
+  // Ensure arrows are visible when the book is opened
+  showArrows();
   const body = document.body;
 
   // COVER LOGIC
@@ -134,11 +184,14 @@ document.addEventListener('DOMContentLoaded', function() {
       if (window.innerWidth <= 600) {
         document.querySelector('.book-mobile').style.display = 'block';
         document.querySelector('.book-page.first-page').style.display = 'none';
-        if (typeof updateMobilePage === "function") updateMobilePage();
+  if (typeof updateMobilePage === "function") updateMobilePage();
+  // ensure arrows are visible
+  addAlwaysVisibleClass();
       } else {
         document.querySelector('.book-mobile').style.display = 'none';
         document.querySelector('.book-page.first-page').style.display = 'block';
         if (typeof updatePages === "function") updatePages();
+  addAlwaysVisibleClass();
       }
     }
 
@@ -203,8 +256,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const bookContainer = document.querySelector('.book-container');
 
     function updatePages() {
-      imgLeft.src = images[window.page] || "";
-      imgRight.src = images[window.page + 1] || "";
+  imgLeft.src = images[window.page] || "";
+  imgRight.src = images[window.page + 1] || "";
+  // mark double-spread on container for styling (arrows contrast)
+  const bc = document.querySelector('.book-container');
+  if (bc) bc.classList.add('double-spread');
     }
 
     // Remove page click navigation for desktop
@@ -212,8 +268,11 @@ document.addEventListener('DOMContentLoaded', function() {
     prevBtn.addEventListener('click', function() {
       // If on first spread, go back to cover
       if (window.page === 0) {
-        bookContainer.style.display = 'none';
-        coverContainer.style.display = 'block';
+  bookContainer.style.display = 'none';
+  coverContainer.style.display = 'block';
+  // remove double-spread styling when returning to cover
+  const bc = document.querySelector('.book-container');
+  if (bc) bc.classList.remove('double-spread');
       } else if (window.page > 0) {
         window.page -= 2;
         updatePages();

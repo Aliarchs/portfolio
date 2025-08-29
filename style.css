@@ -893,6 +893,88 @@ h2, .section-title {
   }
 }
 
+/* Always-visible arrows: keep navigation arrows on-screen (left and right center) */
+/* Targets desktop and mobile arrow buttons by id and generic .book-arrow class */
+#prev-btn,
+#next-btn,
+#prev-btn-mobile,
+#next-btn-mobile,
+.book-arrow.always-visible {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3.2rem;
+  height: 3.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.95);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 0.35rem;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  z-index: 10000;
+  cursor: pointer;
+}
+
+#prev-btn,
+#prev-btn-mobile { left: 0.6rem; }
+#next-btn,
+#next-btn-mobile { right: 0.6rem; }
+
+/* Slightly smaller on narrow mobile screens */
+@media (max-width: 420px) {
+  #prev-btn,
+  #next-btn,
+  #prev-btn-mobile,
+  #next-btn-mobile,
+  .book-arrow.always-visible {
+    width: 2.6rem;
+    height: 2.6rem;
+    left: 0.4rem;
+    right: 0.4rem;
+  }
+  #prev-btn, #prev-btn-mobile { left: 0.4rem; }
+  #next-btn, #next-btn-mobile { right: 0.4rem; }
+}
+
+/* Prevent arrows from overlapping important UI on very small devices by nudging them inward */
+@media (max-width: 360px) {
+  #prev-btn, #prev-btn-mobile { left: 0.2rem; }
+  #next-btn, #next-btn-mobile { right: 0.2rem; }
+}
+
+/* Fade / auto-hide helpers for arrows */
+.book-arrow.always-visible {
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+.book-arrow.always-visible.arrow-hidden,
+#prev-btn.always-visible.arrow-hidden,
+#next-btn.always-visible.arrow-hidden,
+#prev-btn-mobile.always-visible.arrow-hidden,
+#next-btn-mobile.always-visible.arrow-hidden {
+  opacity: 0;
+  transform: translateY(-50%) scale(0.98);
+  pointer-events: none;
+}
+
+/* When a double-spread is active (desktop or mobile landscape), reduce button background opacity
+   so arrows contrast against the page spread. Uses a semi-transparent dark overlay (20%). */
+.book-container.double-spread .book-arrow.always-visible,
+.book-container.double-spread #prev-btn,
+.book-container.double-spread #next-btn,
+.book-container.double-spread #prev-btn-mobile,
+.book-container.double-spread #next-btn-mobile {
+  background: rgba(0,0,0,0.2) !important; /* 20% black */
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.12) !important;
+}
+
+/* Fallback if .book-container isn't present (apply to body) */
+body.double-spread .book-arrow.always-visible {
+  background: rgba(0,0,0,0.2) !important;
+  color: #fff !important;
+}
+
 /* --- Main Body Font Size (larger everywhere except landing page and header) --- */
 body:not(.landing) .content-page,
 body:not(.landing) .about-content,
