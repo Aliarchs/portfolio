@@ -75,42 +75,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (prevBtnMobile) prevBtnMobile.onclick = goPrev;
     if (nextBtnMobile) nextBtnMobile.onclick = goNext;
 
-    // Swipe logic for mobile (both orientations)
-    let touchStartX = null;
-    let touchEndX = null;
+    // Swipe logic removed: navigation only via arrow buttons
 
-  function handleSwipe() {
-    if (touchStartX === null || touchEndX === null) return;
-    const deltaX = touchEndX - touchStartX;
-    if (Math.abs(deltaX) < 50) return; // Minimum swipe distance
-    if (deltaX > 0) {
-      goPrev();
-    } else {
-      goNext();
-    }
-    touchStartX = null;
-    touchEndX = null;
-  }
-
-    document.addEventListener('touchstart', function(e) {
-      if (!isMobile()) return;
-      if (e.touches.length === 1) {
-        touchStartX = e.touches[0].clientX;
-        touchEndX = null;
-      }
-    });
-    document.addEventListener('touchmove', function(e) {
-      if (!isMobile()) return;
-      if (e.touches.length === 1) {
-        touchEndX = e.touches[0].clientX;
-      }
-    });
-    document.addEventListener('touchend', function(e) {
-      if (!isMobile()) return;
-      handleSwipe();
-    });
-
-    // Block page click navigation for mobile only
+    // Block page click navigation for mobile only (optional, but pointer events can remain off)
     if (isMobile()) {
       document.querySelectorAll('.page').forEach(function(page) {
         page.onclick = null;
@@ -238,19 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
       imgRight.src = images[window.page + 1] || "";
     }
 
-    leftPage.addEventListener('click', function() {
-      if (window.page > 0) {
-        window.page -= 2;
-        updatePages();
-      }
-    });
-
-    rightPage.addEventListener('click', function() {
-      if (window.page < images.length - 2) {
-        window.page += 2;
-        updatePages();
-      }
-    });
+    // Remove page click navigation for desktop
 
     prevBtn.addEventListener('click', function() {
       // If on first spread, go back to cover
@@ -457,53 +412,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateFlipbookLayout();
   }
 
-  // Book navigation logic for project1.html
-  const prevBtn = document.getElementById('prev-btn');
-  const nextBtn = document.getElementById('next-btn');
-  const coverNextBtn = document.getElementById('cover-next-btn');
-
-  // Desktop navigation functions
-  function goToPrevPage() {
-    const bookContainer = document.querySelector('.book-container');
-    const coverContainer = document.getElementById('cover-container');
-    if (window.page === 0) {
-      bookContainer.style.display = 'none';
-      coverContainer.style.display = 'block';
-    } else if (window.page > 0) {
-      window.page -= 2;
-      if (typeof updatePages === "function") updatePages();
-    }
-  }
-
-  function goToNextPage() {
-    const images = [
-      "images/blank.jpg", "images/project1-2.jpg", "images/project1-3.jpg", "images/project1-4.jpg", "images/project1-5.jpg", "images/project1-6.jpg", "images/project1-7.jpg", "images/project1-8.jpg", "images/project1-9.jpg", "images/project1-10.jpg", "images/project1-11.jpg", "images/project1-12.jpg", "images/project1-13.jpg", "images/project1-14.jpg", "images/project1-15.jpg", "images/project1-16.jpg", "images/project1-17.jpg", "images/project1-18.jpg", "images/project1-19.jpg", "images/project1-20.jpg", "images/project1-21.jpg", "images/project1-22.jpg", "images/project1-23.jpg", "images/project1-24.jpg", "images/project1-25.jpg", "images/project1-26.jpg", "images/project1-27.jpg", "images/project1-28.jpg", "images/project1-29.jpg", "images/project1-30.jpg", "images/project1-31.jpg", "images/project1-32.jpg"
-    ];
-    if (window.page < images.length - 2) {
-      window.page += 2;
-      if (typeof updatePages === "function") updatePages();
-    }
-  }
-
-  // Accessibility: allow keyboard navigation and focus feedback
-  [prevBtn, nextBtn, coverNextBtn].forEach(btn => {
-    if (!btn) return;
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      btn.blur(); // Remove focus after click for mouse users
-    });
-    btn.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' || e.key === ' ') {
-        btn.click();
-      }
-    });
-    btn.setAttribute('tabindex', '0'); // Ensure focusable
-    btn.setAttribute('aria-label', btn.textContent.trim() === '>' ? 'Next page' : 'Previous page');
-  });
-
-  if (prevBtn) prevBtn.addEventListener('click', goToPrevPage);
-  if (nextBtn) nextBtn.addEventListener('click', goToNextPage);
-  if (coverNextBtn) coverNextBtn.addEventListener('click', goToNextPage);
+  // ...book navigation handled in flipbook blocks above (avoid duplicate bindings)
 
   // Make project grid items clickable
   document.querySelectorAll('.project-item[data-link]').forEach(function(item) {
