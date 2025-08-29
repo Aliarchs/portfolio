@@ -869,6 +869,30 @@ h2, .section-title {
   font-size: 1.08rem;
 }
 
+/* Prevent header from covering content on small screens */
+@media (max-width: 600px) {
+  /* If header is fixed or overlays content, ensure it sits above and content is pushed down */
+  header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999; /* ensure header is above book controls */
+    background: inherit; /* keep existing background (falls back to whatever header uses) */
+  }
+
+  /* Push main content below the header; adjust if your header is taller/shorter */
+  main {
+    padding-top: 3.5rem;
+  }
+
+  /* Make sure the mobile flipbook UI respects the page inset */
+  .book-container,
+  .book-mobile {
+    margin-top: 0; /* avoid extra shifts, rely on main padding */
+  }
+}
+
 /* --- Main Body Font Size (larger everywhere except landing page and header) --- */
 body:not(.landing) .content-page,
 body:not(.landing) .about-content,

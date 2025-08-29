@@ -7,7 +7,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Mobile flipbook logic: single page in portrait, double spread in landscape
   function setupMobileFlipbook() {
-    if (!isMobile() || (!document.getElementById('img-mobile-portrait') && !document.getElementById('img-mobile-left'))) return;
+    // Run mobile flipbook logic whenever the mobile flipbook markup exists.
+    // Don't rely only on viewport width because some phones in landscape can be wider than 600px.
+    if (!document.getElementById('img-mobile-portrait') && !document.getElementById('img-mobile-left')) return;
     // Images array: project1-1.jpg to project1-32.jpg
     const images = [];
     for (let i = 1; i <= 32; i++) {
@@ -247,170 +249,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // FLIPBOOK LOGIC (mobile and mobile landscape)
-  if (
-    body.classList.contains('projects-page') &&
-    window.innerWidth <= 600 &&
-    (document.getElementById('img-mobile'))
-  ) {
-    const images = [
-      "images/project1-1.jpg",   // cover
-      "images/project1-2.jpg",
-      "images/project1-3.jpg",
-      "images/project1-4.jpg",
-      "images/project1-5.jpg",
-      "images/project1-6.jpg",
-      "images/project1-7.jpg",
-      "images/project1-8.jpg",
-      "images/project1-9.jpg",
-      "images/project1-10.jpg",
-      "images/project1-11.jpg",
-      "images/project1-12.jpg",
-      "images/project1-13.jpg",
-      "images/project1-14.jpg",
-      "images/project1-15.jpg",
-      "images/project1-16.jpg",
-      "images/project1-17.jpg",
-      "images/project1-18.jpg",
-      "images/project1-19.jpg",
-      "images/project1-20.jpg",
-      "images/project1-21.jpg",
-      "images/project1-22.jpg",
-      "images/project1-23.jpg",
-      "images/project1-24.jpg",
-      "images/project1-25.jpg",
-      "images/project1-26.jpg",
-      "images/project1-27.jpg",
-      "images/project1-28.jpg",
-      "images/project1-29.jpg",
-      "images/project1-30.jpg",
-      "images/project1-31.jpg",
-      "images/project1-32.jpg"
-    ];
-    window.mobilePage = window.mobilePage || 0;
-
-    const imgMobile = document.getElementById('img-mobile');
-    const prevBtnMobile = document.getElementById('prev-btn-mobile');
-    const nextBtnMobile = document.getElementById('next-btn-mobile');
-    const coverContainer = document.getElementById('cover-container');
-    const bookContainer = document.querySelector('.book-container');
-    const leftPage = document.getElementById('desktop-left');
-    const rightPage = document.getElementById('desktop-right');
-    const imgLeft = document.getElementById('img-left');
-    const imgRight = document.getElementById('img-right');
-
-    function updateMobilePage() {
-      if (imgMobile) {
-        imgMobile.src = images[window.mobilePage] || "";
-      }
-      // For landscape double spread, show two pages
-      if (imgLeft && imgRight) {
-        imgLeft.src = images[window.mobilePage] || "";
-        imgRight.src = images[window.mobilePage + 1] || "";
-      }
-    }
-
-    // Navigation logic (arrow buttons below)
-    function goPrev() {
-      if (window.mobilePage === 0) {
-        bookContainer.style.display = 'none';
-        coverContainer.style.display = 'block';
-      } else if (window.mobilePage > 0) {
-        window.mobilePage -= 1;
-        updateMobilePage();
-      }
-      if (prevBtnMobile) prevBtnMobile.blur();
-    }
-    function goNext() {
-      if (window.mobilePage < images.length - 1) {
-        window.mobilePage += 1;
-        updateMobilePage();
-      }
-      if (nextBtnMobile) nextBtnMobile.blur();
-    }
-
-    if (prevBtnMobile) prevBtnMobile.addEventListener('click', goPrev);
-    if (nextBtnMobile) nextBtnMobile.addEventListener('click', goNext);
-
-    // Block page click navigation for mobile only
-    document.querySelectorAll('.page').forEach(function(page) {
-      page.onclick = null;
-      page.style.pointerEvents = 'none';
-    });
-
-    // Swipe logic for mobile and mobile landscape
-    let touchStartX = null;
-    let touchEndX = null;
-
-    function handleSwipe() {
-      if (touchStartX === null || touchEndX === null) return;
-      const deltaX = touchEndX - touchStartX;
-      if (Math.abs(deltaX) < 50) return; // Minimum swipe distance
-      if (deltaX > 0) {
-        goPrev();
-      } else {
-        goNext();
-      }
-    }
-
-    document.addEventListener('touchstart', function(e) {
-      if (e.touches.length === 1) {
-        touchStartX = e.touches[0].clientX;
-        touchEndX = null;
-      }
-    });
-
-    document.addEventListener('touchmove', function(e) {
-      if (e.touches.length === 1) {
-        touchEndX = e.touches[0].clientX;
-      }
-    });
-
-    document.addEventListener('touchend', function(e) {
-      handleSwipe();
-      touchStartX = null;
-      touchEndX = null;
-    });
-
-    // Also update page when entering book mode
-    if (document.getElementById('cover-img')) {
-      document.getElementById('cover-img').addEventListener('click', function() {
-        window.mobilePage = 0;
-        updateMobilePage();
-      });
-    }
-    if (document.getElementById('cover-next-btn')) {
-      document.getElementById('cover-next-btn').addEventListener('click', function() {
-        window.mobilePage = 0;
-        updateMobilePage();
-      });
-    }
-
-    // Initial update
-    updateMobilePage();
-
-    // Listen for orientation change to update layout and force correct display
-    function updateFlipbookLayout() {
-      const isPortrait = window.matchMedia('(orientation: portrait)').matches;
-      const bookMobile = document.querySelector('.book-mobile');
-      const bookPage = document.querySelector('.book-page.first-page');
-      if (isPortrait) {
-        if (bookMobile) bookMobile.style.display = 'block';
-        if (bookPage) bookPage.style.display = 'none';
-      } else {
-        if (bookMobile) bookMobile.style.display = 'none';
-        if (bookPage) bookPage.style.display = 'block';
-      }
-      updateMobilePage();
-    }
-
-    window.addEventListener('orientationchange', function() {
-      setTimeout(updateFlipbookLayout, 300);
-    });
-
-    // Initial layout update on load
-    updateFlipbookLayout();
-  }
+  // Mobile flipbook is handled by setupMobileFlipbook() above.
+  // Removed duplicated mobile flipbook block to avoid duplicate bindings and inconsistent logic.
 
   // ...book navigation handled in flipbook blocks above (avoid duplicate bindings)
 
