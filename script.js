@@ -399,30 +399,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Blur any arrow buttons after touchend/click to avoid persistent focus state on mobile
   ['touchend', 'pointerup', 'click'].forEach(function(evt) {
-    window.addEventListener(evt, function(e) {
-      // normalize target: if a text node was tapped, use its parentElement
-      let node = e.target;
-      if (node && node.nodeType === 3) node = node.parentElement;
-      let btn = null;
-      try {
-        if (node && typeof node.closest === 'function') btn = node.closest('.book-arrow');
-      } catch (err) {
-        btn = null;
-      }
-      if (btn) {
-        try {
-          btn.blur();
-        } catch (err) {}
-        // Force resting visual styles inline to override any platform tap flash
-        try {
-          btn.style.background = 'rgba(0,0,0,0.42)';
-          btn.style.color = '#fff';
-          btn.style.borderColor = 'rgba(255,255,255,0.18)';
-          btn.style.outline = 'none';
-        } catch (err) {}
+    document.addEventListener(evt, function(e) {
+      // If an arrow was interacted with, blur it to remove focus ring but do NOT set inline styles.
+      var closest = typeof e.target.closest === 'function' && e.target.closest('.book-arrow');
+      if (closest) {
+        try { closest.blur(); } catch (err) { /* ignore */ }
+        // Ensure arrows are visible briefly after interaction so users see feedback
+        if (typeof showArrows === 'function') showArrows();
       }
     }, { passive: true });
   });
+
+  // Ensure mobile-specific arrow touch handlers trigger navigation reliably
+  (function() {
+    var prevBtnMobile = document.getElementById('prev-btn-mobile');
+    var nextBtnMobile = document.getElementById('next-btn-mobile');
+    if (prevBtnMobile) {
+      prevBtnMobile.addEventListener('touchend', function(e) {
+        // prevent double events on some browsers; trigger the button's click handler
+        e.preventDefault();
+        prevBtnMobile.click();
+        try { prevBtnMobile.blur(); } catch (err) {}
+        if (typeof showArrows === 'function') showArrows();
+      }, { passive: false });
+    }
+    if (nextBtnMobile) {
+      nextBtnMobile.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        nextBtnMobile.click();
+        try { nextBtnMobile.blur(); } catch (err) {}
+        if (typeof showArrows === 'function') showArrows();
+      }, { passive: false });
+    }
+  })();
 
   // Make site-name clickable and link to index.html on all pages
   var siteName = document.querySelector('.site-name');

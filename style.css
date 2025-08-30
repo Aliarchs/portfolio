@@ -214,6 +214,40 @@
     transform: translateY(-50%) scale(1) !important;
   }
 }
+
+/* Mobile portrait: keep arrow visuals identical after tap and avoid platform tap flash */
+@media (max-width: 600px) and (orientation: portrait) {
+  /* Place arrows below the page in normal flow */
+  .book-controls { display: block; }
+
+  .book-arrow {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation; /* prefer single-tap interactions */
+    background: rgba(0,0,0,0.62) !important;
+    color: #fff !important;
+    border-color: rgba(255,255,255,0.12) !important;
+    transform: none !important; /* avoid movement on touch */
+    outline: none !important;
+    box-shadow: none !important;
+    position: static !important; /* ensure buttons are in-flow below page in portrait */
+  }
+
+  /* Ensure active/focus/hover states look the same as resting state on touch phones */
+  .book-arrow:active,
+  .book-arrow:focus,
+  .book-arrow:hover {
+    background: rgba(0,0,0,0.62) !important;
+    color: #fff !important;
+    border-color: rgba(255,255,255,0.12) !important;
+    transform: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Avoid outline showing after touch unless keyboard focus is used */
+  .book-arrow:focus:not(:focus-visible) { outline: none !important; }
+}
+
 /* 1) Self-hosted Bahnschrift */
 @font-face {
   font-family: 'Bahnschrift';
