@@ -148,12 +148,17 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.book-arrow.always-visible').forEach(function(el) {
       el.classList.remove('arrow-hidden');
     });
-    // hide after 2.5s of inactivity
+  // On mobile we keep arrows visible (no auto-hide). On desktop/tablet schedule hide after 1.5s
+  if (!isMobile()) {
     arrowHideTimer = setTimeout(function() {
       document.querySelectorAll('.book-arrow.always-visible').forEach(function(el) {
         el.classList.add('arrow-hidden');
       });
-    }, 2500);
+    }, 1500);
+  } else {
+    // ensure there's no pending timer on mobile
+    arrowHideTimer = null;
+  }
   }
 
   // show arrows on any user interaction
@@ -164,6 +169,51 @@ document.addEventListener('DOMContentLoaded', function() {
   // Ensure arrows are visible when the book is opened
   showArrows();
   const body = document.body;
+
+  // Position fixed arrows vertically centered on the .book element
+  function positionFixedArrows() {
+    // prefer .book-container (wraps book and controls) so arrows center on the whole flipbook area
+    let container = document.querySelector('.book-container');
+    if (!container) container = document.querySelector('.book');
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    // only position if container is visible/has size
+    if (!(rect && rect.height > 8)) return;
+    // horizontal offsets: place arrows just inside the container edges
+    const inset = 12; // px from container edge
+    const leftPos = Math.max(8, rect.left + inset);
+    const rightPos = Math.max(8, window.innerWidth - rect.right + inset);
+
+    const map = [
+      { id: 'prev-btn', side: 'left', value: leftPos },
+      { id: 'prev-btn-mobile', side: 'left', value: leftPos },
+      { id: 'next-btn', side: 'right', value: rightPos },
+      { id: 'next-btn-mobile', side: 'right', value: rightPos }
+    ];
+
+    // Only set left/right (horizontal placement) here. Do not set top so arrows keep a fixed vertical position
+    // and do not jump when pages change. Keep them position:fixed so they remain on-screen.
+    map.forEach(entry => {
+      const el = document.getElementById(entry.id);
+      if (!el) return;
+      if (entry.side === 'left') {
+        el.style.left = entry.value + 'px';
+        el.style.right = '';
+      } else {
+        el.style.right = entry.value + 'px';
+        el.style.left = '';
+      }
+      if (!el.classList.contains('always-visible')) el.classList.add('always-visible');
+      el.style.position = 'fixed';
+    });
+  }
+  // No MutationObserver: arrows will not be repositioned on page turns. They will keep their fixed vertical position.
+
+  // call on load and when layout changes
+  window.addEventListener('resize', positionFixedArrows);
+  window.addEventListener('orientationchange', positionFixedArrows);
+  // also call after a short delay on DOMContentLoaded to ensure layout is settled
+  setTimeout(positionFixedArrows, 250);
 
   // COVER LOGIC
   if (

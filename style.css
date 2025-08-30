@@ -182,6 +182,34 @@ header {
   z-index: 100;
   overflow-x: hidden;
 }
+
+/* 1) Ensure main content is pushed below fixed header on flipbook pages */
+body.projects-page main {
+  padding-top: 3.2rem; /* adjust if your header height changes */
+}
+
+/* 2) Arrow transition and hidden state */
+.book-arrow.always-visible {
+  transition: opacity 220ms ease, transform 220ms ease;
+  /* keep baseline centered so hover only scales and doesn't shift vertically */
+  transform: translateY(-50%) scale(1);
+  transform-origin: center center;
+  will-change: transform;
+}
+.book-arrow.always-visible.arrow-hidden {
+  opacity: 0;
+  /* keep the same vertical centering when hidden to avoid jump on show/hide */
+  transform: translateY(-50%) scale(0.98);
+  pointer-events: none;
+}
+
+/* 3) Arrow contrast on double-spread: 20% dark overlay */
+.book-container.double-spread .book-arrow.always-visible,
+body.double-spread .book-arrow.always-visible {
+  background: rgba(0,0,0,0.2) !important;
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.12) !important;
+}
 .site-name {
   flex: 0 0 auto;
   text-align: left;
@@ -489,10 +517,14 @@ body.other-page {
   color: #636363;
   border: none;
   border-radius: 50%;
-  font-size: 2.2rem;
-  width: 2.8rem;
-  height: 2.8rem;
-  margin: 0 0.5rem;
+  font-size: 1rem;
+  width: 2.2rem;
+  height: 2.2rem;
+  margin: 0 0.35rem;
+  /* ensure non-fixed inline arrows don't shift vertically when hovered */
+  transform: translateY(0) scale(1);
+  transform-origin: center center;
+  will-change: transform;
   cursor: url('images/cursor-pointer.svg'), pointer;
   transition: background 0.2s, color 0.2s, transform 0.1s;
   outline: none;
@@ -500,12 +532,13 @@ body.other-page {
   align-items: center;
   justify-content: center;
 }
-.book-controls button.book-arrow:hover,
-.book-controls button.book-arrow:focus,
-.book-controls button.book-arrow:active {
+.book-controls button.book-arrow:not(.always-visible):hover,
+.book-controls button.book-arrow:not(.always-visible):focus,
+.book-controls button.book-arrow:not(.always-visible):active {
   background: #eee;
   color: #7b7b7b;
-  transform: scale(1.12);
+  /* only scale, keep vertical position for non-fixed arrows */
+  transform: translateY(0) scale(1.02);
   cursor: url('images/cursor-hover.svg'), pointer;
 }
 
@@ -590,10 +623,10 @@ body.other-page {
   color: #636363;
   border: none;
   border-radius: 50%;
-  font-size: 2.2rem;
-  width: 2.8rem;
-  height: 2.8rem;
-  margin: 0 0.5rem;
+  font-size: 1rem;
+  width: 2.2rem;
+  height: 2.2rem;
+  margin: 0 0.35rem;
   cursor: url('images/cursor-pointer.svg'), pointer;
   transition: background 0.2s, color 0.2s, transform 0.1s;
   outline: none;
@@ -602,16 +635,61 @@ body.other-page {
   justify-content: center;
 }
 
-.book-arrow:hover,
-.book-arrow:focus,
-.book-arrow:active,
+.book-arrow:not(.always-visible):hover,
+.book-arrow:not(.always-visible):focus,
+.book-arrow:not(.always-visible):active,
 .slideshow-arrow:hover,
 .slideshow-arrow:focus,
 .slideshow-arrow:active {
   background: #eee;
   color: #7b7b7b;
-  transform: scale(1.12);
+  transform: scale(1.04);
   cursor: url('images/cursor-hover.svg'), pointer;
+}
+
+/* For fixed/always-visible arrows keep vertical translate so they don't jump when transform is overridden */
+.book-arrow.always-visible:hover,
+.book-arrow.always-visible:focus,
+.book-arrow.always-visible:active {
+  background: #eee;
+  color: #7b7b7b;
+  /* enforce vertical centering for fixed arrows on hover */
+  transform: translateY(-50%) scale(1.02) !important;
+  cursor: url('images/cursor-hover.svg'), pointer;
+}
+
+/* --- Make arrows smaller (override) ---
+/* This keeps the change targeted so you can tweak sizes easily. */
+.book-arrow,
+.slideshow-arrow {
+  /* smaller visual size */
+  font-size: 1rem;          /* controls glyph size */
+  width: 2.2rem;            /* button box size */
+  height: 2.2rem;
+  padding: 0.25rem;         /* reduce internal padding */
+  line-height: 1.8rem;      /* align glyph vertically */
+  border-radius: 0.35rem;   /* slightly rounded */
+}
+
+/* If arrows contain SVG or icon elements, scale them down too */
+.book-arrow svg,
+.slideshow-arrow svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+/* Keep hover/focus targets usable: slightly increase hit area without changing visuals */
+.book-arrow::before,
+.slideshow-arrow::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 3.2rem;   /* interactive area */
+  height: 3.2rem;
+  border-radius: 0.35rem;
+  pointer-events: none;
 }
 
 /* --- Utility --- */
@@ -822,10 +900,10 @@ button.book-arrow {
   color: #636363 !important;
   border: none !important;
   border-radius: 50% !important;
-  font-size: 2.2rem !important;
-  width: 2.8rem !important;
-  height: 2.8rem !important;
-  margin: 0 0.5rem !important;
+  font-size: 1rem !important;
+  width: 2.2rem !important;
+  height: 2.2rem !important;
+  margin: 0 0.35rem !important;
   cursor: url('images/cursor-pointer.svg'), pointer !important;
   transition: background 0.2s, color 0.2s, transform 0.1s !important;
   outline: none !important;
@@ -841,8 +919,24 @@ button.book-arrow:focus,
 button.book-arrow:active {
   background: #eee !important;
   color: #7b7b7b !important;
-  transform: scale(1.12) !important;
+  transform: scale(1.04) !important;
   cursor: url('images/cursor-hover.svg'), pointer !important;
+}
+
+/* ID-specific hover: keep fixed arrows vertically centered (prevent translateY from being lost) */
+#prev-btn:hover,
+#prev-btn:focus,
+#prev-btn:active,
+#next-btn:hover,
+#next-btn:focus,
+#next-btn:active,
+#prev-btn-mobile:hover,
+#prev-btn-mobile:focus,
+#prev-btn-mobile:active,
+#next-btn-mobile:hover,
+#next-btn-mobile:focus,
+#next-btn-mobile:active {
+  transform: translateY(-50%) scale(1.02) !important;
 }
 
 /* --- Heading Styles --- */
@@ -903,8 +997,8 @@ h2, .section-title {
   position: fixed;
   top: 50%;
   transform: translateY(-50%);
-  width: 3.2rem;
-  height: 3.2rem;
+  width: 2.4rem;
+  height: 2.4rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -928,10 +1022,10 @@ h2, .section-title {
   #prev-btn-mobile,
   #next-btn-mobile,
   .book-arrow.always-visible {
-    width: 2.6rem;
-    height: 2.6rem;
-    left: 0.4rem;
-    right: 0.4rem;
+  width: 2.0rem;
+  height: 2.0rem;
+  left: 0.4rem;
+  right: 0.4rem;
   }
   #prev-btn, #prev-btn-mobile { left: 0.4rem; }
   #next-btn, #next-btn-mobile { right: 0.4rem; }
@@ -1063,7 +1157,7 @@ body.landing .site-name {
   .slideshow-arrow:active {
     background: #eee;
     color: #7b7b7b;
-    transform: scale(1.12);
+    transform: scale(1.04);
     cursor: pointer;
   }
 }
