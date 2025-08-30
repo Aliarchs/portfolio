@@ -181,7 +181,6 @@
   /* Remove the platform tap highlight which can leave a persistent flash on some browsers */
   .book-arrow, .book-arrow * {
     -webkit-tap-highlight-color: transparent !important;
-    tap-highlight-color: transparent !important;
   }
 
   /* keep active tap feedback but avoid leaving focus styling after tap
@@ -1227,7 +1226,6 @@ h2, .section-title {
 .book-container.double-spread #next-btn-mobile {
   background: rgba(0,0,0,0.2) !important; /* 20% black */
   color: #fff !important;
-  border-color: rgba(255,255,255,0.12) !important;
 }
 
 /* Fallback if .book-container isn't present (apply to body) */
@@ -1327,4 +1325,24 @@ body.landing .site-name {
     transform: scale(1.04);
     cursor: pointer;
   }
+}
+
+/* Lazy-loading placeholders */
+img.lazy {
+  background: linear-gradient(90deg, rgba(0,0,0,0.03), rgba(0,0,0,0.06));
+  background-size: 200% 100%;
+  animation: lazy-pulse 1.6s infinite linear;
+  display: block;
+  transition: opacity 240ms ease-in-out, filter 240ms ease-in-out;
+  opacity: 0.92;
+  filter: blur(1px);
+}
+img.lazy.loaded {
+  animation: none;
+  opacity: 1;
+  filter: none;
+}
+@keyframes lazy-pulse {
+  from { background-position: 0% 50%; }
+  to { background-position: 100% 50%; }
 }

@@ -17,6 +17,24 @@ document.addEventListener('DOMContentLoaded', function() {
     return isTouchDevice() && window.innerWidth >= TOUCH_LAPTOP_MIN_WIDTH;
   }
 
+  // Simple image preloader cache. Keeps Image objects for recently-seen sources so
+  // navigation to adjacent pages is immediate if the image is already cached.
+  const _imgCache = Object.create(null);
+  function preloadImage(src) {
+    if (!src) return;
+    if (_imgCache[src]) return; // already queued or loaded
+    const im = new Image();
+    // prefer 'anonymous' to avoid CORS tainting if hosted elsewhere
+    try { im.crossOrigin = 'anonymous'; } catch (e) {}
+    im.src = src;
+    _imgCache[src] = im;
+  }
+  function preloadRange(images, fromIdx, toIdx) {
+    for (let i = Math.max(0, fromIdx); i <= Math.min(images.length - 1, toIdx); i++) {
+      preloadImage(images[i]);
+    }
+  }
+
   // Mobile flipbook logic: single page in portrait, double spread in landscape
   function setupMobileFlipbook() {
     // Run mobile flipbook logic whenever the mobile flipbook markup exists.
@@ -51,6 +69,8 @@ document.addEventListener('DOMContentLoaded', function() {
           if (window.mobilePage < 0) window.mobilePage = 0;
           if (window.mobilePage > images.length - 1) window.mobilePage = images.length - 1;
           imgMobilePortrait.src = images[window.mobilePage];
+          // preload nearby images for snappier navigation
+          preloadRange(images, window.mobilePage - 2, window.mobilePage + 2);
         }
         if (mobileLandscape) mobileLandscape.style.display = 'none';
         // remove double-spread styling when in portrait
@@ -69,6 +89,8 @@ document.addEventListener('DOMContentLoaded', function() {
           window.mobilePage = leftIdx;
           if (imgMobileLeft) imgMobileLeft.src = images[leftIdx];
           if (imgMobileRight) imgMobileRight.src = images[rightIdx];
+          // preload adjacent spreads
+          preloadRange(images, leftIdx - 2, leftIdx + 3);
           // add double-spread styling when showing two pages
           if (bc) bc.classList.add('double-spread');
         }
@@ -95,21 +117,18 @@ document.addEventListener('DOMContentLoaded', function() {
       if (nextBtnMobile) nextBtnMobile.blur();
     }
 
-    if (prevBtnMobile) prevBtnMobile.onclick = goPrev;
-    if (nextBtnMobile) nextBtnMobile.onclick = goNext;
+    if (prevBtnMobile) prevBtnMobile.onclick = function(e) {
+      if (Date.now() - (window.lastMobileTouch || 0) < 700) return;
+      goPrev();
+    };
+    if (nextBtnMobile) nextBtnMobile.onclick = function(e) {
+      if (Date.now() - (window.lastMobileTouch || 0) < 700) return;
+      goNext();
+    };
     // Also listen for touchend to ensure taps trigger navigation on devices that don't emit click reliably
-    if (prevBtnMobile && prevBtnMobile.addEventListener) {
-      prevBtnMobile.addEventListener('touchend', function(e) {
-        e.preventDefault && e.preventDefault();
-        goPrev();
-      }, { passive: false });
-    }
-    if (nextBtnMobile && nextBtnMobile.addEventListener) {
-      nextBtnMobile.addEventListener('touchend', function(e) {
-        e.preventDefault && e.preventDefault();
-        goNext();
-      }, { passive: false });
-    }
+  // touchend handlers were removed here to avoid duplicate navigation events.
+  // We rely on the primary `onclick` handlers above and a single, dedicated
+  // touchend handler added later to normalize behavior across devices.
 
     // Swipe logic removed: navigation only via arrow buttons
 
@@ -153,7 +172,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // Run mobile flipbook logic on load and on resize
   setupMobileFlipbook();
   window.addEventListener('resize', setupMobileFlipbook);
-  
+
+  // Record last mobile touch time (used to prevent double navigation from touchend->click)
+  window.lastMobileTouch = window.lastMobileTouch || 0;
+
   // Ensure arrow buttons use the always-visible class so CSS will keep them on-screen
   function addAlwaysVisibleClass() {
     ['prev-btn', 'next-btn', 'prev-btn-mobile', 'next-btn-mobile'].forEach(function(id) {
@@ -193,6 +215,44 @@ document.addEventListener('DOMContentLoaded', function() {
   // Ensure arrows are visible when the book is opened
   showArrows();
   const body = document.body;
+
+  // Lazy-loading helper: use IntersectionObserver to defer loading large images
+  function initLazyLoading() {
+    const lazyImages = Array.from(document.querySelectorAll('img.lazy'));
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            const img = entry.target;
+            const src = img.getAttribute('data-src');
+            if (src) {
+              img.src = src;
+              // let the browser cache it
+            }
+            img.addEventListener('load', function onload() {
+              img.classList.add('loaded');
+              img.removeEventListener('load', onload);
+            });
+            io.unobserve(img);
+          }
+        });
+      }, { root: null, rootMargin: '200px 0px', threshold: 0.01 });
+
+      lazyImages.forEach(function(img) {
+        io.observe(img);
+      });
+    } else {
+      // Fallback: load immediately
+      lazyImages.forEach(function(img) {
+        const src = img.getAttribute('data-src');
+        if (src) img.src = src;
+        img.classList.add('loaded');
+      });
+    }
+  }
+
+  // initialize lazy loading after a short delay so initial layout isn't blocked
+  setTimeout(initLazyLoading, 120);
 
   // Position fixed arrows vertically centered on the .book element
   function positionFixedArrows() {
@@ -335,6 +395,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // mark double-spread on container for styling (arrows contrast)
   const bc = document.querySelector('.book-container');
   if (bc) bc.classList.add('double-spread');
+  // preload previous and next spreads for snappier page turns
+  preloadRange(images, window.page - 2, window.page + 3);
     }
 
     // Remove page click navigation for desktop
