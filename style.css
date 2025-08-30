@@ -178,12 +178,26 @@
     border-color: rgba(255,255,255,0.18) !important;
   }
 
+  /* Remove the platform tap highlight which can leave a persistent flash on some browsers */
+  .book-arrow, .book-arrow * {
+    -webkit-tap-highlight-color: transparent !important;
+    tap-highlight-color: transparent !important;
+  }
+
   /* keep active tap feedback but avoid leaving focus styling after tap
      Use :focus:not(:focus-visible) to keep keyboard focus visible while hiding
      focus for touch/mouse interactions */
   .book-arrow:focus:not(:focus-visible) {
     outline: none !important;
     box-shadow: none !important;
+  }
+
+  /* Ensure active/focus still match resting visual state so they don't appear "stuck" */
+  .book-arrow:focus,
+  .book-arrow:active {
+    background: rgba(0,0,0,0.42) !important;
+    color: #fff !important;
+    border-color: rgba(255,255,255,0.18) !important;
   }
 
   /* reduce the persistent active look: only briefly scale on active */

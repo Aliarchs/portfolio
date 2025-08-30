@@ -97,6 +97,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (prevBtnMobile) prevBtnMobile.onclick = goPrev;
     if (nextBtnMobile) nextBtnMobile.onclick = goNext;
+    // Also listen for touchend to ensure taps trigger navigation on devices that don't emit click reliably
+    if (prevBtnMobile && prevBtnMobile.addEventListener) {
+      prevBtnMobile.addEventListener('touchend', function(e) {
+        e.preventDefault && e.preventDefault();
+        goPrev();
+      }, { passive: false });
+    }
+    if (nextBtnMobile && nextBtnMobile.addEventListener) {
+      nextBtnMobile.addEventListener('touchend', function(e) {
+        e.preventDefault && e.preventDefault();
+        goNext();
+      }, { passive: false });
+    }
 
     // Swipe logic removed: navigation only via arrow buttons
 
@@ -387,8 +400,27 @@ document.addEventListener('DOMContentLoaded', function() {
   // Blur any arrow buttons after touchend/click to avoid persistent focus state on mobile
   ['touchend', 'pointerup', 'click'].forEach(function(evt) {
     window.addEventListener(evt, function(e) {
-      const btn = e.target.closest && e.target.closest('.book-arrow');
-      if (btn) btn.blur();
+      // normalize target: if a text node was tapped, use its parentElement
+      let node = e.target;
+      if (node && node.nodeType === 3) node = node.parentElement;
+      let btn = null;
+      try {
+        if (node && typeof node.closest === 'function') btn = node.closest('.book-arrow');
+      } catch (err) {
+        btn = null;
+      }
+      if (btn) {
+        try {
+          btn.blur();
+        } catch (err) {}
+        // Force resting visual styles inline to override any platform tap flash
+        try {
+          btn.style.background = 'rgba(0,0,0,0.42)';
+          btn.style.color = '#fff';
+          btn.style.borderColor = 'rgba(255,255,255,0.18)';
+          btn.style.outline = 'none';
+        } catch (err) {}
+      }
     }, { passive: true });
   });
 
