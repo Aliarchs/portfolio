@@ -81,6 +81,65 @@
     box-shadow: none !important;
   }
 }
+
+/* Mobile fixed arrow overrides: keep arrows mid-screen and inset from book edges
+   Prevent the .book-controls element from creating extra vertical space since arrows are fixed */
+@media (max-width: 600px) {
+  .book-arrow.always-visible {
+    position: fixed !important;
+    top: 50% !important;
+    transform: translateY(-50%) scale(1) !important;
+    z-index: 9999 !important;
+    /* slightly increase touch area visually unchanged by using ::before */
+  }
+
+  /* Inset the arrows from the viewport edges to sit near the book */
+  #prev-btn, #prev-btn-mobile {
+    left: 12px !important;
+    right: auto !important;
+  }
+  #next-btn, #next-btn-mobile {
+    right: 12px !important;
+    left: auto !important;
+  }
+
+  /* The controls container below the image should not add extra space when buttons are fixed */
+  .book-controls {
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important; /* allow fixed children to remain visible */
+  }
+
+  /* Make hit area larger for touch without changing visual size */
+  .book-arrow::before {
+    width: 4rem !important;
+    height: 4rem !important;
+  }
+}
+
+/* Improve contrast and avoid persistent focus highlights on touch devices */
+@media (max-width: 600px) {
+  /* stronger background for mobile so arrows are visible over images */
+  .book-arrow.always-visible {
+    background: rgba(0,0,0,0.42) !important;
+    color: #fff !important;
+    border-color: rgba(255,255,255,0.18) !important;
+  }
+
+  /* keep active tap feedback but avoid leaving focus styling after tap
+     Use :focus:not(:focus-visible) to keep keyboard focus visible while hiding
+     focus for touch/mouse interactions */
+  .book-arrow:focus:not(:focus-visible) {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  /* reduce the persistent active look: only briefly scale on active */
+  .book-arrow:active {
+    transform: translateY(-50%) scale(0.98) !important;
+  }
+}
 /* 1) Self-hosted Bahnschrift */
 @font-face {
   font-family: 'Bahnschrift';

@@ -145,20 +145,18 @@ document.addEventListener('DOMContentLoaded', function() {
   let arrowHideTimer = null;
   function showArrows() {
     clearTimeout(arrowHideTimer);
-    document.querySelectorAll('.book-arrow.always-visible').forEach(function(el) {
-      el.classList.remove('arrow-hidden');
-    });
-  // On mobile we keep arrows visible (no auto-hide). On desktop/tablet schedule hide after 1.5s
-  if (!isMobile()) {
-    arrowHideTimer = setTimeout(function() {
-      document.querySelectorAll('.book-arrow.always-visible').forEach(function(el) {
-        el.classList.add('arrow-hidden');
-      });
-    }, 1500);
-  } else {
-    // ensure there's no pending timer on mobile
-    arrowHideTimer = null;
-  }
+    const arrows = Array.from(document.querySelectorAll('.book-arrow.always-visible'));
+    arrows.forEach(function(el) { el.classList.remove('arrow-hidden'); });
+
+    // On mobile we keep arrows visible (no auto-hide). On desktop/tablet schedule hide after 1.5s
+    if (!isMobile()) {
+      arrowHideTimer = setTimeout(function() {
+        arrows.forEach(function(el) { el.classList.add('arrow-hidden'); });
+      }, 1500);
+    } else {
+      // ensure there's no pending timer on mobile
+      arrowHideTimer = null;
+    }
   }
 
   // show arrows on any user interaction
@@ -371,6 +369,14 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.href = link;
       }
     });
+  });
+
+  // Blur any arrow buttons after touchend/click to avoid persistent focus state on mobile
+  ['touchend', 'pointerup', 'click'].forEach(function(evt) {
+    window.addEventListener(evt, function(e) {
+      const btn = e.target.closest && e.target.closest('.book-arrow');
+      if (btn) btn.blur();
+    }, { passive: true });
   });
 
   // Make site-name clickable and link to index.html on all pages
