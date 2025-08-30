@@ -5,6 +5,18 @@ document.addEventListener('DOMContentLoaded', function() {
     return window.innerWidth <= 600;
   }
 
+  // Helper to detect touch-capable devices (phones, tablets, many laptops)
+  function isTouchDevice() {
+    return (('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints && navigator.msMaxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches));
+  }
+
+  // Treat very large touch screens (e.g. touch-enabled laptops) as "large touch devices"
+  // where auto-hide is acceptable. Adjust this threshold if you want a different cutoff.
+  const TOUCH_LAPTOP_MIN_WIDTH = 900; // px
+  function isLargeTouchDevice() {
+    return isTouchDevice() && window.innerWidth >= TOUCH_LAPTOP_MIN_WIDTH;
+  }
+
   // Mobile flipbook logic: single page in portrait, double spread in landscape
   function setupMobileFlipbook() {
     // Run mobile flipbook logic whenever the mobile flipbook markup exists.
@@ -148,8 +160,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const arrows = Array.from(document.querySelectorAll('.book-arrow.always-visible'));
     arrows.forEach(function(el) { el.classList.remove('arrow-hidden'); });
 
-    // On mobile we keep arrows visible (no auto-hide). On desktop/tablet schedule hide after 1.5s
-    if (!isMobile()) {
+  // On touch-capable phones/tablets we keep arrows visible (no auto-hide).
+  // Allow auto-hide on non-touch devices OR on large touch laptops (big screens with touch)
+  if (!isTouchDevice() || isLargeTouchDevice()) {
       arrowHideTimer = setTimeout(function() {
         arrows.forEach(function(el) { el.classList.add('arrow-hidden'); });
       }, 1500);
