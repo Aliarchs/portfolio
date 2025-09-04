@@ -646,6 +646,15 @@ body.other-page {
   cursor: pointer;
   margin: 0 auto;
 }
+/* Ensure cover controls remain in-flow and centered; prevent JS inline fixed positioning from affecting them */
+#cover-container .book-controls .book-arrow {
+  position: static !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  transform: none !important;
+  margin-top: 1rem !important;
+}
 .book-container {
   display: flex;
   flex-direction: column;

@@ -40,9 +40,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Run mobile flipbook logic whenever the mobile flipbook markup exists.
     // Don't rely only on viewport width because some phones in landscape can be wider than 600px.
     if (!document.getElementById('img-mobile-portrait') && !document.getElementById('img-mobile-left')) return;
-    // Images array: project1-1.jpg to project1-32.jpg
+    // Images array: exclude cover (project1-1.jpg) since cover is handled separately
+    // Start at project1-2.jpg through project1-32.jpg
     const images = [];
-    for (let i = 1; i <= 32; i++) {
+    for (let i = 2; i <= 32; i++) {
       images.push(`images/project1-${i}.jpg`);
     }
     window.mobilePage = window.mobilePage || 0;
@@ -180,11 +181,12 @@ document.addEventListener('DOMContentLoaded', function() {
   function addAlwaysVisibleClass() {
     ['prev-btn', 'next-btn', 'prev-btn-mobile', 'next-btn-mobile'].forEach(function(id) {
       const el = document.getElementById(id);
-      if (el && !el.classList.contains('always-visible')) el.classList.add('always-visible');
+      // skip arrows inside the cover container so the cover arrow isn't fixed mid-screen
+      if (el && !el.closest('#cover-container') && !el.classList.contains('always-visible')) el.classList.add('always-visible');
     });
     // Also mark any .book-arrow elements if needed
     document.querySelectorAll('.book-arrow').forEach(function(b) {
-      if (!b.classList.contains('always-visible')) b.classList.add('always-visible');
+      if (!b.closest('#cover-container') && !b.classList.contains('always-visible')) b.classList.add('always-visible');
     });
   }
 
@@ -339,9 +341,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('img-left') &&
     document.getElementById('img-right')
   ) {
+    // Desktop images for the flipbook: exclude the cover (cover is separate), start at project1-2
     const images = [
-      "images/blank.jpg",        // blank left page at start
-      "images/project1-2.jpg",   // first real page
+      "images/project1-2.jpg",
       "images/project1-3.jpg",
       "images/project1-4.jpg",
       "images/project1-5.jpg",
@@ -371,7 +373,7 @@ document.addEventListener('DOMContentLoaded', function() {
       "images/project1-29.jpg",
       "images/project1-30.jpg",
       "images/project1-31.jpg",
-      "images/project1-32.jpg"   // last page!
+      "images/project1-32.jpg"
     ];
     if (images.length % 2 !== 0) {
       images.push("images/blank.jpg");
@@ -508,12 +510,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.addEventListener('DOMContentLoaded', () => {
       if (isMobile()) {
-          ['cover-page', 'blank-page'].forEach(cls => {
-              document.querySelector(`.${cls}`)?.classList.add('hidden');
-          });
+          // hide the cover on mobile; blank page no longer exists
+          document.querySelector('.cover-page')?.classList.add('hidden');
           document.querySelector('.first-page')?.classList.remove('hidden');
-      } else {
-        // Desktop logic (unchanged)
       }
     });
   });
