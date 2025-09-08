@@ -30,10 +30,20 @@ async function processFile(filename) {
     const outDir = path.join(OUTPUT_DIR, String(size));
     const outPath = path.join(outDir, filename);
     try {
+      // write the resized original-format image
       await sharp(inputPath)
         .resize({ width: size })
         .toFile(outPath);
       console.log('Wrote', outPath);
+      // also write a WebP variant for browsers that support it
+      const ext = path.extname(filename).toLowerCase();
+      const base = path.basename(filename, ext);
+      const outWebp = path.join(outDir, base + '.webp');
+      await sharp(inputPath)
+        .resize({ width: size })
+        .webp({ quality: 80 })
+        .toFile(outWebp);
+      console.log('Wrote', outWebp);
     } catch (err) {
       console.error('Failed to process', filename, '->', err.message);
     }

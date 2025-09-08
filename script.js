@@ -21,13 +21,31 @@ document.addEventListener('DOMContentLoaded', function() {
   // navigation to adjacent pages is immediate if the image is already cached.
   const _imgCache = Object.create(null);
   function preloadImage(src) {
-    if (!src) return;
-    if (_imgCache[src]) return; // already queued or loaded
+    if (!src) return Promise.resolve();
+    if (_imgCache[src]) {
+      // if cached Image object exists, return a resolved promise when it's complete
+      const cached = _imgCache[src];
+      if (cached.complete) return Promise.resolve(cached);
+      return new Promise((res, rej) => {
+        cached.addEventListener('load', () => res(cached));
+        cached.addEventListener('error', () => rej(new Error('failed to load')));
+      });
+    }
     const im = new Image();
-    // prefer 'anonymous' to avoid CORS tainting if hosted elsewhere
     try { im.crossOrigin = 'anonymous'; } catch (e) {}
-    im.src = src;
     _imgCache[src] = im;
+    im.src = src;
+    return new Promise((resolve, reject) => {
+      im.addEventListener('load', () => {
+        // try to decode for smoother display if supported
+        if (typeof im.decode === 'function') {
+          im.decode().then(() => resolve(im)).catch(() => resolve(im));
+        } else {
+          resolve(im);
+        }
+      });
+      im.addEventListener('error', () => reject(new Error('failed to load ' + src)));
+    });
   }
   function preloadRange(images, fromIdx, toIdx) {
     for (let i = Math.max(0, fromIdx); i <= Math.min(images.length - 1, toIdx); i++) {
@@ -69,8 +87,11 @@ document.addEventListener('DOMContentLoaded', function() {
           imgMobilePortrait.style.display = 'block';
           if (window.mobilePage < 0) window.mobilePage = 0;
           if (window.mobilePage > images.length - 1) window.mobilePage = images.length - 1;
-          imgMobilePortrait.src = images[window.mobilePage];
-          // preload nearby images for snappier navigation
+          const src = images[window.mobilePage];
+          preloadImage(src).then(() => {
+            imgMobilePortrait.src = src;
+          }).catch(() => { imgMobilePortrait.src = src; });
+          // preload nearby images for snappier navigation (fire-and-forget)
           preloadRange(images, window.mobilePage - 2, window.mobilePage + 2);
         }
         if (mobileLandscape) mobileLandscape.style.display = 'none';
@@ -88,8 +109,8 @@ document.addEventListener('DOMContentLoaded', function() {
           if (rightIdx > images.length - 1) rightIdx = images.length - 1;
           // Keep window.mobilePage aligned to leftIdx for consistency
           window.mobilePage = leftIdx;
-          if (imgMobileLeft) imgMobileLeft.src = images[leftIdx];
-          if (imgMobileRight) imgMobileRight.src = images[rightIdx];
+          if (imgMobileLeft) preloadImage(images[leftIdx]).then(() => { imgMobileLeft.src = images[leftIdx]; }).catch(() => { imgMobileLeft.src = images[leftIdx]; });
+          if (imgMobileRight) preloadImage(images[rightIdx]).then(() => { imgMobileRight.src = images[rightIdx]; }).catch(() => { imgMobileRight.src = images[rightIdx]; });
           // preload adjacent spreads
           preloadRange(images, leftIdx - 2, leftIdx + 3);
           // add double-spread styling when showing two pages
@@ -220,35 +241,62 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Lazy-loading helper: use IntersectionObserver to defer loading large images
   function initLazyLoading() {
-    const lazyImages = Array.from(document.querySelectorAll('img.lazy'));
+    const lazyImgs = Array.from(document.querySelectorAll('img.lazy'));
+    const lazyPictures = Array.from(document.querySelectorAll('picture[data-lazy]'));
     if ('IntersectionObserver' in window) {
       const io = new IntersectionObserver(function(entries) {
         entries.forEach(function(entry) {
-          if (entry.isIntersecting) {
-            const img = entry.target;
+          if (!entry.isIntersecting) return;
+          const node = entry.target;
+          // handle <img class="lazy">
+          if (node.tagName && node.tagName.toLowerCase() === 'img') {
+            const img = node;
             const src = img.getAttribute('data-src');
-            if (src) {
-              img.src = src;
-              // let the browser cache it
-            }
+            if (src) img.src = src;
             img.addEventListener('load', function onload() {
               img.classList.add('loaded');
               img.removeEventListener('load', onload);
             });
             io.unobserve(img);
+            return;
+          }
+          // handle <picture data-lazy> where <source> children have data-srcset
+          if (node.tagName && node.tagName.toLowerCase() === 'picture') {
+            const pic = node;
+            const sources = pic.querySelectorAll('source[data-srcset]');
+            sources.forEach(s => {
+              const ss = s.getAttribute('data-srcset');
+              if (ss) s.srcset = ss;
+            });
+            const img = pic.querySelector('img.lazy');
+            if (img) {
+              const src = img.getAttribute('data-src');
+              if (src) img.src = src;
+              img.addEventListener('load', function onload() {
+                img.classList.add('loaded');
+                img.removeEventListener('load', onload);
+              });
+            }
+            io.unobserve(pic);
+            return;
           }
         });
       }, { root: null, rootMargin: '200px 0px', threshold: 0.01 });
 
-      lazyImages.forEach(function(img) {
-        io.observe(img);
-      });
+      lazyImgs.forEach(function(img) { io.observe(img); });
+      lazyPictures.forEach(function(pic) { io.observe(pic); });
     } else {
       // Fallback: load immediately
-      lazyImages.forEach(function(img) {
+      lazyImgs.forEach(function(img) {
         const src = img.getAttribute('data-src');
         if (src) img.src = src;
         img.classList.add('loaded');
+      });
+      lazyPictures.forEach(function(pic) {
+        const sources = pic.querySelectorAll('source[data-srcset]');
+        sources.forEach(s => { const ss = s.getAttribute('data-srcset'); if (ss) s.srcset = ss; });
+        const img = pic.querySelector('img.lazy');
+        if (img) { const src = img.getAttribute('data-src'); if (src) img.src = src; img.classList.add('loaded'); }
       });
     }
   }
@@ -289,8 +337,9 @@ document.addEventListener('DOMContentLoaded', function() {
         el.style.right = entry.value + 'px';
         el.style.left = '';
       }
-      if (!el.classList.contains('always-visible')) el.classList.add('always-visible');
-      el.style.position = 'fixed';
+  if (!el.classList.contains('always-visible')) el.classList.add('always-visible');
+  el.style.position = 'fixed';
+  el.style.zIndex = '10010';
     });
   }
   // No MutationObserver: arrows will not be repositioned on page turns. They will keep their fixed vertical position.
@@ -376,11 +425,13 @@ document.addEventListener('DOMContentLoaded', function() {
       "images/project1-32.jpg"
     ];
     if (images.length % 2 !== 0) {
-      images.push("images/blank.jpg");
+      images.push("");
     }
 
-    // Make page variable global for cover logic
-    window.page = 0;
+  // Make page variable global for cover logic
+  window.page = 0;
+  // expose images for delegated handlers
+  window.__images__ = images;
 
     const leftPage = document.getElementById('desktop-left');
     const rightPage = document.getElementById('desktop-right');
@@ -392,13 +443,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const bookContainer = document.querySelector('.book-container');
 
     function updatePages() {
-  imgLeft.src = images[window.page] || "";
-  imgRight.src = images[window.page + 1] || "";
-  // mark double-spread on container for styling (arrows contrast)
-  const bc = document.querySelector('.book-container');
-  if (bc) bc.classList.add('double-spread');
-  // preload previous and next spreads for snappier page turns
-  preloadRange(images, window.page - 2, window.page + 3);
+  // preload current spread then assign to DOM elements for smoother visuals
+  const leftSrc = images[window.page] || "";
+  const rightSrc = images[window.page + 1] || "";
+  Promise.all([
+    preloadImage(leftSrc).catch(() => null),
+    preloadImage(rightSrc).catch(() => null)
+  ]).then(() => {
+    imgLeft.src = leftSrc;
+    imgRight.src = rightSrc;
+    // mark double-spread on container for styling (arrows contrast)
+    const bc = document.querySelector('.book-container');
+    if (bc) bc.classList.add('double-spread');
+    // preload previous and next spreads for snappier page turns (fire-and-forget)
+    preloadRange(images, window.page - 2, window.page + 3);
+  }).catch(() => {
+    // fallback: assign immediately
+    imgLeft.src = leftSrc;
+    imgRight.src = rightSrc;
+  });
     }
 
     // Remove page click navigation for desktop
@@ -506,6 +569,59 @@ document.addEventListener('DOMContentLoaded', function() {
     link.textContent = siteName.textContent;
     siteName.replaceWith(link);
   }
+
+  // Delegated click handler for all book-arrow buttons to ensure navigation works
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest && e.target.closest('.book-arrow');
+    if (!btn) return;
+    // prevent duplicate handling
+    e.stopPropagation();
+    e.preventDefault();
+    // mobile handlers
+    if (btn.id === 'prev-btn-mobile' || btn.id === 'next-btn-mobile') {
+      if (typeof goPrev === 'function' && typeof goNext === 'function') {
+        if (btn.id === 'prev-btn-mobile') goPrev(); else goNext();
+        try { btn.blur(); } catch (err) {}
+        return;
+      }
+    }
+    // desktop handlers
+    if (btn.id === 'prev-btn' || btn.id === 'next-btn' || btn.id === 'cover-next-btn' || btn.id === 'cover-next-btn') {
+      // cover-next behaves like next: open book
+      if (btn.id === 'cover-next-btn') {
+        if (typeof showBook === 'function') { showBook(); try { btn.blur(); } catch (err) {} return; }
+      }
+      // if desktop page handlers exist, use them
+      if (typeof updatePages === 'function') {
+        if (btn.id === 'prev-btn') {
+          if (window.page === 0) {
+            // go back to cover
+            var bc = document.querySelector('.book-container');
+            if (bc) bc.style.display = 'none';
+            var cc = document.getElementById('cover-container');
+            if (cc) cc.style.display = 'block';
+            var bcc = document.querySelector('.book-container'); if (bcc) bcc.classList.remove('double-spread');
+          } else {
+            window.page = Math.max(0, window.page - 2);
+            updatePages();
+          }
+          try { btn.blur(); } catch (err) {}
+          return;
+        }
+        if (btn.id === 'next-btn') {
+          if (window.page < (Array.isArray(window.__images__) ? window.__images__.length - 2 : 9999)) {
+            window.page = Math.min((Array.isArray(window.__images__) ? window.__images__.length - 2 : 9999), window.page + 2);
+            updatePages();
+          } else {
+            // fallback just in case
+            window.page += 2; updatePages();
+          }
+          try { btn.blur(); } catch (err) {}
+          return;
+        }
+      }
+    }
+  }, true);
 
 
     window.addEventListener('DOMContentLoaded', () => {
