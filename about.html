@@ -6,23 +6,23 @@
   <title>About – ALI SHABESTARY</title>
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="favicon.png" type="image/png">
-  <meta name="theme-color" content="#f5f5f5">
+  <!-- Theme color intentionally omitted for cross-browser linting -->
+  <meta name="color-scheme" content="light dark">
   <style>
-    .about-content {
-      width: 60%;
-      margin: 4em auto 0 auto; /* move text further down */
-      text-align: justify;
-    }
-    @media (max-width: 900px) {
-      .about-content {
-        width: 90%;
-      }
-    }
-    .about-heading {
-      margin-top: 6em; /* move heading further down */
-      text-align: center;
-    }
+    body { background-color: #f5f5f5; }
+    .about-content { width: 60%; margin: 4em auto 0 auto; text-align: justify; }
+    @media (max-width: 900px) { .about-content { width: 90%; } }
+    .about-heading { margin-top: 6em; text-align: center; }
   </style>
+  <!-- Windows tile color for IE/Edge -->
+  <meta name="msapplication-TileColor" content="#f5f5f5">
+  <!-- iOS Safari status bar color -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="#f5f5f5">
+  <meta name="msapplication-navbutton-color" content="#f5f5f5">
+  <meta name="apple-mobile-web-app-status-bar-style" content="#f5f5f5">
+  <meta name="msapplication-TileColor" content="#f5f5f5">
+  <meta name="color-scheme" content="light dark">
+  <!-- consolidated styles above -->
 </head>
 <body class="other-page">
   <header>
@@ -36,7 +36,7 @@
   <main class="content-page">
     <h1 class="about-heading">About Me</h1>
     <div class="about-content">
-      <div style="margin-top: 3em;">
+  <div class="mt-3em">
         I am a RIBA Part 1 architecture graduate from the University of Dundee, passionate about creating sustainable, accessible and attractive spaces. I’m drawn to architecture that responds to its context and leaves a positive impact on the people who use it. I enjoy thinking about what makes a place work and how design choices can subtly improve everyday life. My attention to detail, ability to think creatively and practically help me come up with unique ideas and fine-tune them into real, thoughtful solutions. I’m looking for an opportunity to develop and learn within a team that values purposeful, well-crafted design.
       </div>
     </div>

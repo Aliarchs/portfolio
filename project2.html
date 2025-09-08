@@ -6,7 +6,7 @@
   <title>Projects – ALI SHABESTARY</title>
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="favicon.png" type="image/png">
-  <meta name="theme-color" content="#f5f5f5">
+  <!-- meta theme-color removed for cross-browser linting -->
   </head>
 <body class="projects-page">
   <header>
@@ -26,7 +26,7 @@
       <button class="slideshow-arrow next" aria-label="Next image">&#10095;</button>
     </div>
   </div>
-  <div class="gallery" aria-label="Image gallery" style="margin-top:3.5rem;">
+  <div class="gallery mt-3-5" aria-label="Image gallery">
   <img class="lazy" loading="lazy" data-src="images/project2-1.png" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="Project 2 Image 1" tabindex="0">
   <img class="lazy" loading="lazy" data-src="images/project2-2.png" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="Project 2 Image 2" tabindex="0">
   <img class="lazy" loading="lazy" data-src="images/project2-3.png" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="Project 2 Image 3" tabindex="0">
@@ -34,8 +34,8 @@
   </div>
 
   <!-- Lightbox Modal -->
-  <div id="lightbox" class="lightbox" tabindex="-1" aria-modal="true" style="display:none;">
-    <span class="lightbox-close" aria-label="Close" style="display:none;">&times;</span>
+  <div id="lightbox" class="lightbox js-hidden" tabindex="-1" role="dialog" aria-hidden="true" aria-label="Image lightbox">
+    <button class="lightbox-close js-hidden" aria-label="Close">&times;</button>
     <img class="lightbox-img" src="" alt="">
   </div>
 </main>

@@ -56,21 +56,56 @@ document.addEventListener('DOMContentLoaded', function() {
 
   galleryImgs.forEach(img => {
     img.addEventListener('click', () => {
-      lightbox.style.display = 'flex';
-      lightboxClose.style.display = 'block';
-      lightboxImg.src = img.src;
-      lightboxImg.alt = img.alt;
-      document.querySelector('.gallery').classList.add('lightbox-active');
-      lightbox.focus();
+  // open lightbox: use classes to avoid inline styles and manage aria
+  lightbox.classList.remove('js-hidden');
+  lightbox.setAttribute('aria-hidden', 'false');
+  lightboxClose.classList.remove('js-hidden');
+  lightboxImg.src = img.src;
+  lightboxImg.alt = img.alt;
+  document.querySelector('.gallery').classList.add('lightbox-active');
+  // save opener to restore focus when closed
+  lightbox._opener = img;
+      // focus the close button for immediate keyboard access
+      try { lightboxClose.focus(); } catch (e) { lightbox.focus(); }
+      // install focus trap
+      function trapFocus(e) {
+        if (e.key !== 'Tab') return;
+        const focusable = Array.from(lightbox.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+          .filter(el => !el.hasAttribute('disabled') && el.offsetParent !== null);
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+      lightbox._trap = trapFocus;
+      lightbox.addEventListener('keydown', trapFocus);
     });
   });
 
   function closeLightbox() {
-    lightbox.style.display = 'none';
-    lightboxClose.style.display = 'none';
-    lightboxImg.src = '';
-    lightboxImg.alt = '';
-    document.querySelector('.gallery').classList.remove('lightbox-active');
+  lightbox.classList.add('js-hidden');
+  lightbox.setAttribute('aria-hidden', 'true');
+  lightboxClose.classList.add('js-hidden');
+  lightboxImg.src = '';
+  lightboxImg.alt = '';
+  document.querySelector('.gallery').classList.remove('lightbox-active');
+  // restore focus to opener if available
+  try { if (lightbox._opener) lightbox._opener.focus(); } catch (e) {}
+    // remove focus trap
+    try {
+      if (lightbox._trap) lightbox.removeEventListener('keydown', lightbox._trap);
+      delete lightbox._trap;
+    } catch (e) {}
   }
 
   lightboxClose.addEventListener('click', closeLightbox);

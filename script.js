@@ -49,8 +49,33 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   function preloadRange(images, fromIdx, toIdx) {
     for (let i = Math.max(0, fromIdx); i <= Math.min(images.length - 1, toIdx); i++) {
-      preloadImage(images[i]);
+      // Prefer preloading the resized 800px variant when available
+      const src = images[i];
+      if (src) {
+        const m = src.match(/\/([^\/]+)$/);
+        const fname = m ? m[1] : src;
+        const resized800 = `images/resized/800/${fname}`;
+        preloadImage(resized800);
+      }
     }
+  }
+
+  // Build resized srcsets and fallback jpg for a given original path like
+  // "images/project1-2.jpg" -> { jpg800, jpgSrcset, webpSrcset }
+  function buildResizedSrcs(orig) {
+    if (!orig) return { jpg800: '', jpgSrcset: '', webpSrcset: '' };
+    const m = orig.match(/\/([^\/]+)$/);
+    const fname = m ? m[1] : orig;
+    // derive resized paths; handle jpg/jpeg/png
+    const jpg1200 = `images/resized/1200/${fname}`;
+    const jpg800 = `images/resized/800/${fname}`;
+    const jpg400 = `images/resized/400/${fname}`;
+    const webp1200 = jpg1200.replace(/\.(jpe?g|png)$/i, '.webp');
+    const webp800 = jpg800.replace(/\.(jpe?g|png)$/i, '.webp');
+    const webp400 = jpg400.replace(/\.(jpe?g|png)$/i, '.webp');
+    const jpgSrcset = `${jpg1200} 1200w, ${jpg800} 800w, ${jpg400} 400w`;
+    const webpSrcset = `${webp1200} 1200w, ${webp800} 800w, ${webp400} 400w`;
+    return { jpg800, jpgSrcset, webpSrcset };
   }
 
   // Mobile flipbook logic: single page in portrait, double spread in landscape
@@ -304,6 +329,29 @@ document.addEventListener('DOMContentLoaded', function() {
   // initialize lazy loading after a short delay so initial layout isn't blocked
   setTimeout(initLazyLoading, 120);
 
+  // Force-reveal pictures inside a container by copying data-srcset/data-src into real attributes
+  // Useful when dynamic UI (like opening a book) should immediately display images without
+  // waiting for IntersectionObserver.
+  function revealPicturesIn(container) {
+    if (!container) return;
+    const pics = Array.from(container.querySelectorAll('picture[data-lazy]'));
+    pics.forEach(pic => {
+      try {
+        const sources = pic.querySelectorAll('source[data-srcset]');
+        sources.forEach(s => {
+          const ss = s.getAttribute('data-srcset');
+          if (ss) s.srcset = ss;
+        });
+        const img = pic.querySelector('img.lazy');
+        if (img) {
+          const src = img.getAttribute('data-src');
+          if (src) img.src = src;
+          img.classList.add('loaded');
+        }
+      } catch (e) { /* ignore per-image errors */ }
+    });
+  }
+
   // Position fixed arrows vertically centered on the .book element
   function positionFixedArrows() {
     // prefer .book-container (wraps book and controls) so arrows center on the whole flipbook area
@@ -364,19 +412,21 @@ document.addEventListener('DOMContentLoaded', function() {
       // Reset to first spread
       if (window.page !== undefined) window.page = 0;
       if (window.mobilePage !== undefined) window.mobilePage = 0;
-      coverContainer.style.display = 'none';
-      bookContainer.style.display = 'block';
+      // hide cover and show book using class toggles so !important CSS rules work
+      coverContainer.classList.add('js-hidden');
+      if (bookContainer) bookContainer.classList.remove('js-hidden');
       if (window.innerWidth <= 600) {
-        document.querySelector('.book-mobile').style.display = 'block';
-        document.querySelector('.book-page.first-page').style.display = 'none';
-  if (typeof updateMobilePage === "function") updateMobilePage();
-  // ensure arrows are visible
-  addAlwaysVisibleClass();
+        document.querySelector('.book-mobile')?.classList.remove('js-hidden');
+        document.querySelector('.book-page.first-page')?.classList.add('js-hidden');
+        if (typeof updateMobilePage === "function") updateMobilePage();
+        addAlwaysVisibleClass();
       } else {
-        document.querySelector('.book-mobile').style.display = 'none';
-        document.querySelector('.book-page.first-page').style.display = 'block';
-        if (typeof updatePages === "function") updatePages();
-  addAlwaysVisibleClass();
+        document.querySelector('.book-mobile')?.classList.add('js-hidden');
+        document.querySelector('.book-page.first-page')?.classList.remove('js-hidden');
+  // reveal responsive picture sources immediately so the book shows without waiting for IO
+  revealPicturesIn(bookContainer);
+  if (typeof updatePages === "function") updatePages();
+        addAlwaysVisibleClass();
       }
     }
 
@@ -425,7 +475,10 @@ document.addEventListener('DOMContentLoaded', function() {
       "images/project1-32.jpg"
     ];
     if (images.length % 2 !== 0) {
-      images.push("");
+      // Avoid inserting a blank entry which creates a visible empty page.
+      // Duplicate the last image so the final spread shows the same image on both sides.
+      const last = images[images.length - 1] || "";
+      if (last) images.push(last);
     }
 
   // Make page variable global for cover logic
@@ -443,25 +496,53 @@ document.addEventListener('DOMContentLoaded', function() {
     const bookContainer = document.querySelector('.book-container');
 
     function updatePages() {
-  // preload current spread then assign to DOM elements for smoother visuals
-  const leftSrc = images[window.page] || "";
-  const rightSrc = images[window.page + 1] || "";
-  Promise.all([
-    preloadImage(leftSrc).catch(() => null),
-    preloadImage(rightSrc).catch(() => null)
-  ]).then(() => {
-    imgLeft.src = leftSrc;
-    imgRight.src = rightSrc;
-    // mark double-spread on container for styling (arrows contrast)
-    const bc = document.querySelector('.book-container');
-    if (bc) bc.classList.add('double-spread');
-    // preload previous and next spreads for snappier page turns (fire-and-forget)
-    preloadRange(images, window.page - 2, window.page + 3);
-  }).catch(() => {
-    // fallback: assign immediately
-    imgLeft.src = leftSrc;
-    imgRight.src = rightSrc;
-  });
+      // Determine original paths for the current spread
+      const leftOrig = images[window.page] || "";
+      const rightOrig = images[window.page + 1] || "";
+      // Use resized 800px jpg as the primary preload target for speed
+      const leftRes = buildResizedSrcs(leftOrig);
+      const rightRes = buildResizedSrcs(rightOrig);
+      Promise.all([
+        preloadImage(leftRes.jpg800 || leftOrig).catch(() => null),
+        preloadImage(rightRes.jpg800 || rightOrig).catch(() => null)
+      ]).then(() => {
+        // If the current img elements are wrapped in <picture>, populate their <source> srcset
+        try {
+          const leftPic = imgLeft && imgLeft.closest && imgLeft.closest('picture');
+          if (leftPic) {
+            Array.from(leftPic.querySelectorAll('source')).forEach(s => {
+              const t = (s.getAttribute('type') || '').toLowerCase();
+              if (t.indexOf('webp') !== -1) s.srcset = leftRes.webpSrcset || '';
+              else s.srcset = leftRes.jpgSrcset || '';
+            });
+          }
+        } catch (e) { /* ignore */ }
+        try {
+          const rightPic = imgRight && imgRight.closest && imgRight.closest('picture');
+          if (rightPic) {
+            Array.from(rightPic.querySelectorAll('source')).forEach(s => {
+              const t = (s.getAttribute('type') || '').toLowerCase();
+              if (t.indexOf('webp') !== -1) s.srcset = rightRes.webpSrcset || '';
+              else s.srcset = rightRes.jpgSrcset || '';
+            });
+          }
+        } catch (e) { /* ignore */ }
+
+        // Assign the 800px fallback to the <img> so browser chooses best source from srcset
+        if (imgLeft) imgLeft.src = leftRes.jpg800 || leftOrig;
+        if (imgRight) imgRight.src = rightRes.jpg800 || rightOrig;
+
+        // mark double-spread on container for styling (arrows contrast)
+        const bc = document.querySelector('.book-container');
+        if (bc) bc.classList.add('double-spread');
+
+        // preload previous and next spreads for snappier page turns (fire-and-forget)
+        preloadRange(images, window.page - 2, window.page + 3);
+      }).catch(() => {
+        // fallback: assign original paths directly
+        imgLeft.src = leftOrig;
+        imgRight.src = rightOrig;
+      });
     }
 
     // Remove page click navigation for desktop
@@ -469,8 +550,8 @@ document.addEventListener('DOMContentLoaded', function() {
     prevBtn.addEventListener('click', function() {
       // If on first spread, go back to cover
       if (window.page === 0) {
-  bookContainer.style.display = 'none';
-  coverContainer.style.display = 'block';
+  if (bookContainer) bookContainer.classList.add('js-hidden');
+  if (coverContainer) coverContainer.classList.remove('js-hidden');
   // remove double-spread styling when returning to cover
   const bc = document.querySelector('.book-container');
   if (bc) bc.classList.remove('double-spread');
@@ -489,8 +570,8 @@ document.addEventListener('DOMContentLoaded', function() {
       nextBtn.blur();
     });
 
-    // Only initialize book if bookContainer is visible
-    if (bookContainer && bookContainer.style.display !== 'none') {
+    // Only initialize book if bookContainer is visible (we use .js-hidden to toggle)
+    if (bookContainer && !bookContainer.classList.contains('js-hidden')) {
       updatePages();
     }
 
@@ -597,9 +678,9 @@ document.addEventListener('DOMContentLoaded', function() {
           if (window.page === 0) {
             // go back to cover
             var bc = document.querySelector('.book-container');
-            if (bc) bc.style.display = 'none';
+            if (bc) bc.classList.add('js-hidden');
             var cc = document.getElementById('cover-container');
-            if (cc) cc.style.display = 'block';
+            if (cc) cc.classList.remove('js-hidden');
             var bcc = document.querySelector('.book-container'); if (bcc) bcc.classList.remove('double-spread');
           } else {
             window.page = Math.max(0, window.page - 2);
