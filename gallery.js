@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (e.target === lightbox) closeLightbox();
   });
   document.addEventListener('keydown', function(e) {
-    if (lightbox.style.display === 'flex' && (e.key === 'Escape' || e.key === 'Esc')) {
+    if (!lightbox.classList.contains('js-hidden') && (e.key === 'Escape' || e.key === 'Esc')) {
       closeLightbox();
     }
   });

@@ -32,7 +32,9 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
     const im = new Image();
-    try { im.crossOrigin = 'anonymous'; } catch (e) {}
+  // Only set crossOrigin for same-asset policy alignment if element sources used crossorigin in markup
+  // (preloads now declare crossorigin="anonymous")
+  // No crossOrigin needed for same-origin images; remove to avoid credential mode mismatch with preloads.
     _imgCache[src] = im;
     im.src = src;
     return new Promise((resolve, reject) => {
@@ -122,6 +124,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (mobileLandscape) mobileLandscape.style.display = 'none';
         // remove double-spread styling when in portrait
         if (bc) bc.classList.remove('double-spread');
+        // Update next button state in portrait (was missing before)
+        var nextBtnMobileElP = document.getElementById('next-btn-mobile');
+        if (nextBtnMobileElP) {
+          var isMobileLastP = (window.mobilePage >= images.length - 1);
+          nextBtnMobileElP.innerHTML = isMobileLastP ? 'continue to first page &gt;' : '&gt;';
+          nextBtnMobileElP.setAttribute('aria-label', isMobileLastP ? 'Continue to first page' : 'Next page');
+          if (isMobileLastP) nextBtnMobileElP.classList.add('end-loop'); else nextBtnMobileElP.classList.remove('end-loop');
+        }
       } else {
         // Landscape: always show even-left spreads (1+2, 3+4, ...)
         if (imgMobilePortrait) imgMobilePortrait.style.display = 'none';
@@ -140,6 +150,20 @@ document.addEventListener('DOMContentLoaded', function() {
           preloadRange(images, leftIdx - 2, leftIdx + 3);
           // add double-spread styling when showing two pages
           if (bc) bc.classList.add('double-spread');
+              // Update mobile next button label when on final spread
+              var nextBtnMobileEl = document.getElementById('next-btn-mobile');
+              var isMobileLast = false;
+              // In portrait we check single-page end; in landscape check left index
+              if (isPortrait()) {
+                isMobileLast = (window.mobilePage >= images.length - 1);
+              } else {
+                isMobileLast = (leftIdx >= images.length - 2);
+              }
+              if (nextBtnMobileEl) {
+                nextBtnMobileEl.innerHTML = isMobileLast ? 'continue to first page &gt;' : '&gt;';
+                nextBtnMobileEl.setAttribute('aria-label', isMobileLast ? 'Continue to first page' : 'Next page');
+                if (isMobileLast) nextBtnMobileEl.classList.add('end-loop'); else nextBtnMobileEl.classList.remove('end-loop');
+              }
         }
       }
     }
@@ -228,11 +252,11 @@ document.addEventListener('DOMContentLoaded', function() {
     ['prev-btn', 'next-btn', 'prev-btn-mobile', 'next-btn-mobile'].forEach(function(id) {
       const el = document.getElementById(id);
       // skip arrows inside the cover container so the cover arrow isn't fixed mid-screen
-      if (el && !el.closest('#cover-container') && !el.classList.contains('always-visible')) el.classList.add('always-visible');
+  if (el && (!el.closest('#cover-container') || el.id === 'cover-next-btn') && !el.classList.contains('always-visible')) el.classList.add('always-visible');
     });
     // Also mark any .book-arrow elements if needed
     document.querySelectorAll('.book-arrow').forEach(function(b) {
-      if (!b.closest('#cover-container') && !b.classList.contains('always-visible')) b.classList.add('always-visible');
+  if ((!b.closest('#cover-container') || b.id === 'cover-next-btn') && !b.classList.contains('always-visible')) b.classList.add('always-visible');
     });
   }
 
@@ -475,10 +499,11 @@ document.addEventListener('DOMContentLoaded', function() {
       "images/project1-32.jpg"
     ];
     if (images.length % 2 !== 0) {
-      // Avoid inserting a blank entry which creates a visible empty page.
-      // Duplicate the last image so the final spread shows the same image on both sides.
-      const last = images[images.length - 1] || "";
-      if (last) images.push(last);
+      // If there's an odd number of pages, append a blank placeholder instead
+      // of duplicating the last image so the final spread doesn't show the
+      // same photo on both sides. Use the project's blank.jpg which has
+      // resized variants available.
+      images.push('images/blank.jpg');
     }
 
   // Make page variable global for cover logic
@@ -536,6 +561,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const bc = document.querySelector('.book-container');
         if (bc) bc.classList.add('double-spread');
 
+        // Update desktop next button label when on final spread
+        try {
+          var nextBtnEl = document.getElementById('next-btn');
+          var isLastSpread = (window.page >= images.length - 2);
+          if (nextBtnEl) {
+            nextBtnEl.innerHTML = isLastSpread ? 'continue to first page &gt;' : '&gt;';
+            nextBtnEl.setAttribute('aria-label', isLastSpread ? 'Continue to first page' : 'Next page');
+            if (isLastSpread) nextBtnEl.classList.add('end-loop'); else nextBtnEl.classList.remove('end-loop');
+          }
+        } catch (e) { /* ignore */ }
+
         // preload previous and next spreads for snappier page turns (fire-and-forget)
         preloadRange(images, window.page - 2, window.page + 3);
       }).catch(() => {
@@ -565,8 +601,11 @@ document.addEventListener('DOMContentLoaded', function() {
     nextBtn.addEventListener('click', function() {
       if (window.page < images.length - 2) {
         window.page += 2;
-        updatePages();
+      } else {
+        // Loop to the first spread when at the end
+        window.page = 0;
       }
+      updatePages();
       nextBtn.blur();
     });
 
@@ -692,11 +731,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (btn.id === 'next-btn') {
           if (window.page < (Array.isArray(window.__images__) ? window.__images__.length - 2 : 9999)) {
             window.page = Math.min((Array.isArray(window.__images__) ? window.__images__.length - 2 : 9999), window.page + 2);
-            updatePages();
           } else {
-            // fallback just in case
-            window.page += 2; updatePages();
+            // At the end: loop back to the first spread
+            window.page = 0;
           }
+          updatePages();
           try { btn.blur(); } catch (err) {}
           return;
         }

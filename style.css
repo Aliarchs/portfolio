@@ -648,12 +648,13 @@ body.other-page {
 }
 /* Ensure cover controls remain in-flow and centered; prevent JS inline fixed positioning from affecting them */
 #cover-container .book-controls .book-arrow {
-  position: static !important;
+  position: fixed !important; /* same positioning as other arrows */
+  top: 50% !important;
+  right: 0.6rem !important;
   left: auto !important;
-  right: auto !important;
-  top: auto !important;
-  transform: none !important;
-  margin-top: 1rem !important;
+  transform: translateY(-50%) !important;
+  margin: 0 !important;
+  z-index: 10000 !important;
 }
 .book-container {
   display: flex;
@@ -707,6 +708,28 @@ body.other-page {
   align-items: center;
   justify-content: center;
 }
+
+/* Last page / loop button variant: black text, no circle, inherit background */
+/* Important: reset sizing/shape when end-loop state applied */
+.book-controls .book-arrow.end-loop,
+.book-arrow.end-loop {
+  background: transparent !important;
+  color: #000 !important;
+  border: none !important;
+  box-shadow: none !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 .35rem !important;
+  font-weight: 500 !important;
+  font-size: .95rem !important;
+  letter-spacing: .5px;
+  line-height: 1.4;
+}
+.book-arrow.end-loop:hover,
+.book-arrow.end-loop:focus { color: #000 !important; transform: none !important; background: transparent !important; }
 /* Ensure arrows remain clickable and above image content */
 .book-arrow {
   z-index: 10010;
@@ -1178,27 +1201,33 @@ h2, .section-title {
 #next-btn,
 #prev-btn-mobile,
 #next-btn-mobile,
+#cover-next-btn,
 .book-arrow.always-visible {
   position: fixed;
   top: 50%;
   transform: translateY(-50%);
-  width: 2.4rem;
-  height: 2.4rem;
+  width: 2.6rem;
+  height: 2.6rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255,255,255,0.95);
-  border: 1px solid rgba(0,0,0,0.06);
-  border-radius: 0.35rem;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  background: rgba(0,0,0,0.38);
+  border: 1px solid rgba(0,0,0,0.22);
+  border-radius: 50%;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.26);
   z-index: 10000;
   cursor: pointer;
+  color: #fff;
+  font-size: 1rem;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
 }
 
 #prev-btn,
 #prev-btn-mobile { left: 0.6rem; }
 #next-btn,
-#next-btn-mobile { right: 0.6rem; }
+#next-btn-mobile,
+#cover-next-btn { right: 0.6rem; }
 
 /* Slightly smaller on narrow mobile screens */
 @media (max-width: 420px) {
@@ -1206,14 +1235,15 @@ h2, .section-title {
   #next-btn,
   #prev-btn-mobile,
   #next-btn-mobile,
+  #cover-next-btn,
   .book-arrow.always-visible {
-  width: 2.0rem;
-  height: 2.0rem;
+  width: 2.3rem;
+  height: 2.3rem;
   left: 0.4rem;
   right: 0.4rem;
   }
   #prev-btn, #prev-btn-mobile { left: 0.4rem; }
-  #next-btn, #next-btn-mobile { right: 0.4rem; }
+  #next-btn, #next-btn-mobile, #cover-next-btn { right: 0.4rem; }
 }
 
 /* Prevent arrows from overlapping important UI on very small devices by nudging them inward */
@@ -1238,19 +1268,39 @@ h2, .section-title {
 
 /* When a double-spread is active (desktop or mobile landscape), reduce button background opacity
    so arrows contrast against the page spread. Uses a semi-transparent dark overlay (20%). */
+/* When a double-spread is active, increase overlay opacity and padding so
+   the dark background extends fully behind multi-word labels and improves
+   legibility. */
 .book-container.double-spread .book-arrow.always-visible,
 .book-container.double-spread #prev-btn,
 .book-container.double-spread #next-btn,
 .book-container.double-spread #prev-btn-mobile,
-.book-container.double-spread #next-btn-mobile {
-  background: rgba(0,0,0,0.2) !important; /* 20% black */
+.book-container.double-spread #next-btn-mobile,
+.book-container.double-spread #cover-next-btn {
+  background: rgba(0,0,0,0.55) !important; /* slightly stronger than normal but reduced */
   color: #fff !important;
+  padding: 0 1rem !important;
+  border-radius: 2rem !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.35) !important;
 }
 
+/* When double-spread is active, nudge right-side buttons slightly left to
+   avoid clipping at the viewport edge. Left buttons don't need this. */
+/* Removed inward translateX on right-side arrows to keep left/right distances equal */
+/* .book-container.double-spread #next-btn,
+.book-container.double-spread #next-btn-mobile,
+.book-container.double-spread #cover-next-btn {
+  transform: translateY(-50%) translateX(-10px) !important;
+} */
+
 /* Fallback if .book-container isn't present (apply to body) */
-body.double-spread .book-arrow.always-visible {
-  background: rgba(0,0,0,0.2) !important;
+/* Fallback if .book-container isn't present (apply to body) */
+body.double-spread .book-arrow.always-visible,
+body.double-spread #cover-next-btn {
+  background: rgba(0,0,0,0.55) !important;
   color: #fff !important;
+  padding: 0 1rem !important;
+  border-radius: 2rem !important;
 }
 
 /* --- Main Body Font Size (larger everywhere except landing page and header) --- */
