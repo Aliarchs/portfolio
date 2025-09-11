@@ -9,19 +9,46 @@
   <!-- meta theme-color removed for linting -->
   </head>
 <body class="projects-page">
-   </header>
-   <main class="content-page">
-     <h1>Other Projects</h1>
-     <p>Content coming soon. This page acts as a placeholder.</p>
-   </main>
+  <header>
+    <a href="index.html" class="site-name" aria-label="Home">ALI SHABESTARY</a>
+    <nav class="nav-dropdown" role="navigation" aria-label="Main navigation">
+      <a href="projects.html" aria-label="Projects page">Projects</a>
+      <a href="about.html" aria-label="About page">About</a>
+      <a href="contact.html#contact-form" aria-label="Contact page">Contact</a>
+    </nav>
+  </header>
+  <main class="content-page">
+    <h1 class="project-heading">Project 4</h1>
+    
+    <!-- Slideshow -->
+    <div class="slideshow-container" aria-label="Slideshow gallery">
+      <img class="slideshow-image" src="images/resized/1200/blank.jpg" alt="Project 4 Slide 1" tabindex="0">
+      <div class="slideshow-controls" aria-label="Slideshow navigation">
+        <button class="slideshow-arrow" onclick="changeSlide(-1)" aria-label="Previous slide">‹</button>
+        <button class="slideshow-arrow" onclick="changeSlide(1)" aria-label="Next slide">›</button>
+      </div>
+    </div>
+
+    <!-- Gallery -->
+    <div class="gallery mt-3-5" aria-label="Image gallery">
+      <!-- Images will be added when you provide them -->
+      <img src="images/resized/800/blank.jpg" alt="Project 4 placeholder" tabindex="0">
+    </div>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox" onclick="closeLightbox()" aria-label="Image lightbox" aria-hidden="true">
+      <span class="lightbox-close" onclick="closeLightbox()" aria-label="Close lightbox">&times;</span>
+      <img class="lightbox-content" id="lightbox-img" alt="">
+      <div class="lightbox-nav">
+        <button class="lightbox-arrow" onclick="changeLightboxImage(-1)" aria-label="Previous image">‹</button>
+        <button class="lightbox-arrow" onclick="changeLightboxImage(1)" aria-label="Next image">›</button>
+      </div>
+    </div>
+  </main>
    <footer>
      <p class="footer-muted">&copy; 2025 Ali Shabestary. All rights reserved.</p>
    </footer>
-   <script src="script.js"></script>
-  <a href="index.html" class="site-name" aria-label="Home">ALI SHABESTARY</a>
-  <nav class="nav-dropdown" role="navigation" aria-label="Main navigation">
-    <a href="projects.html" aria-label="Projects page">Projects</a>
-    <a href="about.html" aria-label="About page">About</a>
-    <a href="contact.html" aria-label="Contact page">Contact</a>
-  </nav>
-</header>
+  <script src="script.js"></script>
+  <script src="gallery.js"></script>
+</body>
+  </html>

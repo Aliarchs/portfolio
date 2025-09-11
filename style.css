@@ -265,6 +265,9 @@
   --heading-size: 1.7rem;
   --main-heading-size: 2.4rem;
   --gravity-duration: 0.6s;
+  /* Canonical arrow sizing (site-wide) */
+  --arrow-size: 2.6rem;          /* primary diameter to use everywhere */
+  --arrow-font-size: 1rem;       /* chevron glyph size */
 }
 * {
   box-sizing: border-box;
@@ -587,6 +590,8 @@ body.other-page {
   justify-content: flex-start;
   box-sizing: border-box;
 }
+.about-portrait-figure { text-align:center; margin: 0 0 2rem 0; }
+.about-portrait { max-width: 220px; width: 40%; height: auto; border-radius: 0; filter: grayscale(100%); opacity: .92; display: inline-block; }
 .content-page form {
   width: 100%;
   max-width: 500px;
@@ -982,8 +987,9 @@ textarea:focus,
 
 .slideshow-image {
   width: 100%;
-  max-width: 1200px;
-  height: 400px;
+  max-width: 1400px;
+  height: auto;              /* let the image control height for sharpness */
+  max-height: 70vh;          /* prevent overly tall images */
   border-radius: 0;
   box-shadow: none;
   object-fit: contain;
@@ -1102,22 +1108,28 @@ textarea:focus,
   opacity: 0.3;
   pointer-events: none;
 }
+/* Unified arrow look (site-wide): circular dark grey with white chevron and subtle shadow */
 button.slideshow-arrow,
 button.book-arrow {
-  background: none !important;
-  color: #636363 !important;
+  background: rgba(0,0,0,0.55) !important;
+  color: #fff !important;
   border: none !important;
   border-radius: 50% !important;
-  font-size: 1rem !important;
-  width: 2.2rem !important;
-  height: 2.2rem !important;
-  margin: 0 0.35rem !important;
+  font-size: var(--arrow-font-size) !important;
+  width: var(--arrow-size) !important;
+  height: var(--arrow-size) !important;
+  margin: 0 0.45rem !important;
   cursor: url('images/cursor-pointer.svg'), pointer !important;
-  transition: background 0.2s, color 0.2s, transform 0.1s !important;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.1s !important;
   outline: none !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.30) !important;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  font-family: monospace !important;
+  line-height: 1 !important;
 }
 button.slideshow-arrow:hover,
 button.slideshow-arrow:focus,
@@ -1125,9 +1137,9 @@ button.slideshow-arrow:active,
 button.book-arrow:hover,
 button.book-arrow:focus,
 button.book-arrow:active {
-  background: #eee !important;
-  color: #7b7b7b !important;
-  transform: scale(1.04) !important;
+  background: rgba(0,0,0,0.65) !important;
+  color: #fff !important;
+  transform: scale(1.02) !important;
   cursor: url('images/cursor-hover.svg'), pointer !important;
 }
 
@@ -1206,8 +1218,8 @@ h2, .section-title {
   position: fixed;
   top: 50%;
   transform: translateY(-50%);
-  width: 2.6rem;
-  height: 2.6rem;
+  width: var(--arrow-size);
+  height: var(--arrow-size);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1218,7 +1230,7 @@ h2, .section-title {
   z-index: 10000;
   cursor: pointer;
   color: #fff;
-  font-size: 1rem;
+  font-size: var(--arrow-font-size);
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
 }
@@ -1429,3 +1441,26 @@ img.lazy.loaded {
 .half-width-inline { display: inline-block !important; width: 50vw !important; max-width: 50vw !important; }
 .footer-muted { color: #60606060 !important; text-align: center !important; font-size: 0.8em !important; }
 .mt-3-5 { margin-top: 3.5rem !important; }
+
+/* --- Consolidated Mobile Flipbook Rules (override scattered earlier blocks) --- */
+@media (max-width: 900px) {
+  /* Base mobile: hide desktop spread by default; JS will reveal as needed */
+  .book-page.first-page { display: none !important; }
+  .book-mobile { display: block; width: 100vw; max-width: 100vw; margin: 0 auto; }
+  .book-mobile img { width: 100%; height: auto; display:block; }
+}
+@media (max-width: 900px) and (orientation: portrait) {
+  /* Single page portrait */
+  #mobile-landscape { display: none !important; }
+  #img-mobile-portrait { display: block !important; }
+  .book-arrow.always-visible { position: static !important; transform: none !important; top:auto !important; }
+  .book-controls { text-align:center; margin: 0.75rem 0 2rem 0 !important; height:auto !important; }
+}
+@media (max-width: 900px) and (orientation: landscape) {
+  /* Double spread mobile landscape */
+  #mobile-landscape { display:flex !important; }
+  #img-mobile-portrait { display:none !important; }
+  .book-arrow.always-visible { position:fixed !important; top:50% !important; transform: translateY(-50%) !important; }
+}
+/* Force-show utility if cascade conflicts */
+.book-mobile.force-show { display:block !important; visibility:visible !important; opacity:1 !important; }

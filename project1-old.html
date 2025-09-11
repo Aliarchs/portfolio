@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Projects – ALI SHABESTARY</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.png" type="image/png">
+  <!-- Preload cover and first spread for faster initial render -->
+  <link rel="preload" href="images/project1-1.jpg" as="image">
+  <link rel="preload" href="images/project1-2.jpg" as="image">
+</head>
+<body class="projects-page project1-page">
+  <header>
+    <a href="index.html" class="site-name">ALI SHABESTARY</a>
+    <nav class="nav-dropdown">
+      <a href="projects.html">Projects</a>
+      <a href="about.html">About</a>
+  <a href="contact.html#contact-form">Contact</a>
+    </nav>
+  </header>
+  <main>
+  <h1 class="main-title text-center" id="main-title-muted">EXTENDED PORTFOLIO</h1>
+    <!-- Cover container for cover page (desktop only) -->
+  <div id="cover-container">
+    <div class="cover-page">
+  <img id="cover-img" class="lazy" data-src="images/project1-1.jpg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="Portfolio Cover">
+        <div class="book-controls">
+          <button id="cover-next-btn" class="book-arrow" aria-label="Next page">&gt;</button>
+        </div>
+      </div>
+    </div>
+  <!-- Blank page removed: not needed after image swap -->
+    <!-- Book container for flipbook pages -->
+  <div class="book-container js-hidden">
+      <!-- Desktop flipbook (unchanged) -->
+      <div class="book-page first-page">
+        <div class="book">
+          <div class="page left" id="desktop-left">
+            <picture data-lazy>
+              <source data-srcset="images/resized/1200/project1-2.webp 1200w, images/resized/800/project1-2.webp 800w, images/resized/400/project1-2.webp 400w" type="image/webp">
+              <source data-srcset="images/resized/1200/project1-2.jpg 1200w, images/resized/800/project1-2.jpg 800w, images/resized/400/project1-2.jpg 400w" type="image/jpeg">
+              <img id="img-left" class="lazy" data-src="images/resized/800/project1-2.jpg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="Left Page">
+            </picture>
+          </div>
+          <div class="page right" id="desktop-right">
+            <picture data-lazy>
+              <source data-srcset="images/resized/1200/project1-3.webp 1200w, images/resized/800/project1-3.webp 800w, images/resized/400/project1-3.webp 400w" type="image/webp">
+              <source data-srcset="images/resized/1200/project1-3.jpg 1200w, images/resized/800/project1-3.jpg 800w, images/resized/400/project1-3.jpg 400w" type="image/jpeg">
+              <img id="img-right" class="lazy" data-src="images/resized/800/project1-3.jpg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="Right Page">
+            </picture>
+          </div>
+        </div>
+        <div class="book-controls">
+          <button id="prev-btn" class="book-arrow" aria-label="Previous page">&lt;</button>
+          <button id="next-btn" class="book-arrow" aria-label="Next page">&gt;</button>
+        </div>
+      </div>
+      <!-- Mobile flipbook -->
+      <div class="book-mobile">
+        <!-- Portrait: single image -->
+  <picture id="mobile-portrait" data-lazy class="mobile-portrait-pic">
+    <source data-srcset="images/resized/1200/project1-2.webp 1200w, images/resized/800/project1-2.webp 800w, images/resized/400/project1-2.webp 400w" type="image/webp">
+    <source data-srcset="images/resized/1200/project1-2.jpg 1200w, images/resized/800/project1-2.jpg 800w, images/resized/400/project1-2.jpg 400w" type="image/jpeg">
+  <img id="img-mobile-portrait" class="lazy" data-src="images/resized/800/project1-2.jpg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="Mobile Page Portrait">
+  </picture>
+        <!-- Landscape: two images side by side -->
+        <div id="mobile-landscape" class="mobile-landscape">
+          <picture data-lazy class="half-width-inline">
+            <source data-srcset="images/resized/1200/project1-2.webp 1200w, images/resized/800/project1-2.webp 800w, images/resized/400/project1-2.webp 400w" type="image/webp">
+            <source data-srcset="images/resized/1200/project1-2.jpg 1200w, images/resized/800/project1-2.jpg 800w, images/resized/400/project1-2.jpg 400w" type="image/jpeg">
+            <img id="img-mobile-left" class="lazy" data-src="images/resized/800/project1-2.jpg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="Mobile Left Page">
+          </picture>
+          <picture data-lazy class="half-width-inline">
+            <source data-srcset="images/resized/1200/project1-3.webp 1200w, images/resized/800/project1-3.webp 800w, images/resized/400/project1-3.webp 400w" type="image/webp">
+            <source data-srcset="images/resized/1200/project1-3.jpg 1200w, images/resized/800/project1-3.jpg 800w, images/resized/400/project1-3.jpg 400w" type="image/jpeg">
+            <img id="img-mobile-right" class="lazy" data-src="images/resized/800/project1-3.jpg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="Mobile Right Page">
+          </picture>
+        </div>
+        <div class="book-controls">
+          <button id="prev-btn-mobile" class="book-arrow" aria-label="Previous page">&lt;</button>
+          <button id="next-btn-mobile" class="book-arrow" aria-label="Next page">&gt;</button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer>
+  <p class="text-center">Use arrows to navigate</p>
+  <p class="text-center">turn mobile device Landscape to view as double pages</p>
+  <p class="mb-5rem">&nbsp;</p>
+  <p class="footer-muted">&copy; 2025 Ali Shabestary. All rights reserved.</p>
+  </footer>
+  <script src="script.js"></script>
+</body>
+</html>

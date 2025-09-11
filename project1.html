@@ -3,93 +3,341 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Projects – ALI SHABESTARY</title>
+  <title>Extended Portfolio – ALI SHABESTARY</title>
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="favicon.png" type="image/png">
-  <!-- Preload cover and first spread for faster initial render -->
-  <link rel="preload" href="images/project1-1.jpg" as="image">
-  <link rel="preload" href="images/project1-2.jpg" as="image">
+  <style>
+    /* Extended Portfolio scroll-snap styles */
+    .portfolio-container {
+      height: 100vh;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      display: flex;
+      scroll-behavior: smooth;
+    }
+    .portfolio-page {
+      min-width: 100vw;
+      height: 100vh;
+      scroll-snap-align: start;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: var(--bg-color);
+    }
+    .portfolio-nav {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 1000;
+      width: var(--arrow-size);
+      height: var(--arrow-size);
+      background: rgba(0,0,0,0.55);
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      font-size: var(--arrow-font-size);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.30);
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
+      transition: background 0.18s ease, transform 0.1s;
+      font-family: monospace;
+      line-height: 1;
+    }
+    .portfolio-nav.prev { left: 2rem; }
+    .portfolio-nav.next { right: 2rem; }
+    .portfolio-nav.hidden { display: none; }
+    
+    .end-label {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--text-color);
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+    
+    /* Portfolio page layouts */
+    .portfolio-cover, .portfolio-spread {
+      min-width: 100vw;
+      height: 100vh;
+      scroll-snap-align: start;
+      display: flex;
+      align-items: center;
+      justify-content: center; /* center 90vw content */
+      position: relative;
+      background: var(--bg-color);
+    }
+    
+    .portfolio-cover img {
+      max-height: 90vh;
+      max-width: 90vw;
+      object-fit: contain;
+    }
+    
+    .portfolio-spread {
+      gap: 0; /* No gap - pages touch in the middle */
+    }
+
+    /* Non-scaled soft shadow behind the spread (exactly image area) */
+  .spread-shadow {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+  width: 90vw; /* match two pages (45vw + 45vw) */
+      height: var(--spread-img-height, 90vh); /* match image height */
+      pointer-events: none;
+      z-index: 1; /* behind images and spine overlays */
+      border-radius: 2px;
+      box-shadow:
+        0 18px 72px rgba(0,0,0,0.12),
+        0 6px 32px rgba(0,0,0,0.08);
+    }
+    
+    /* Side halo with hard top/bottom cutoff */
+  .portfolio-spread::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+  width: clamp(50px, 5.5vw, 200px); /* scaled to 90vw content */
+      height: var(--spread-img-height, 90vh); /* match image area (hard vertical cutoff) */
+      pointer-events: none;
+      z-index: 9;
+      /* two-layer halo: broad subtle base + existing medium halo */
+      background:
+        linear-gradient(to right,
+          rgba(0,0,0,0) 0%,
+          rgba(0,0,0,0.025) 20%,
+          rgba(0,0,0,0.05) 50%,
+          rgba(0,0,0,0.025) 80%,
+          rgba(0,0,0,0) 100%),
+        linear-gradient(to right,
+          rgba(0,0,0,0) 0%,
+          rgba(0,0,0,0.06) 35%,
+          rgba(0,0,0,0.12) 50%,
+          rgba(0,0,0,0.06) 65%,
+          rgba(0,0,0,0) 100%);
+    }
+
+    /* Narrow middle line with subtle vertical softening only here */
+  .portfolio-spread::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+  width: clamp(4px, 0.6vw, 12px); /* subtler, narrower center line */
+      height: var(--spread-img-height, 90vh);
+      pointer-events: none;
+      z-index: 10;
+      background: linear-gradient(to right,
+        rgba(0,0,0,0) 0%,
+        rgba(0,0,0,0.08) 50%,
+        rgba(0,0,0,0) 100%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 6%, black 94%, transparent 100%);
+      mask-image: linear-gradient(to bottom, transparent 0%, black 6%, black 94%, transparent 100%);
+    }
+    
+    .portfolio-spread img {
+      max-height: 90vh;
+      width: 45vw; /* two pages = 90vw total */
+      object-fit: contain;
+    }
+  </style>
 </head>
-<body class="projects-page project1-page">
-  <header>
-    <a href="index.html" class="site-name">ALI SHABESTARY</a>
-    <nav class="nav-dropdown">
-      <a href="projects.html">Projects</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
-    </nav>
-  </header>
-  <main>
-  <h1 class="main-title text-center" id="main-title-muted">EXTENDED PORTFOLIO</h1>
-    <!-- Cover container for cover page (desktop only) -->
-  <div id="cover-container">
-    <div class="cover-page">
-  <img id="cover-img" class="lazy" data-src="images/project1-1.jpg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="Portfolio Cover">
-        <div class="book-controls">
-          <button id="cover-next-btn" class="book-arrow" aria-label="Next page">&gt;</button>
-        </div>
-      </div>
+<body>
+  <div class="portfolio-container" id="portfolioContainer">
+    
+    <!-- Cover Page (stands alone) -->
+    <div class="portfolio-cover">
+      <img src="images/resized/1200/project1-1.jpg" alt="Architecture Portfolio Cover" loading="eager">
     </div>
-  <!-- Blank page removed: not needed after image swap -->
-    <!-- Book container for flipbook pages -->
-  <div class="book-container js-hidden">
-      <!-- Desktop flipbook (unchanged) -->
-      <div class="book-page first-page">
-        <div class="book">
-          <div class="page left" id="desktop-left">
-            <picture data-lazy>
-              <source data-srcset="images/resized/1200/project1-2.webp 1200w, images/resized/800/project1-2.webp 800w, images/resized/400/project1-2.webp 400w" type="image/webp">
-              <source data-srcset="images/resized/1200/project1-2.jpg 1200w, images/resized/800/project1-2.jpg 800w, images/resized/400/project1-2.jpg 400w" type="image/jpeg">
-              <img id="img-left" class="lazy" data-src="images/resized/800/project1-2.jpg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="Left Page">
-            </picture>
-          </div>
-          <div class="page right" id="desktop-right">
-            <picture data-lazy>
-              <source data-srcset="images/resized/1200/project1-3.webp 1200w, images/resized/800/project1-3.webp 800w, images/resized/400/project1-3.webp 400w" type="image/webp">
-              <source data-srcset="images/resized/1200/project1-3.jpg 1200w, images/resized/800/project1-3.jpg 800w, images/resized/400/project1-3.jpg 400w" type="image/jpeg">
-              <img id="img-right" class="lazy" data-src="images/resized/800/project1-3.jpg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="Right Page">
-            </picture>
-          </div>
-        </div>
-        <div class="book-controls">
-          <button id="prev-btn" class="book-arrow" aria-label="Previous page">&lt;</button>
-          <button id="next-btn" class="book-arrow" aria-label="Next page">&gt;</button>
-        </div>
-      </div>
-      <!-- Mobile flipbook -->
-      <div class="book-mobile">
-        <!-- Portrait: single image -->
-  <picture id="mobile-portrait" data-lazy class="mobile-portrait-pic">
-    <source data-srcset="images/resized/1200/project1-2.webp 1200w, images/resized/800/project1-2.webp 800w, images/resized/400/project1-2.webp 400w" type="image/webp">
-    <source data-srcset="images/resized/1200/project1-2.jpg 1200w, images/resized/800/project1-2.jpg 800w, images/resized/400/project1-2.jpg 400w" type="image/jpeg">
-  <img id="img-mobile-portrait" class="lazy" data-src="images/resized/800/project1-2.jpg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="Mobile Page Portrait">
-  </picture>
-        <!-- Landscape: two images side by side -->
-        <div id="mobile-landscape" class="mobile-landscape">
-          <picture data-lazy class="half-width-inline">
-            <source data-srcset="images/resized/1200/project1-2.webp 1200w, images/resized/800/project1-2.webp 800w, images/resized/400/project1-2.webp 400w" type="image/webp">
-            <source data-srcset="images/resized/1200/project1-2.jpg 1200w, images/resized/800/project1-2.jpg 800w, images/resized/400/project1-2.jpg 400w" type="image/jpeg">
-            <img id="img-mobile-left" class="lazy" data-src="images/resized/800/project1-2.jpg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="Mobile Left Page">
-          </picture>
-          <picture data-lazy class="half-width-inline">
-            <source data-srcset="images/resized/1200/project1-3.webp 1200w, images/resized/800/project1-3.webp 800w, images/resized/400/project1-3.webp 400w" type="image/webp">
-            <source data-srcset="images/resized/1200/project1-3.jpg 1200w, images/resized/800/project1-3.jpg 800w, images/resized/400/project1-3.jpg 400w" type="image/jpeg">
-            <img id="img-mobile-right" class="lazy" data-src="images/resized/800/project1-3.jpg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="Mobile Right Page">
-          </picture>
-        </div>
-        <div class="book-controls">
-          <button id="prev-btn-mobile" class="book-arrow" aria-label="Previous page">&lt;</button>
-          <button id="next-btn-mobile" class="book-arrow" aria-label="Next page">&gt;</button>
-        </div>
-      </div>
+    
+    <!-- Spread 1: Pages 2-3 -->
+    <div class="portfolio-spread">
+      <img src="images/resized/1200/project1-2.jpg" alt="Portfolio Page 2" loading="lazy">
+      <img src="images/resized/1200/project1-3.jpg" alt="Portfolio Page 3" loading="lazy">
     </div>
-  </main>
-  <footer>
-  <p class="text-center">Use arrows to navigate</p>
-  <p class="text-center">turn mobile device Landscape to view as double pages</p>
-  <p class="mb-5rem">&nbsp;</p>
-  <p class="footer-muted">&copy; 2025 Ali Shabestary. All rights reserved.</p>
-  </footer>
-  <script src="script.js"></script>
+    
+    <!-- Spread 2: Pages 4-5 -->
+    <div class="portfolio-spread">
+      <img src="images/resized/1200/project1-4.jpg" alt="Portfolio Page 4" loading="lazy">
+      <img src="images/resized/1200/project1-5.jpg" alt="Portfolio Page 5" loading="lazy">
+    </div>
+    
+    <!-- Spread 3: Pages 6-7 -->
+    <div class="portfolio-spread">
+      <img src="images/resized/1200/project1-6.jpg" alt="Portfolio Page 6" loading="lazy">
+      <img src="images/resized/1200/project1-7.jpg" alt="Portfolio Page 7" loading="lazy">
+    </div>
+    
+    <!-- Spread 4: Pages 8-9 -->
+    <div class="portfolio-spread">
+      <img src="images/resized/1200/project1-8.jpg" alt="Portfolio Page 8" loading="lazy">
+      <img src="images/resized/1200/project1-9.jpg" alt="Portfolio Page 9" loading="lazy">
+    </div>
+    
+    <!-- Spread 5: Pages 10-11 -->
+    <div class="portfolio-spread">
+      <img src="images/resized/1200/project1-10.jpg" alt="Portfolio Page 10" loading="lazy">
+      <img src="images/resized/1200/project1-11.jpg" alt="Portfolio Page 11" loading="lazy">
+    </div>
+    
+    <!-- Spread 6: Pages 12-13 -->
+    <div class="portfolio-spread">
+      <img src="images/resized/1200/project1-12.jpg" alt="Portfolio Page 12" loading="lazy">
+      <img src="images/resized/1200/project1-13.jpg" alt="Portfolio Page 13" loading="lazy">
+    </div>
+    
+    <!-- Spread 7: Pages 14-15 -->
+    <div class="portfolio-spread">
+      <img src="images/resized/1200/project1-14.jpg" alt="Portfolio Page 14" loading="lazy">
+      <img src="images/resized/1200/project1-15.jpg" alt="Portfolio Page 15" loading="lazy">
+    </div>
+    
+    <!-- Spread 8: Pages 16-17 -->
+    <div class="portfolio-spread">
+      <img src="images/resized/1200/project1-16.jpg" alt="Portfolio Page 16" loading="lazy">
+      <img src="images/resized/1200/project1-17.jpg" alt="Portfolio Page 17" loading="lazy">
+    </div>
+    
+    <!-- Spread 9: Pages 18-19 -->
+    <div class="portfolio-spread">
+      <img src="images/resized/1200/project1-18.jpg" alt="Portfolio Page 18" loading="lazy">
+      <img src="images/resized/1200/project1-19.jpg" alt="Portfolio Page 19" loading="lazy">
+    </div>
+    
+    <!-- Spread 10: Pages 20-21 -->
+    <div class="portfolio-spread">
+      <img src="images/resized/1200/project1-20.jpg" alt="Portfolio Page 20" loading="lazy">
+      <img src="images/resized/1200/project1-21.jpg" alt="Portfolio Page 21" loading="lazy">
+    </div>
+    
+    <!-- Spread 11: Pages 22-23 -->
+    <div class="portfolio-spread">
+      <img src="images/resized/1200/project1-22.jpg" alt="Portfolio Page 22" loading="lazy">
+      <img src="images/resized/1200/project1-23.jpg" alt="Portfolio Page 23" loading="lazy">
+    </div>
+    
+    <!-- Spread 12: Pages 24-25 -->
+    <div class="portfolio-spread">
+      <img src="images/resized/1200/project1-24.jpg" alt="Portfolio Page 24" loading="lazy">
+      <img src="images/resized/1200/project1-25.jpg" alt="Portfolio Page 25" loading="lazy">
+    </div>
+    
+    <!-- Spread 13: Pages 26-27 -->
+    <div class="portfolio-spread">
+      <img src="images/resized/1200/project1-26.jpg" alt="Portfolio Page 26" loading="lazy">
+      <img src="images/resized/1200/project1-27.jpg" alt="Portfolio Page 27" loading="lazy">
+    </div>
+    
+    <!-- Spread 14: Pages 28-29 -->
+    <div class="portfolio-spread">
+      <img src="images/resized/1200/project1-28.jpg" alt="Portfolio Page 28" loading="lazy">
+      <img src="images/resized/1200/project1-29.jpg" alt="Portfolio Page 29" loading="lazy">
+    </div>
+    
+    <!-- Spread 15: Pages 30-31 -->
+    <div class="portfolio-spread">
+      <img src="images/resized/1200/project1-30.jpg" alt="Portfolio Page 30" loading="lazy">
+      <img src="images/resized/1200/project1-31.jpg" alt="Portfolio Page 31" loading="lazy">
+    </div>
+    
+    <!-- Final Spread: Pages 32-33 -->
+    <div class="portfolio-spread">
+      <img src="images/resized/1200/project1-32.jpg" alt="Portfolio Page 32" loading="lazy">
+      <img src="images/resized/1200/project1-33.jpg" alt="Portfolio Back Cover" loading="lazy">
+      <div class="end-label">continue to first page</div>
+    </div>
+  </div>
+
+  <!-- Navigation arrows -->
+  <button class="portfolio-nav prev" id="prevBtn" aria-label="Previous page">‹</button>
+  <button class="portfolio-nav next" id="nextBtn" aria-label="Next page">›</button>
+
+  <script>
+    const container = document.getElementById('portfolioContainer');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    
+    const pages = document.querySelectorAll('.portfolio-cover, .portfolio-spread');
+    
+    let currentPage = 0;
+    const totalPages = pages.length;
+
+    function updateNavigation() {
+      prevBtn.classList.toggle('hidden', currentPage === 0);
+      nextBtn.classList.remove('hidden');
+    }
+
+    function scrollToPage(pageIndex) {
+      if (pageIndex < 0) pageIndex = 0;
+      if (pageIndex >= totalPages) pageIndex = 0; // Loop back to first page
+      
+      currentPage = pageIndex;
+      const targetScroll = currentPage * window.innerWidth;
+      container.scrollTo({ left: targetScroll, behavior: 'smooth' });
+      updateNavigation();
+    }
+
+    prevBtn.addEventListener('click', () => scrollToPage(currentPage - 1));
+    nextBtn.addEventListener('click', () => scrollToPage(currentPage + 1));
+
+    // Track scroll position to update current page
+    container.addEventListener('scroll', () => {
+      const scrollLeft = container.scrollLeft;
+      const newPage = Math.round(scrollLeft / window.innerWidth);
+      if (newPage !== currentPage) {
+        currentPage = newPage;
+        updateNavigation();
+      }
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') scrollToPage(currentPage - 1);
+      if (e.key === 'ArrowRight') scrollToPage(currentPage + 1);
+    });
+
+    // Set gradient height to match images within each spread
+    function updateSpreadHeights() {
+      document.querySelectorAll('.portfolio-spread').forEach(spread => {
+        const imgs = Array.from(spread.querySelectorAll('img'));
+        if (imgs.length === 0) return;
+        const heights = imgs.map(img => img.clientHeight).filter(h => h > 0);
+        const maxH = heights.length ? Math.max(...heights) : 0;
+        if (maxH > 0) {
+          spread.style.setProperty('--spread-img-height', `${maxH}px`);
+        }
+      });
+    }
+
+    // Recalculate when images load and on resize
+    window.addEventListener('load', () => {
+      updateSpreadHeights();
+      // Insert a non-scaled shadow to match the spread image area
+      document.querySelectorAll('.portfolio-spread').forEach(spread => {
+        if (!spread.querySelector('.spread-shadow')) {
+          const shadow = document.createElement('div');
+          shadow.className = 'spread-shadow';
+          spread.insertBefore(shadow, spread.firstChild);
+        }
+      });
+      updateNavigation();
+    });
+    window.addEventListener('resize', updateSpreadHeights);
+    document.querySelectorAll('.portfolio-spread img').forEach(img => {
+      img.addEventListener('load', updateSpreadHeights, { once: true });
+    });
+  </script>
 </body>
 </html>

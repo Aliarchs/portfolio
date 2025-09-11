@@ -1,5 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
 
+  // --- Unified mobile sizing/orientation thresholds ---
+  const MOBILE_MAX_WIDTH = 900; // broaden support for larger phones/phablets
+  function isPortraitGlobal() { return window.innerHeight > window.innerWidth; }
+  function isMobileModeGlobal() { return window.innerWidth <= MOBILE_MAX_WIDTH; }
+
   // Helper to detect mobile
   function isMobile() {
     return window.innerWidth <= 600;
@@ -101,17 +106,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const coverContainer = document.getElementById('cover-container');
     const bookContainer = document.querySelector('.book-container');
 
-    function isPortrait() {
-      return window.matchMedia('(orientation: portrait)').matches;
-    }
+  function isPortrait() { return isPortraitGlobal(); }
+  function isMobileMode() { return isMobileModeGlobal(); }
 
     function updateMobilePage() {
+      // Only run mobile logic when in mobile width range
+      if (!isMobileMode()) return;
       const portrait = isPortrait();
       const bc = document.querySelector('.book-container');
       if (portrait) {
         // Portrait: show single image
         if (imgMobilePortrait) {
           imgMobilePortrait.style.display = 'block';
+          // Force-load first image if still a placeholder (lazy may have deferred)
+          if (imgMobilePortrait.getAttribute('data-src') && (!imgMobilePortrait.src || imgMobilePortrait.src.indexOf('data:image/svg') === 0)) {
+            imgMobilePortrait.src = images[window.mobilePage];
+            imgMobilePortrait.classList.remove('lazy');
+          }
           if (window.mobilePage < 0) window.mobilePage = 0;
           if (window.mobilePage > images.length - 1) window.mobilePage = images.length - 1;
           const src = images[window.mobilePage];
@@ -168,6 +179,11 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 
+  // Expose for outside access (cover showBook, delegated handlers)
+  window.updateMobilePage = updateMobilePage;
+  window.goPrev = goPrev;
+  window.goNext = goNext;
+
     // Navigation logic (arrow buttons below)
     function goPrev() {
       if (isPortrait()) {
@@ -179,23 +195,20 @@ document.addEventListener('DOMContentLoaded', function() {
       if (prevBtnMobile) prevBtnMobile.blur();
     }
     function goNext() {
+      const maxSingle = images.length - 1; // last index
       if (isPortrait()) {
-        window.mobilePage = Math.min(31, window.mobilePage + 1);
+        window.mobilePage = Math.min(maxSingle, window.mobilePage + 1);
       } else {
-        window.mobilePage = Math.min(30, window.mobilePage + 2);
+        // landscape uses spreads (advance 2 pages)
+        const maxLeftIdx = (images.length % 2 === 0) ? images.length - 2 : images.length - 3; // ensure left page exists
+        window.mobilePage = Math.min(maxLeftIdx, window.mobilePage + 2);
       }
       updateMobilePage();
       if (nextBtnMobile) nextBtnMobile.blur();
     }
 
-    if (prevBtnMobile) prevBtnMobile.onclick = function(e) {
-      if (Date.now() - (window.lastMobileTouch || 0) < 700) return;
-      goPrev();
-    };
-    if (nextBtnMobile) nextBtnMobile.onclick = function(e) {
-      if (Date.now() - (window.lastMobileTouch || 0) < 700) return;
-      goNext();
-    };
+  if (prevBtnMobile) prevBtnMobile.onclick = function() { goPrev(); };
+  if (nextBtnMobile) nextBtnMobile.onclick = function() { goNext(); };
     // Also listen for touchend to ensure taps trigger navigation on devices that don't emit click reliably
   // touchend handlers were removed here to avoid duplicate navigation events.
   // We rely on the primary `onclick` handlers above and a single, dedicated
@@ -227,6 +240,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initial update
     updateMobilePage();
+
+  // Expose functions globally so cover logic + delegated handlers can access them
+  window.updateMobilePage = updateMobilePage;
+  window.goPrev = goPrev;
+  window.goNext = goNext;
 
     // Listen for orientation change to update layout and force correct display
     window.addEventListener('orientationchange', function() {
@@ -439,10 +457,26 @@ document.addEventListener('DOMContentLoaded', function() {
       // hide cover and show book using class toggles so !important CSS rules work
       coverContainer.classList.add('js-hidden');
       if (bookContainer) bookContainer.classList.remove('js-hidden');
-      if (window.innerWidth <= 600) {
+  if (isMobileModeGlobal()) {
         document.querySelector('.book-mobile')?.classList.remove('js-hidden');
         document.querySelector('.book-page.first-page')?.classList.add('js-hidden');
-        if (typeof updateMobilePage === "function") updateMobilePage();
+        // Ensure mobile flipbook single page renders immediately in portrait
+        if (typeof window.updateMobilePage === 'function') window.updateMobilePage();
+        // Force lazy images inside mobile container to load (so first page isn't blank)
+        const mobileContainer = document.querySelector('.book-mobile');
+        if (mobileContainer) {
+          try { revealPicturesIn(mobileContainer); } catch(_) {}
+          // Fallback: ensure portrait image element is visible
+          const mp = document.getElementById('img-mobile-portrait');
+          if (mp) { mp.style.display = 'block'; }
+          // Force mobile book visible
+          const bmEl = document.querySelector('.book-mobile');
+          if (bmEl) {
+            bmEl.style.display = 'block';
+            bmEl.style.visibility = 'visible';
+            bmEl.style.opacity = '1';
+          }
+        }
         addAlwaysVisibleClass();
       } else {
         document.querySelector('.book-mobile')?.classList.add('js-hidden');
@@ -694,17 +728,11 @@ document.addEventListener('DOMContentLoaded', function() {
   document.addEventListener('click', function(e) {
     var btn = e.target.closest && e.target.closest('.book-arrow');
     if (!btn) return;
-    // prevent duplicate handling
-    e.stopPropagation();
-    e.preventDefault();
-    // mobile handlers
-    if (btn.id === 'prev-btn-mobile' || btn.id === 'next-btn-mobile') {
-      if (typeof goPrev === 'function' && typeof goNext === 'function') {
-        if (btn.id === 'prev-btn-mobile') goPrev(); else goNext();
-        try { btn.blur(); } catch (err) {}
-        return;
-      }
-    }
+    // Ignore mobile buttons here to avoid double increment; their own onclick handles navigation
+    if (btn.id === 'prev-btn-mobile' || btn.id === 'next-btn-mobile') return;
+  // prevent duplicate handling for desktop/cover
+  e.stopPropagation();
+  e.preventDefault();
     // desktop handlers
     if (btn.id === 'prev-btn' || btn.id === 'next-btn' || btn.id === 'cover-next-btn' || btn.id === 'cover-next-btn') {
       // cover-next behaves like next: open book

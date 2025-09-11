@@ -1,120 +1,131 @@
 document.addEventListener('DOMContentLoaded', function() {
-  // Slideshow logic
-  const slideshowImages = [
-    "images/project2-1.png",
-    "images/project2-2.png",
-    "images/project2-3.png"
-    // Add more images as needed
-  ];
-  let slideIndex = 0;
+  // Get current page context to determine which images to use
+  const isProject2 = window.location.pathname.includes('project2');
+  const isProject3 = window.location.pathname.includes('project3');
+  const isProject4 = window.location.pathname.includes('project4');
+  const isProject5 = window.location.pathname.includes('project5');
+  
+  // Define image sets per project
+  let slideshowImages = [];
+  let projectName = '';
+  
+  if (isProject2) {
+    slideshowImages = [
+      "images/resized/1200/project2-1.png",
+      "images/resized/1200/project2-2.png",
+      "images/resized/1200/project2-3.png"
+    ];
+    projectName = 'Project 2';
+  } else if (isProject3) {
+    slideshowImages = [
+      "images/resized/1200/blank.jpg"  // Placeholder until you add real images
+    ];
+    projectName = 'Project 3';
+  } else if (isProject4) {
+    slideshowImages = [
+      "images/resized/1200/blank.jpg"  // Placeholder until you add real images
+    ];
+    projectName = 'Project 4';
+  } else if (isProject5) {
+    slideshowImages = [
+      "images/resized/1200/blank.jpg"  // Placeholder until you add real images
+    ];
+    projectName = 'Project 5';
+  }
+
+  // Only initialize slideshow if we have images and slideshow container
   const slideshowImg = document.querySelector('.slideshow-image');
-  const prevBtn = document.querySelector('.slideshow-arrow.prev');
-  const nextBtn = document.querySelector('.slideshow-arrow.next');
+  if (slideshowImg && slideshowImages.length > 0) {
+    let slideIndex = 0;
+    function showSlide(idx) {
+      slideIndex = (idx + slideshowImages.length) % slideshowImages.length;
+      slideshowImg.src = slideshowImages[slideIndex];
+      slideshowImg.alt = projectName + " Slide " + (slideIndex + 1);
+    }
 
-  function showSlide(idx) {
-    slideIndex = (idx + slideshowImages.length) % slideshowImages.length;
-    slideshowImg.src = slideshowImages[slideIndex];
-    slideshowImg.alt = "Project 2 Slide " + (slideIndex + 1);
+    function nextSlide() {
+      if (slideshowImages.length > 1) showSlide(slideIndex + 1);
+    }
+
+    function prevSlide() {
+      if (slideshowImages.length > 1) showSlide(slideIndex - 1);
+    }
+
+    // Global functions for onclick handlers
+    window.changeSlide = function(direction) {
+      if (direction > 0) nextSlide();
+      else prevSlide();
+      if (resetTimer) resetTimer();
+    };
+
+    // Auto-advance only if multiple images
+    let slideshowTimer;
+    if (slideshowImages.length > 1) {
+      slideshowTimer = setInterval(nextSlide, 7000);
+    }
+
+    function resetTimer() {
+      if (slideshowTimer) {
+        clearInterval(slideshowTimer);
+        if (slideshowImages.length > 1) {
+          slideshowTimer = setInterval(nextSlide, 7000);
+        }
+      }
+    }
+
+    showSlide(0);
   }
-
-  function nextSlide() {
-    showSlide(slideIndex + 1);
-  }
-
-  function prevSlide() {
-    showSlide(slideIndex - 1);
-  }
-
-  prevBtn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    prevSlide();
-    resetTimer();
-    prevBtn.blur(); // Remove focus after click
-  });
-  nextBtn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    nextSlide();
-    resetTimer();
-    nextBtn.blur(); // Remove focus after click
-  });
-
-  // Auto-advance every 7 seconds
-  let slideshowTimer = setInterval(nextSlide, 7000);
-
-  function resetTimer() {
-    clearInterval(slideshowTimer);
-    slideshowTimer = setInterval(nextSlide, 7000);
-  }
-
-  showSlide(0);
 
   // Lightbox logic for gallery
   const galleryImgs = document.querySelectorAll('.gallery img');
   const lightbox = document.getElementById('lightbox');
-  const lightboxImg = document.querySelector('.lightbox-img');
+  const lightboxImg = document.getElementById('lightbox-img');
   const lightboxClose = document.querySelector('.lightbox-close');
 
-  galleryImgs.forEach(img => {
-    img.addEventListener('click', () => {
-  // open lightbox: use classes to avoid inline styles and manage aria
-  lightbox.classList.remove('js-hidden');
-  lightbox.setAttribute('aria-hidden', 'false');
-  lightboxClose.classList.remove('js-hidden');
-  lightboxImg.src = img.src;
-  lightboxImg.alt = img.alt;
-  document.querySelector('.gallery').classList.add('lightbox-active');
-  // save opener to restore focus when closed
-  lightbox._opener = img;
-      // focus the close button for immediate keyboard access
-      try { lightboxClose.focus(); } catch (e) { lightbox.focus(); }
-      // install focus trap
-      function trapFocus(e) {
-        if (e.key !== 'Tab') return;
-        const focusable = Array.from(lightbox.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
-          .filter(el => !el.hasAttribute('disabled') && el.offsetParent !== null);
-        if (focusable.length === 0) return;
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-        if (e.shiftKey) {
-          if (document.activeElement === first) {
-            e.preventDefault();
-            last.focus();
-          }
-        } else {
-          if (document.activeElement === last) {
-            e.preventDefault();
-            first.focus();
-          }
-        }
-      }
-      lightbox._trap = trapFocus;
-      lightbox.addEventListener('keydown', trapFocus);
+  if (lightbox && lightboxImg && lightboxClose) {
+    galleryImgs.forEach(img => {
+      img.addEventListener('click', () => {
+        // Open lightbox
+        lightbox.style.display = 'flex';
+        lightbox.setAttribute('aria-hidden', 'false');
+        lightboxImg.src = img.src;
+        lightboxImg.alt = img.alt;
+        // Save opener to restore focus when closed
+        lightbox._opener = img;
+        // Focus the close button for immediate keyboard access
+        try { lightboxClose.focus(); } catch (e) { lightbox.focus(); }
+      });
     });
-  });
 
-  function closeLightbox() {
-  lightbox.classList.add('js-hidden');
-  lightbox.setAttribute('aria-hidden', 'true');
-  lightboxClose.classList.add('js-hidden');
-  lightboxImg.src = '';
-  lightboxImg.alt = '';
-  document.querySelector('.gallery').classList.remove('lightbox-active');
-  // restore focus to opener if available
-  try { if (lightbox._opener) lightbox._opener.focus(); } catch (e) {}
-    // remove focus trap
-    try {
-      if (lightbox._trap) lightbox.removeEventListener('keydown', lightbox._trap);
-      delete lightbox._trap;
-    } catch (e) {}
+    // Global function for lightbox navigation
+    window.changeLightboxImage = function(direction) {
+      const currentSrc = lightboxImg.src;
+      const currentIndex = Array.from(galleryImgs).findIndex(img => img.src === currentSrc);
+      if (currentIndex !== -1) {
+        const newIndex = (currentIndex + direction + galleryImgs.length) % galleryImgs.length;
+        const newImg = galleryImgs[newIndex];
+        lightboxImg.src = newImg.src;
+        lightboxImg.alt = newImg.alt;
+      }
+    };
+
+    window.closeLightbox = function() {
+      lightbox.style.display = 'none';
+      lightbox.setAttribute('aria-hidden', 'true');
+      lightboxImg.src = '';
+      lightboxImg.alt = '';
+      // Restore focus to opener if available
+      try { if (lightbox._opener) lightbox._opener.focus(); } catch (e) {}
+    };
+
+    lightboxClose.addEventListener('click', window.closeLightbox);
+    lightbox.addEventListener('click', function(e) {
+      if (e.target === lightbox) window.closeLightbox();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (lightbox.style.display === 'flex' && (e.key === 'Escape' || e.key === 'Esc')) {
+        window.closeLightbox();
+      }
+    });
   }
-
-  lightboxClose.addEventListener('click', closeLightbox);
-  lightbox.addEventListener('click', function(e) {
-    if (e.target === lightbox) closeLightbox();
-  });
-  document.addEventListener('keydown', function(e) {
-    if (!lightbox.classList.contains('js-hidden') && (e.key === 'Escape' || e.key === 'Esc')) {
-      closeLightbox();
-    }
-  });
 });
