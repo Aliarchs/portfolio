@@ -9,12 +9,13 @@
   <style>
     /* Extended Portfolio scroll-snap styles */
     .portfolio-container {
-      height: 100vh;
+      height: calc(100vh - var(--header-h, 0px));
       overflow-x: auto;
       overflow-y: hidden;
       scroll-snap-type: x mandatory;
       display: flex;
       scroll-behavior: smooth;
+      margin-top: var(--header-h, 0px);
     }
     .portfolio-page {
       min-width: 100vw;
@@ -53,6 +54,28 @@
     .portfolio-nav.next { right: 2rem; }
     .portfolio-nav.hidden { display: none; }
     
+    /* Smaller arrows and tighter inset on mobile/tablet */
+    @media (max-width: 900px) {
+      :root {
+        --arrow-size: 2rem;
+        --arrow-font-size: 0.9rem;
+      }
+      .portfolio-nav.prev { left: 1rem; }
+      .portfolio-nav.next { right: 1rem; }
+    }
+
+    /* Mobile landscape: ensure the whole page fits the screen height */
+    @media (max-width: 900px) and (orientation: landscape) {
+      .portfolio-container {
+        height: calc(100dvh - var(--header-h, 0px));
+      }
+      .portfolio-spread img,
+      .portfolio-cover img,
+      #portfolioContainer.mobile-mode .mobile-page img {
+        max-height: calc(100dvh - var(--header-h, 0px));
+      }
+    }
+    
     .end-label {
       position: absolute;
       bottom: 2rem;
@@ -66,7 +89,7 @@
     /* Portfolio page layouts */
     .portfolio-cover, .portfolio-spread {
       min-width: 100vw;
-      height: 100vh;
+      height: 100h;
       scroll-snap-align: start;
       display: flex;
       align-items: center;
@@ -76,8 +99,9 @@
     }
     
     .portfolio-cover img {
-      max-height: 90vh;
-      max-width: 90vw;
+      /* Slightly smaller cover as requested */
+      max-height: 86vh;
+      max-width: 86vw;
       object-fit: contain;
     }
     
@@ -152,6 +176,25 @@
       width: 45vw; /* two pages = 90vw total */
       object-fit: contain;
     }
+
+    /* Mobile single-page slides (created dynamically) */
+    .mobile-page { display: none; }
+    #portfolioContainer.mobile-mode .mobile-page {
+      min-width: 100vw;
+      height: 100vh;
+      scroll-snap-align: start;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-color);
+      position: relative;
+    }
+    #portfolioContainer.mobile-mode .mobile-page img {
+      max-height: 90vh;
+      max-width: 90vw;
+      object-fit: contain;
+    }
+    #portfolioContainer.mobile-mode .portfolio-spread { display: none; }
   </style>
 </head>
 <body>
@@ -277,7 +320,7 @@
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     
-    const pages = document.querySelectorAll('.portfolio-cover, .portfolio-spread');
+  const pages = document.querySelectorAll('.portfolio-cover, .portfolio-spread');
     
     let currentPage = 0;
     const totalPages = pages.length;
@@ -329,8 +372,62 @@
       });
     }
 
+    // Build mobile single-page slides from spreads
+    function buildMobileSlides() {
+      // Remove existing mobile slides
+      document.querySelectorAll('#portfolioContainer .mobile-page').forEach(n => n.remove());
+      const containerEl = document.getElementById('portfolioContainer');
+      const cover = containerEl.querySelector('.portfolio-cover');
+      const spreads = Array.from(containerEl.querySelectorAll('.portfolio-spread'));
+      const mobileSlides = [];
+      // Cover as first slide
+      if (cover) {
+        const slide = document.createElement('div');
+        slide.className = 'mobile-page';
+        const img = cover.querySelector('img').cloneNode(true);
+        slide.appendChild(img);
+        mobileSlides.push(slide);
+      }
+      // Each image in spreads becomes a slide
+      spreads.forEach(spread => {
+        const imgs = Array.from(spread.querySelectorAll('img'));
+        imgs.forEach(img => {
+          const slide = document.createElement('div');
+          slide.className = 'mobile-page';
+          slide.appendChild(img.cloneNode(true));
+          mobileSlides.push(slide);
+        });
+      });
+      // Append slides at the end
+      mobileSlides.forEach(slide => containerEl.appendChild(slide));
+    }
+
+    function isPortraitMobile() {
+      const portrait = window.matchMedia('(orientation: portrait)').matches;
+      const narrow = window.innerWidth <= 900; // tablets in portrait and phones
+      return portrait && narrow;
+    }
+
+    function applyLayoutMode() {
+      const containerEl = document.getElementById('portfolioContainer');
+      if (isPortraitMobile()) {
+        containerEl.classList.add('mobile-mode');
+        buildMobileSlides();
+      } else {
+        containerEl.classList.remove('mobile-mode');
+        // Mobile slides are not shown; they can remain appended but hidden
+      }
+    }
+
     // Recalculate when images load and on resize
+    function setHeaderOffset() {
+      const header = document.querySelector('header');
+      const h = header ? header.getBoundingClientRect().height : 0;
+      document.documentElement.style.setProperty('--header-h', `${h}px`);
+    }
+
     window.addEventListener('load', () => {
+      setHeaderOffset();
       updateSpreadHeights();
       // Insert a non-scaled shadow to match the spread image area
       document.querySelectorAll('.portfolio-spread').forEach(spread => {
@@ -340,9 +437,14 @@
           spread.insertBefore(shadow, spread.firstChild);
         }
       });
+      applyLayoutMode();
       updateNavigation();
     });
-    window.addEventListener('resize', updateSpreadHeights);
+    window.addEventListener('resize', () => {
+      setHeaderOffset();
+      updateSpreadHeights();
+      applyLayoutMode();
+    });
     document.querySelectorAll('.portfolio-spread img').forEach(img => {
       img.addEventListener('load', updateSpreadHeights, { once: true });
     });
