@@ -195,6 +195,61 @@
       object-fit: contain;
     }
     #portfolioContainer.mobile-mode .portfolio-spread { display: none; }
+
+    /* Mobile portrait: place pages under header, scale images to 90% width, and put arrows below image */
+  @media (max-width: 900px) and (orientation: portrait) {
+      /* Ensure the portfolio starts below the fixed header, keep horizontal scroll */
+      .portfolio-container {
+        margin-top: calc(var(--header-h, 0px) + 0.5rem);
+        padding-top: 0;
+        height: auto;
+        display: flex;            /* keep horizontal strip */
+        overflow-x: auto;         /* allow horizontal paging */
+        overflow-y: visible;      /* allow nav bar below */
+      }
+
+      /* Show single-image slides in mobile mode at 90% viewport width */
+      #portfolioContainer.mobile-mode .mobile-page {
+        height: auto;             /* image height defines section */
+        min-height: 0;
+      }
+      #portfolioContainer.mobile-mode .mobile-page img {
+        width: 90vw;
+        max-width: 90vw;
+        height: auto;
+        max-height: none;
+        display: block;
+        margin: 0.5rem auto 0;
+        object-fit: contain;
+      }
+
+      /* Make cover image also 90vw in portrait */
+      .portfolio-cover img { max-width: 90vw; }
+
+      /* Navigation arrows appear below the image, centered */
+      .portfolio-nav-bar {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        margin: 0.75rem auto 1.25rem;
+        padding: 0;
+        width: 100%;
+      }
+      .portfolio-nav {
+        position: static;
+        top: auto;
+        transform: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: clamp(44px, 12vw, 56px);
+        height: clamp(44px, 12vw, 56px);
+        font-size: clamp(20px, 6vw, 28px);
+        line-height: 1;
+        border-radius: 999px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -312,8 +367,10 @@
   </div>
 
   <!-- Navigation arrows -->
-  <button class="portfolio-nav prev" id="prevBtn" aria-label="Previous page">‹</button>
-  <button class="portfolio-nav next" id="nextBtn" aria-label="Next page">›</button>
+  <div class="portfolio-nav-bar" aria-label="Page navigation">
+    <button class="portfolio-nav prev" id="prevBtn" aria-label="Previous page">‹</button>
+    <button class="portfolio-nav next" id="nextBtn" aria-label="Next page">›</button>
+  </div>
 
   <script>
     const container = document.getElementById('portfolioContainer');
