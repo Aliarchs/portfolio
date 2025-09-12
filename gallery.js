@@ -36,6 +36,21 @@ document.addEventListener('DOMContentLoaded', function() {
   // Only initialize slideshow if we have images and slideshow container
   const slideshowImg = document.querySelector('.slideshow-image');
   if (slideshowImg && slideshowImages.length > 0) {
+    // Add responsive sources for the slideshow image if it matches our resized pattern
+    (function enhanceSlideshowImage(img) {
+      const src = img.getAttribute('src') || '';
+      const m = src.match(/^images\/resized\/1200\/(.+)\.(jpg|jpeg|png)$/i);
+      if (!m) return;
+      const base = m[1];
+      const ext = m[2].toLowerCase();
+      const widths = [400, 800, 1200];
+      const srcset = widths.map(w => `images/resized/${w}/${base}.${ext} ${w}w`).join(', ');
+      const sizes = '(max-width: 900px) 100vw, 1200px';
+      img.setAttribute('srcset', srcset);
+      img.setAttribute('sizes', sizes);
+      if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
+      if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
+    })(slideshowImg);
     let slideIndex = 0;
     function showSlide(idx) {
       slideIndex = (idx + slideshowImages.length) % slideshowImages.length;
@@ -57,6 +72,16 @@ document.addEventListener('DOMContentLoaded', function() {
       else prevSlide();
       if (resetTimer) resetTimer();
     };
+
+    // Keyboard support on slideshow container
+    const slideshowContainer = document.querySelector('.slideshow-container');
+    if (slideshowContainer) {
+      slideshowContainer.setAttribute('tabindex', '0');
+      slideshowContainer.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') prevSlide();
+        if (e.key === 'ArrowRight') nextSlide();
+      });
+    }
 
     // Auto-advance only if multiple images
     let slideshowTimer;
@@ -83,7 +108,20 @@ document.addEventListener('DOMContentLoaded', function() {
   const lightboxClose = document.querySelector('.lightbox-close');
 
   if (lightbox && lightboxImg && lightboxClose) {
+    // Add srcset/sizes for gallery thumbs and bind open handlers
     galleryImgs.forEach(img => {
+      const src = img.getAttribute('src') || '';
+      const m = src.match(/^images\/resized\/(400|800|1200)\/(.+)\.(jpg|jpeg|png)$/i);
+      if (m) {
+        const base = m[2];
+        const ext = m[3] ? m[3].toLowerCase() : (src.endsWith('.png') ? 'png' : 'jpg');
+        const widths = [400, 800, 1200];
+        const srcset = widths.map(w => `images/resized/${w}/${base}.${ext} ${w}w`).join(', ');
+        img.setAttribute('srcset', srcset);
+        img.setAttribute('sizes', '(max-width: 900px) 48vw, 400px');
+        if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
+        if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
+      }
       img.addEventListener('click', () => {
         // Open lightbox
         lightbox.style.display = 'flex';

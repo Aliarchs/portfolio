@@ -9,7 +9,8 @@
   <style>
     /* Extended Portfolio scroll-snap styles */
     .portfolio-container {
-      height: calc(100vh - var(--header-h, 0px));
+      /* Subtract a couple of pixels to avoid fractional rounding overflow on some setups */
+      height: calc(100dvh - var(--header-h, 0px) - 2px);
       overflow-x: auto;
       overflow-y: hidden;
       scroll-snap-type: x mandatory;
@@ -19,7 +20,7 @@
     }
     .portfolio-page {
       min-width: 100vw;
-      height: 100vh;
+      height: 100%;
       scroll-snap-align: start;
       display: flex;
       align-items: center;
@@ -66,15 +67,17 @@
 
     /* Mobile landscape: ensure the whole page fits the screen height */
     @media (max-width: 900px) and (orientation: landscape) {
-      .portfolio-container {
-        height: calc(100dvh - var(--header-h, 0px));
-      }
+      .portfolio-container { height: calc(100dvh - var(--header-h, 0px) - 2px); }
       .portfolio-spread img,
-      .portfolio-cover img,
       #portfolioContainer.mobile-mode .mobile-page img {
-        max-height: calc(100dvh - var(--header-h, 0px));
+        max-height: calc(100dvh - var(--header-h, 0px) - 2px);
       }
+      /* Cover image stays at 90% of available height in landscape mobile */
+      .portfolio-cover img { max-height: calc((100dvh - var(--header-h, 0px) - 2px) * 0.9); }
     }
+
+    /* Prevent the wrapper under the fixed arrows from adding page height on desktop */
+    .portfolio-nav-bar { height: 0; overflow: visible; }
     
     .end-label {
       position: absolute;
@@ -89,19 +92,22 @@
     /* Portfolio page layouts */
     .portfolio-cover, .portfolio-spread {
       min-width: 100vw;
-      height: 100h;
+      height: 100%;
       scroll-snap-align: start;
       display: flex;
       align-items: center;
       justify-content: center; /* center 90vw content */
       position: relative;
       background: var(--bg-color);
+
     }
     
     .portfolio-cover img {
-      /* Slightly smaller cover as requested */
-      max-height: 86vh;
+      /* Fit inside page area beneath header at 90% of available height */
+      height: auto;
+      max-height: calc((100dvh - var(--header-h, 0px) - 2px) * 0.9);
       max-width: 86vw;
+      width: auto;
       object-fit: contain;
     }
     
@@ -116,7 +122,7 @@
       top: 50%;
       transform: translate(-50%, -50%);
   width: 90vw; /* match two pages (45vw + 45vw) */
-      height: var(--spread-img-height, 90vh); /* match image height */
+  height: var(--spread-img-height, 100%); /* match image height */
       pointer-events: none;
       z-index: 1; /* behind images and spine overlays */
       border-radius: 2px;
@@ -133,7 +139,7 @@
       top: 50%;
       transform: translate(-50%, -50%);
   width: clamp(50px, 5.5vw, 200px); /* scaled to 90vw content */
-      height: var(--spread-img-height, 90vh); /* match image area (hard vertical cutoff) */
+    height: var(--spread-img-height, 100%); /* match image area (hard vertical cutoff) */
       pointer-events: none;
       z-index: 9;
       /* two-layer halo: broad subtle base + existing medium halo */
@@ -160,7 +166,7 @@
       top: 50%;
       transform: translate(-50%, -50%);
   width: clamp(4px, 0.6vw, 12px); /* subtler, narrower center line */
-      height: var(--spread-img-height, 90vh);
+    height: var(--spread-img-height, 100%);
       pointer-events: none;
       z-index: 10;
       background: linear-gradient(to right,
@@ -172,16 +178,31 @@
     }
     
     .portfolio-spread img {
-      max-height: 90vh;
+      max-height: 100%;
       width: 45vw; /* two pages = 90vw total */
       object-fit: contain;
+    }
+
+    /* Eliminate inline baseline gaps and any perceived thin border around images */
+    .portfolio-cover picture,
+    .portfolio-spread picture {
+      display: block;
+      line-height: 0;
+      background: transparent;
+    }
+    .portfolio-cover img,
+    .portfolio-spread img {
+      display: block;
+      border: 0;
+      box-shadow: none;
+      background: transparent;
     }
 
     /* Mobile single-page slides (created dynamically) */
     .mobile-page { display: none; }
     #portfolioContainer.mobile-mode .mobile-page {
       min-width: 100vw;
-      height: 100vh;
+      height: 100%;
       scroll-snap-align: start;
       display: flex;
       align-items: center;
@@ -223,8 +244,13 @@
         object-fit: contain;
       }
 
-      /* Make cover image also 90vw in portrait */
-      .portfolio-cover img { max-width: 90vw; }
+      /* Make cover image 90vw in portrait and let height auto */
+      .portfolio-cover img {
+        max-width: 90vw;
+        width: 90vw;
+        height: auto;
+        max-height: none;
+      }
 
       /* Navigation arrows appear below the image, centered */
       .portfolio-nav-bar {
@@ -235,6 +261,7 @@
         margin: 0.75rem auto 1.25rem;
         padding: 0;
         width: 100%;
+        height: auto; /* override desktop 0-height so arrows sit below image */
       }
       .portfolio-nav {
         position: static;
@@ -265,103 +292,103 @@
     
     <!-- Cover Page (stands alone) -->
     <div class="portfolio-cover">
-      <img src="images/resized/1200/project1-1.jpg" alt="Architecture Portfolio Cover" loading="eager">
+  <img src="images/resized/1200/project1-1.jpg" alt="Architecture Portfolio Cover" loading="eager" decoding="async">
     </div>
     
     <!-- Spread 1: Pages 2-3 -->
     <div class="portfolio-spread">
-      <img src="images/resized/1200/project1-2.jpg" alt="Portfolio Page 2" loading="lazy">
-      <img src="images/resized/1200/project1-3.jpg" alt="Portfolio Page 3" loading="lazy">
+  <img src="images/resized/1200/project1-2.jpg" alt="Portfolio Page 2" loading="lazy" decoding="async">
+  <img src="images/resized/1200/project1-3.jpg" alt="Portfolio Page 3" loading="lazy" decoding="async">
     </div>
     
     <!-- Spread 2: Pages 4-5 -->
     <div class="portfolio-spread">
-      <img src="images/resized/1200/project1-4.jpg" alt="Portfolio Page 4" loading="lazy">
-      <img src="images/resized/1200/project1-5.jpg" alt="Portfolio Page 5" loading="lazy">
+  <img src="images/resized/1200/project1-4.jpg" alt="Portfolio Page 4" loading="lazy" decoding="async">
+  <img src="images/resized/1200/project1-5.jpg" alt="Portfolio Page 5" loading="lazy" decoding="async">
     </div>
     
     <!-- Spread 3: Pages 6-7 -->
     <div class="portfolio-spread">
-      <img src="images/resized/1200/project1-6.jpg" alt="Portfolio Page 6" loading="lazy">
-      <img src="images/resized/1200/project1-7.jpg" alt="Portfolio Page 7" loading="lazy">
+  <img src="images/resized/1200/project1-6.jpg" alt="Portfolio Page 6" loading="lazy" decoding="async">
+  <img src="images/resized/1200/project1-7.jpg" alt="Portfolio Page 7" loading="lazy" decoding="async">
     </div>
     
     <!-- Spread 4: Pages 8-9 -->
     <div class="portfolio-spread">
-      <img src="images/resized/1200/project1-8.jpg" alt="Portfolio Page 8" loading="lazy">
-      <img src="images/resized/1200/project1-9.jpg" alt="Portfolio Page 9" loading="lazy">
+  <img src="images/resized/1200/project1-8.jpg" alt="Portfolio Page 8" loading="lazy" decoding="async">
+  <img src="images/resized/1200/project1-9.jpg" alt="Portfolio Page 9" loading="lazy" decoding="async">
     </div>
     
     <!-- Spread 5: Pages 10-11 -->
     <div class="portfolio-spread">
-      <img src="images/resized/1200/project1-10.jpg" alt="Portfolio Page 10" loading="lazy">
-      <img src="images/resized/1200/project1-11.jpg" alt="Portfolio Page 11" loading="lazy">
+  <img src="images/resized/1200/project1-10.jpg" alt="Portfolio Page 10" loading="lazy" decoding="async">
+  <img src="images/resized/1200/project1-11.jpg" alt="Portfolio Page 11" loading="lazy" decoding="async">
     </div>
     
     <!-- Spread 6: Pages 12-13 -->
     <div class="portfolio-spread">
-      <img src="images/resized/1200/project1-12.jpg" alt="Portfolio Page 12" loading="lazy">
-      <img src="images/resized/1200/project1-13.jpg" alt="Portfolio Page 13" loading="lazy">
+  <img src="images/resized/1200/project1-12.jpg" alt="Portfolio Page 12" loading="lazy" decoding="async">
+  <img src="images/resized/1200/project1-13.jpg" alt="Portfolio Page 13" loading="lazy" decoding="async">
     </div>
     
     <!-- Spread 7: Pages 14-15 -->
     <div class="portfolio-spread">
-      <img src="images/resized/1200/project1-14.jpg" alt="Portfolio Page 14" loading="lazy">
-      <img src="images/resized/1200/project1-15.jpg" alt="Portfolio Page 15" loading="lazy">
+  <img src="images/resized/1200/project1-14.jpg" alt="Portfolio Page 14" loading="lazy" decoding="async">
+  <img src="images/resized/1200/project1-15.jpg" alt="Portfolio Page 15" loading="lazy" decoding="async">
     </div>
     
     <!-- Spread 8: Pages 16-17 -->
     <div class="portfolio-spread">
-      <img src="images/resized/1200/project1-16.jpg" alt="Portfolio Page 16" loading="lazy">
-      <img src="images/resized/1200/project1-17.jpg" alt="Portfolio Page 17" loading="lazy">
+  <img src="images/resized/1200/project1-16.jpg" alt="Portfolio Page 16" loading="lazy" decoding="async">
+  <img src="images/resized/1200/project1-17.jpg" alt="Portfolio Page 17" loading="lazy" decoding="async">
     </div>
     
     <!-- Spread 9: Pages 18-19 -->
     <div class="portfolio-spread">
-      <img src="images/resized/1200/project1-18.jpg" alt="Portfolio Page 18" loading="lazy">
-      <img src="images/resized/1200/project1-19.jpg" alt="Portfolio Page 19" loading="lazy">
+  <img src="images/resized/1200/project1-18.jpg" alt="Portfolio Page 18" loading="lazy" decoding="async">
+  <img src="images/resized/1200/project1-19.jpg" alt="Portfolio Page 19" loading="lazy" decoding="async">
     </div>
     
     <!-- Spread 10: Pages 20-21 -->
     <div class="portfolio-spread">
-      <img src="images/resized/1200/project1-20.jpg" alt="Portfolio Page 20" loading="lazy">
-      <img src="images/resized/1200/project1-21.jpg" alt="Portfolio Page 21" loading="lazy">
+  <img src="images/resized/1200/project1-20.jpg" alt="Portfolio Page 20" loading="lazy" decoding="async">
+  <img src="images/resized/1200/project1-21.jpg" alt="Portfolio Page 21" loading="lazy" decoding="async">
     </div>
     
     <!-- Spread 11: Pages 22-23 -->
     <div class="portfolio-spread">
-      <img src="images/resized/1200/project1-22.jpg" alt="Portfolio Page 22" loading="lazy">
-      <img src="images/resized/1200/project1-23.jpg" alt="Portfolio Page 23" loading="lazy">
+  <img src="images/resized/1200/project1-22.jpg" alt="Portfolio Page 22" loading="lazy" decoding="async">
+  <img src="images/resized/1200/project1-23.jpg" alt="Portfolio Page 23" loading="lazy" decoding="async">
     </div>
     
     <!-- Spread 12: Pages 24-25 -->
     <div class="portfolio-spread">
-      <img src="images/resized/1200/project1-24.jpg" alt="Portfolio Page 24" loading="lazy">
-      <img src="images/resized/1200/project1-25.jpg" alt="Portfolio Page 25" loading="lazy">
+  <img src="images/resized/1200/project1-24.jpg" alt="Portfolio Page 24" loading="lazy" decoding="async">
+  <img src="images/resized/1200/project1-25.jpg" alt="Portfolio Page 25" loading="lazy" decoding="async">
     </div>
     
     <!-- Spread 13: Pages 26-27 -->
     <div class="portfolio-spread">
-      <img src="images/resized/1200/project1-26.jpg" alt="Portfolio Page 26" loading="lazy">
-      <img src="images/resized/1200/project1-27.jpg" alt="Portfolio Page 27" loading="lazy">
+  <img src="images/resized/1200/project1-26.jpg" alt="Portfolio Page 26" loading="lazy" decoding="async">
+  <img src="images/resized/1200/project1-27.jpg" alt="Portfolio Page 27" loading="lazy" decoding="async">
     </div>
     
     <!-- Spread 14: Pages 28-29 -->
     <div class="portfolio-spread">
-      <img src="images/resized/1200/project1-28.jpg" alt="Portfolio Page 28" loading="lazy">
-      <img src="images/resized/1200/project1-29.jpg" alt="Portfolio Page 29" loading="lazy">
+  <img src="images/resized/1200/project1-28.jpg" alt="Portfolio Page 28" loading="lazy" decoding="async">
+  <img src="images/resized/1200/project1-29.jpg" alt="Portfolio Page 29" loading="lazy" decoding="async">
     </div>
     
     <!-- Spread 15: Pages 30-31 -->
     <div class="portfolio-spread">
-      <img src="images/resized/1200/project1-30.jpg" alt="Portfolio Page 30" loading="lazy">
-      <img src="images/resized/1200/project1-31.jpg" alt="Portfolio Page 31" loading="lazy">
+  <img src="images/resized/1200/project1-30.jpg" alt="Portfolio Page 30" loading="lazy" decoding="async">
+  <img src="images/resized/1200/project1-31.jpg" alt="Portfolio Page 31" loading="lazy" decoding="async">
     </div>
     
     <!-- Final Spread: Pages 32-33 -->
     <div class="portfolio-spread">
-      <img src="images/resized/1200/project1-32.jpg" alt="Portfolio Page 32" loading="lazy">
-      <img src="images/resized/1200/project1-33.jpg" alt="Portfolio Back Cover" loading="lazy">
+  <img src="images/resized/1200/project1-32.jpg" alt="Portfolio Page 32" loading="lazy" decoding="async">
+  <img src="images/resized/1200/project1-33.jpg" alt="Portfolio Back Cover" loading="lazy" decoding="async">
       <div class="end-label">continue to first page</div>
     </div>
   </div>
@@ -497,6 +524,11 @@
       applyLayoutMode();
       updateNavigation();
     });
+    // Set header offset ASAP without waiting for images
+    document.addEventListener('DOMContentLoaded', () => {
+      setHeaderOffset();
+      applyLayoutMode();
+    });
     window.addEventListener('resize', () => {
       setHeaderOffset();
       updateSpreadHeights();
@@ -505,6 +537,61 @@
     document.querySelectorAll('.portfolio-spread img').forEach(img => {
       img.addEventListener('load', updateSpreadHeights, { once: true });
     });
+
+    // Add responsive srcset/sizes and WebP <picture> wrappers to flipbook images
+    function enhanceFlipbookImages() {
+      const imgs = document.querySelectorAll('#portfolioContainer img');
+      imgs.forEach(img => {
+        const src = img.getAttribute('src') || '';
+        // Only process images from the resized/1200 folder
+        const m = src.match(/^images\/resized\/1200\/(.+)\.(jpg|jpeg|png)$/i);
+        if (!m) return;
+        const base = m[1];
+        const ext = m[2].toLowerCase();
+
+        // Build srcsets
+        const widths = [400, 800, 1200];
+        const srcset = widths.map(w => `images/resized/${w}/${base}.${ext} ${w}w`).join(', ');
+        const webpSrcset = widths.map(w => `images/resized/${w}/${base}.webp ${w}w`).join(', ');
+
+        // Sizes: spreads are ~45vw on desktop, cover up to ~86vw; mobile slides 90vw
+        const isCover = img.closest('.portfolio-cover') !== null;
+        const sizes = isCover
+          ? '(max-width: 900px) 90vw, 86vw'
+          : '(max-width: 900px) 90vw, 45vw';
+
+        // If not already wrapped, create <picture> with WebP first
+        if (img.parentElement && img.parentElement.tagName.toLowerCase() !== 'picture') {
+          const picture = document.createElement('picture');
+          const webp = document.createElement('source');
+          webp.setAttribute('type', 'image/webp');
+          webp.setAttribute('srcset', webpSrcset);
+          webp.setAttribute('sizes', sizes);
+          const fallback = document.createElement('source');
+          fallback.setAttribute('type', ext === 'png' ? 'image/png' : 'image/jpeg');
+          fallback.setAttribute('srcset', srcset);
+          fallback.setAttribute('sizes', sizes);
+          img.setAttribute('srcset', srcset);
+          img.setAttribute('sizes', sizes);
+          if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
+          if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
+
+          const parent = img.parentElement;
+          parent.insertBefore(picture, img);
+          picture.appendChild(webp);
+          picture.appendChild(fallback);
+          picture.appendChild(img);
+        } else {
+          // Already inside <picture>: just update attributes
+          img.setAttribute('srcset', srcset);
+          img.setAttribute('sizes', sizes);
+          if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
+          if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
+        }
+      });
+    }
+
+    enhanceFlipbookImages();
   </script>
 </body>
 </html>

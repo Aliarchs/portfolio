@@ -20,23 +20,27 @@
 <main class="content-page">
   <h1>RSPB Lochwinnoch Gallery</h1>
   <div class="slideshow-container" aria-label="Slideshow gallery">
-  <img class="slideshow-image" src="images/resized/1200/project2-1.png" alt="Project 2 Slide 1" tabindex="0">
-    <div class="slideshow-arrows-mobile">
-      <button class="slideshow-arrow prev" aria-label="Previous image">&#10094;</button>
-      <button class="slideshow-arrow next" aria-label="Next image">&#10095;</button>
+    <img class="slideshow-image" src="images/resized/1200/project2-1.png" alt="Project 2 Slide 1" tabindex="0" decoding="async">
+    <div class="slideshow-controls" aria-label="Slideshow navigation">
+      <button class="slideshow-arrow" onclick="changeSlide(-1)" aria-label="Previous slide">‹</button>
+      <button class="slideshow-arrow" onclick="changeSlide(1)" aria-label="Next slide">›</button>
     </div>
   </div>
   <div class="gallery mt-3-5" aria-label="Image gallery">
-  <img src="images/resized/800/project2-1.png" alt="Project 2 Image 1" tabindex="0">
-  <img src="images/resized/800/project2-2.png" alt="Project 2 Image 2" tabindex="0">
-  <img src="images/resized/800/project2-3.png" alt="Project 2 Image 3" tabindex="0">
+    <img src="images/resized/800/project2-1.png" alt="Project 2 Image 1" tabindex="0" decoding="async">
+    <img src="images/resized/800/project2-2.png" alt="Project 2 Image 2" tabindex="0" decoding="async">
+    <img src="images/resized/800/project2-3.png" alt="Project 2 Image 3" tabindex="0" decoding="async">
     <!-- Add more images as needed -->
   </div>
 
-  <!-- Lightbox Modal -->
-  <div id="lightbox" class="lightbox js-hidden" tabindex="-1" role="dialog" aria-hidden="true" aria-label="Image lightbox">
-    <button class="lightbox-close js-hidden" aria-label="Close">&times;</button>
-    <img class="lightbox-img" src="" alt="">
+  <!-- Lightbox -->
+  <div id="lightbox" class="lightbox" onclick="closeLightbox()" aria-label="Image lightbox" aria-hidden="true">
+    <span class="lightbox-close" onclick="closeLightbox()" aria-label="Close lightbox">&times;</span>
+    <img class="lightbox-content" id="lightbox-img" alt="">
+    <div class="lightbox-nav">
+      <button class="lightbox-arrow" onclick="changeLightboxImage(-1)" aria-label="Previous image">‹</button>
+      <button class="lightbox-arrow" onclick="changeLightboxImage(1)" aria-label="Next image">›</button>
+    </div>
   </div>
 </main>
 <script src="gallery.js"></script>
