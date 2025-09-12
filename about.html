@@ -10,8 +10,8 @@
   <meta name="color-scheme" content="light dark">
   <style>
     body { background-color: #f5f5f5; }
-    .about-content { width: 60%; margin: 4em auto 0 auto; text-align: justify; }
-    @media (max-width: 900px) { .about-content { width: 90%; } }
+  .about-content { width: 60%; margin: 3.5em auto 0 auto; text-align: justify; font-size: 0.95rem; line-height: 1.65; }
+  @media (max-width: 900px) { .about-content { width: 90%; font-size: 0.98rem; line-height: 1.6; } }
     .about-heading { margin-top: 6em; text-align: center; }
   </style>
   <!-- Windows tile color for IE/Edge -->
@@ -31,10 +31,13 @@
   <main class="content-page">
     <h1 class="about-heading">About Me</h1>
     <div class="about-content">
-      <!-- Optional portrait; replace src with your photo when ready -->
+      <!-- Portrait -->
       <figure class="about-portrait-figure">
-  <img class="about-portrait" src="images/resized/400/blank.jpg" alt="Portrait of Ali Shabestary" decoding="async" loading="lazy">
-        <!-- No visible caption by default to keep layout minimal -->
+        <picture>
+          <source type="image/webp" srcset="images/resized/400/about-portrait.webp 400w, images/resized/800/about-portrait.webp 800w, images/resized/1200/about-portrait.webp 1200w" sizes="(max-width: 900px) 50vw, 220px">
+          <source type="image/jpeg" srcset="images/resized/400/about-portrait.jpg 400w, images/resized/800/about-portrait.jpg 800w, images/resized/1200/about-portrait.jpg 1200w" sizes="(max-width: 900px) 50vw, 220px">
+          <img class="about-portrait" src="images/about-portrait.jpg" alt="Portrait of Ali Shabestary" decoding="async" loading="lazy">
+        </picture>
       </figure>
   <div class="mt-3em">
         I am a RIBA Part 1 architecture graduate from the University of Dundee, passionate about creating sustainable, accessible and attractive spaces. I’m drawn to architecture that responds to its context and leaves a positive impact on the people who use it. I enjoy thinking about what makes a place work and how design choices can subtly improve everyday life. My attention to detail, ability to think creatively and practically help me come up with unique ideas and fine-tune them into real, thoughtful solutions. I’m looking for an opportunity to develop and learn within a team that values purposeful, well-crafted design.

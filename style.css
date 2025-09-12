@@ -269,6 +269,8 @@
   --arrow-size: 2.6rem;          /* primary diameter to use everywhere */
   --arrow-font-size: 1rem;       /* chevron glyph size */
 }
+/* Uniformly scale down all rem-based typography across the site */
+html { font-size: 15px; }
 * {
   box-sizing: border-box;
   margin: 0;
@@ -591,7 +593,7 @@ body.other-page {
   box-sizing: border-box;
 }
 .about-portrait-figure { text-align:center; margin: 0 0 2rem 0; }
-.about-portrait { max-width: 220px; width: 40%; height: auto; border-radius: 0; filter: grayscale(100%); opacity: .92; display: inline-block; }
+.about-portrait { max-width: 220px; width: 40%; height: auto; border-radius: 0; filter: none; opacity: 1; display: inline-block; }
 .content-page form {
   width: 100%;
   max-width: 500px;
@@ -1060,6 +1062,62 @@ textarea:focus,
   margin: 0;
   padding: 0;
   display: block;
+}
+
+/* --- Simple placeholder/coming-soon state --- */
+.placeholder-state {
+  min-height: calc(100vh - 6rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1rem;
+  color: #666;
+  padding: 2rem 1rem;
+}
+.placeholder-state img {
+  width: min(60vw, 520px);
+  height: auto;
+  opacity: 0.85;
+  filter: grayscale(100%);
+  border: 0;
+  box-shadow: none;
+  display: block;
+}
+.placeholder-state h1 {
+  margin: 0.2rem 0 0.25rem;
+  font-size: 1.3rem;
+}
+.placeholder-state p {
+  max-width: 740px;
+  line-height: 1.5;
+}
+.placeholder-state .actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 0.4rem;
+}
+.placeholder-state .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+.placeholder-state .btn.secondary {
+  background: #e9e9e9;
+  color: #333;
+}
+.placeholder-state .btn:hover,
+.placeholder-state .btn:focus {
+  opacity: 0.92;
 }
 
 /* --- Lightbox Styles --- */
