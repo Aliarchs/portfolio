@@ -401,11 +401,17 @@
 		const container = document.getElementById('portfolioContainer');
 		const prevBtn = document.getElementById('prevBtn');
 		const nextBtn = document.getElementById('nextBtn');
-    
-	const pages = document.querySelectorAll('.portfolio-cover, .portfolio-spread');
-    
+
 		let currentPage = 0;
-		const totalPages = pages.length;
+
+		// Dynamically compute total pages depending on current layout mode
+		function getTotalPages() {
+			const isMobileMode = container.classList.contains('mobile-mode');
+			if (isMobileMode) {
+				return container.querySelectorAll('.mobile-page').length;
+			}
+			return container.querySelectorAll('.portfolio-cover, .portfolio-spread').length;
+		}
 
 		function updateNavigation() {
 			prevBtn.classList.toggle('hidden', currentPage === 0);
@@ -414,7 +420,8 @@
 
 		function scrollToPage(pageIndex) {
 			if (pageIndex < 0) pageIndex = 0;
-			if (pageIndex >= totalPages) pageIndex = 0; // Loop back to first page
+			const total = getTotalPages();
+			if (pageIndex >= total) pageIndex = 0; // Loop back to first page
       
 			currentPage = pageIndex;
 			const targetScroll = currentPage * window.innerWidth;
@@ -499,6 +506,10 @@
 				containerEl.classList.remove('mobile-mode');
 				// Mobile slides are not shown; they can remain appended but hidden
 			}
+			// After switching modes or (re)building slides, make sure navigation state is correct
+			const total = getTotalPages();
+			if (currentPage >= total) currentPage = Math.max(0, total - 1);
+			updateNavigation();
 		}
 
 		// Recalculate when images load and on resize
