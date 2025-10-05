@@ -36,16 +36,16 @@ document.addEventListener('DOMContentLoaded', function() {
     ]
   };
 
-  const projectNames = { '2': 'RSPB', '3': 'Facade Retrofit', '4': 'Other Projects', '5': 'Personal Works' };
+  const projectNames = { '2': 'RSPB', '3': 'Facade Retrofit', '4': 'St. Andrews Bakery', '5': 'Personal Works' };
   // Per-project 2x2 big tile fraction (tunable per page)
   const BIG_FRACTION_BY_PROJECT = { '2': 0.12, '3': 0.12, '4': 0.12, '5': 0.12 };
-  // Per-load cache busting for image URLs (avoids stale browser caches after edits)
-  const CACHE_BUST = `v=${Date.now()}`;
+  // Stable cache version for images derived from manifest, improves caching across sessions
+  let IMG_CACHE_VER = 'v=1';
   function withBust(url) {
     if (!url) return url;
     // Only append to same-origin images path
     if (url.startsWith('images/')) {
-      return encodeURI(url) + (url.includes('?') ? '&' : '?') + CACHE_BUST;
+      return encodeURI(url) + (url.includes('?') ? '&' : '?') + IMG_CACHE_VER;
     }
     return url;
   }
@@ -62,9 +62,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // Fetch manifest if present; otherwise use defaults
   async function loadProjectImages() {
     try {
-      // Encode URL (handles spaces in folder names) and add cache-busting query to avoid stale CDN caches
-      const bust = `?v=${Date.now()}`;
-      const res = await fetch(encodeURI(manifestUrl) + bust, { cache: 'no-store' });
+      // Encode URL (handles spaces in folder names). Allow HTTP cache revalidation for speed.
+      const res = await fetch(encodeURI(manifestUrl), { cache: 'no-cache' });
       if (!res.ok) throw new Error('manifest not found');
       const data = await res.json();
       const list = Array.isArray(data?.images) ? data.images : [];
@@ -97,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const srcset = widths
       .map(w => {
         const u = `images/resized/${w}/${base}.${ext}`;
-        return `${u}?${CACHE_BUST} ${w}w`;
+        return `${u}?${IMG_CACHE_VER} ${w}w`;
       })
       .join(', ');
     const sizes = '(max-width: 900px) 100vw, 1200px';
@@ -111,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Clear existing
     galleryContainer.innerHTML = '';
 
-    images.forEach(item => {
+    images.forEach((item, idx) => {
       const figure = document.createElement('figure');
       figure.className = 'gallery-item';
       // Apply dynamic span classes based on aspect classification if present
@@ -123,7 +122,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Encode spaces and append cache-busting param to avoid stale caches after image changes
   img.src = withBust(item.src);
       img.alt = item.alt || '';
-      img.loading = 'lazy';
+      // Prioritize the first row visually; others remain lazy
+      if (idx < 4) { img.loading = 'eager'; img.setAttribute('fetchpriority', 'high'); }
+      else { img.loading = 'lazy'; img.setAttribute('fetchpriority', 'auto'); }
       img.decoding = 'async';
       img.tabIndex = 0; // focusable for keyboard users
       // Add lazy-loading visual state until the image is fully loaded
@@ -259,6 +260,7 @@ document.addEventListener('DOMContentLoaded', function() {
   slideshowImg.src = withBust(item.src);
     slideshowImg.alt = `${projectNames[projectNum]} Slide ${slideIndex + 1}`;
     enhanceResponsive(slideshowImg);
+    try { slideshowImg.setAttribute('fetchpriority', 'high'); } catch (e) {}
   }
   function nextSlide() { if (slideshowImages.length > 1) showSlide(slideIndex + 1); }
   function prevSlide() { if (slideshowImages.length > 1) showSlide(slideIndex - 1); }
@@ -275,6 +277,20 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize
   loadProjectImages()
     .then(async (images) => {
+      // Compute a stable per-page image version from manifest image list (for caching)
+      try {
+        const joined = images.map(i => i && i.src ? i.src : '').join('|');
+        let h = 0; for (let i = 0; i < joined.length; i++) { h = (h * 31 + joined.charCodeAt(i)) >>> 0; }
+        IMG_CACHE_VER = 'v=' + h.toString(36);
+      } catch (e) { IMG_CACHE_VER = 'v=1'; }
+
+      // Fast-first render: show slideshow and grid immediately without waiting for metrics
+      slideshowImages = images.slice();
+      showSlide(0);
+      resetTimer();
+      renderGallery(images);
+      initLightboxForCurrentGallery();
+
       // Image metrics cache to avoid remeasuring images (aspect + dimensions)
       const metricsCache = new Map();
       async function getImageMetrics(url) {
@@ -289,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
             resolve({ ar: ar || 1, w, h });
           };
           im.onerror = () => resolve({ ar: 1, w: 0, h: 0 });
-          im.src = url && url.startsWith('images/') ? encodeURI(url) : url;
+          im.src = url && url.startsWith('images/') ? withBust(url) : url;
           if (im.decode) { im.decode().catch(() => {}); }
         });
         metricsCache.set(key, value);
@@ -299,6 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Classify each image into one of 4 tile shapes:
       // tall (1 x 2), wide (2 x 1), big (2 x 2), normal (1 x 1)
       const nearSquareDelta = 0.12; // kept for reference, but big is chosen by measured tile AR
+      // Compute metrics in the background, then reflow with best-fit layout
       const withMetrics = await Promise.all(images.map(async (it) => {
         const m = await getImageMetrics(it.src);
         return { ...it, _ar: m.ar, _w: m.w, _h: m.h, _area: (m.w || 0) * (m.h || 0) };
@@ -453,15 +470,12 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
 
-      // Initial arrange and render using current grid metrics
-      let arranged = arrangeFromMetrics(withMetrics);
-
-  // Use arranged order for both slideshow and gallery so distribution changes are visible
-  slideshowImages = arranged.slice();
-      showSlide(0);
-      resetTimer();
-  renderGallery(arranged);
-      initLightboxForCurrentGallery();
+    // Arrange and re-render once metrics are available
+    let arranged = arrangeFromMetrics(withMetrics);
+    slideshowImages = arranged.slice();
+    showSlide(slideIndex);
+    renderGallery(arranged);
+    initLightboxForCurrentGallery();
 
       // Debounced resize reflow: recompute tile ARs and reassign boxes when layout changes
       let _reflowTimer = null;
