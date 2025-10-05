@@ -1034,34 +1034,44 @@ textarea:focus,
 }
 
 /* --- Gallery Styles --- */
+/* --- CodePen-style Gallery (clean & flat) --- */
 .gallery {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  margin: 2.5rem auto 0 auto;
-  justify-content: center;
-  align-items: flex-start;
-  width: 80vw;
-  max-width: 1800px;
-  background: none;
-  border: none;
-  box-shadow: none;
-  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
+  grid-auto-rows: 12.5rem;
+  grid-auto-flow: dense;
+  gap: 0.75rem;
+  width: min(92vw, 1800px);
+  margin: 2rem auto 0 auto;
+}
+.gallery figure {
+  container: figure / inline-size;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  margin: 0;
 }
 .gallery img {
-  max-width: 420px;
-  width: 420px;
-  height: 290px;
-  border-radius: 0;
-  box-shadow: none;
-  transition: transform 0.2s;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  grid-area: 1 / 1 / -1 / -1;
+  transition: scale 1s ease-in-out;
   cursor: url('images/cursor-pointer.svg'), pointer;
-  background: none;
-  border: none;
-  object-fit: contain;
-  margin: 0;
-  padding: 0;
-  display: block;
+}
+/* Flat: no hover zoom */
+.gallery figure:hover img { scale: 1; }
+
+/* Ensure no captions/labels render over images */
+.gallery figcaption { display: none !important; }
+
+@media (width > 600px) {
+  /* Class-based spans defining the four tile types */
+  .gallery .tile-tall { grid-row: span 2; grid-column: auto; }   /* 1 x 2 */
+  .gallery .tile-wide { grid-column: span 2; grid-row: auto; }   /* 2 x 1 */
+  .gallery .tile-big  { grid-area: span 2 / span 2; }            /* 2 x 2 */
+  /* Default is 1 x 1 (no class) */
 }
 
 /* --- Simple placeholder/coming-soon state --- */
@@ -1131,11 +1141,31 @@ textarea:focus,
   background: rgba(0,0,0,0.7); /* Dim background */
 }
 
+/* --- Content navigation (prev/next) --- */
+.content-nav {
+  margin: 2rem 0;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1400px;
+}
+.content-nav a {
+  color: inherit;
+  text-decoration: none;
+}
+.content-nav a:hover,
+.content-nav a:focus {
+  color: var(--accent-color);
+  text-decoration: underline;
+}
+
 .lightbox-img {
-  max-width: 60vw;
-  max-height: 80vh;
-  width: 60vw;
-  height: auto;
+  max-width: 90vw;
+  max-height: 90vh;
+  width: auto;          /* preserve natural aspect ratio */
+  height: auto;         /* preserve natural aspect ratio */
+  object-fit: contain;  /* ensure no cropping or distortion within bounds */
   border-radius: 0;
   box-shadow: none; /* No dropshadow in lightbox mode */
   background: none;
@@ -1396,8 +1426,7 @@ body.landing .site-name {
   main,
   .content-page,
   .project-grid,
-  .slideshow-container,
-  .gallery {
+  .slideshow-container {
     width: 100vw !important;
     max-width: 100vw !important;
     box-sizing: border-box;
@@ -1406,6 +1435,17 @@ body.landing .site-name {
     padding-left: 0 !important;
     padding-right: 0 !important;
     overflow-x: hidden !important;
+  }
+  /* On mobile, galleries are horizontally scrollable; allow overflow */
+  .gallery {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    box-sizing: border-box;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    overflow-x: auto !important;
   }
   button,
   .book-arrow,
@@ -1468,13 +1508,13 @@ body.landing .site-name {
 
 /* Lazy-loading placeholders */
 img.lazy {
-  background: linear-gradient(90deg, rgba(0,0,0,0.03), rgba(0,0,0,0.06));
+  background: linear-gradient(90deg, rgba(0,0,0,0.04), rgba(0,0,0,0.08));
   background-size: 200% 100%;
-  animation: lazy-pulse 1.6s infinite linear;
+  animation: lazy-pulse 1.4s infinite linear;
   display: block;
-  transition: opacity 240ms ease-in-out, filter 240ms ease-in-out;
-  opacity: 0.92;
-  filter: blur(1px);
+  transition: opacity 220ms ease, filter 220ms ease;
+  opacity: 0.9;
+  filter: blur(1px) saturate(0.98);
 }
 img.lazy.loaded {
   animation: none;

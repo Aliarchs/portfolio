@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Project 4 – ALI SHABESTARY</title>
+  <title>St. Andrews Bakery – ALI SHABESTARY</title>
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="favicon.png" type="image/png">
 </head>
@@ -16,17 +16,34 @@
       <a href="contact.html#contact-form" aria-label="Contact page">Contact</a>
     </nav>
   </header>
+
   <main class="content-page">
-    <section class="placeholder-state" aria-label="Project in progress">
-      <h1>working on it</h1>
-      <div class="actions">
-        <a class="btn" href="projects.html">View other projects</a>
-        <a class="btn secondary" href="contact.html#contact-form">Contact me</a>
+  <h1 class="main-title">St. Andrews Bakery</h1>
+  <p class="text-center" id="main-title-muted">Concept visuals and photography for a local bakery in St. Andrews.</p>
+
+    <section class="slideshow-container" aria-label="Hero slideshow">
+      <img class="slideshow-image" src="images/project 4/20220428_114628-3.jpg" alt="St. Andrews Bakery hero image" loading="eager" decoding="async">
+      <div class="slideshow-arrows-mobile">
+        <button class="slideshow-arrow" aria-label="Previous image" onclick="changeSlide(-1)">‹</button>
+        <button class="slideshow-arrow" aria-label="Next image" onclick="changeSlide(1)">›</button>
       </div>
     </section>
+
+    <section class="gallery" aria-label="Project gallery">
+      <img src="images/project 4/20220428_114537-2.jpg" alt="St. Andrews Bakery study models" loading="lazy" decoding="async">
+    </section>
+
+    <nav class="content-nav" aria-label="Project navigation">
+      <a href="project3.html">← Facade Retrofit</a>
+      <a href="project5.html">Next: Personal Works →</a>
+    </nav>
   </main>
-  <footer>
-    <p class="footer-muted">&copy; 2025 Ali Shabestary. All rights reserved.</p>
-  </footer>
+
+  <div id="lightbox" class="lightbox" aria-hidden="true" role="dialog" aria-label="Image lightbox">
+    <button class="lightbox-close" aria-label="Close">&times;</button>
+    <img id="lightbox-img" class="lightbox-img" alt="">
+  </div>
+
+  <script src="gallery.js?v=20251005"></script>
 </body>
 </html>

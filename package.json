@@ -4,7 +4,9 @@
   "description": "",
   "main": "gallery.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "gen:manifests": "node ./scripts/generate-manifests.mjs",
+    "watch:manifests": "node ./scripts/watch-manifests.mjs"
   },
   "repository": {
     "type": "git",

@@ -1,114 +1,221 @@
 document.addEventListener('DOMContentLoaded', function() {
-  // Get current page context to determine which images to use
-  const isProject2 = window.location.pathname.includes('project2');
-  const isProject3 = window.location.pathname.includes('project3');
-  const isProject4 = window.location.pathname.includes('project4');
-  const isProject5 = window.location.pathname.includes('project5');
-  
-  // Define image sets per project
-  let slideshowImages = [];
-  let projectName = '';
-  
-  if (isProject2) {
-    slideshowImages = [
-      "images/resized/1200/project2-1.png",
-      "images/resized/1200/project2-2.png",
-      "images/resized/1200/project2-3.png"
-    ];
-    projectName = 'Project 2';
-  } else if (isProject3) {
-    slideshowImages = [
-      "images/resized/1200/blank.jpg"  // Placeholder until you add real images
-    ];
-    projectName = 'Project 3';
-  } else if (isProject4) {
-    slideshowImages = [
-      "images/resized/1200/blank.jpg"  // Placeholder until you add real images
-    ];
-    projectName = 'Project 4';
-  } else if (isProject5) {
-    slideshowImages = [
-      "images/resized/1200/blank.jpg"  // Placeholder until you add real images
-    ];
-    projectName = 'Project 5';
-  }
+  // Helpers to detect project number from URL and build folder path
+  const m = (window.location.pathname.match(/project(\d+)/i) || []);
+  const projectNum = m[1] || '';
+  const isTargetProject = ['2','3','4','5'].includes(projectNum);
 
-  // Only initialize slideshow if we have images and slideshow container
+  // Elements
   const slideshowImg = document.querySelector('.slideshow-image');
-  if (slideshowImg && slideshowImages.length > 0) {
-    // Add responsive sources for the slideshow image if it matches our resized pattern
-    (function enhanceSlideshowImage(img) {
-      const src = img.getAttribute('src') || '';
-      const m = src.match(/^images\/resized\/1200\/(.+)\.(jpg|jpeg|png)$/i);
-      if (!m) return;
-      const base = m[1];
-      const ext = m[2].toLowerCase();
-      const widths = [400, 800, 1200];
-      const srcset = widths.map(w => `images/resized/${w}/${base}.${ext} ${w}w`).join(', ');
-      const sizes = '(max-width: 900px) 100vw, 1200px';
-      img.setAttribute('srcset', srcset);
-      img.setAttribute('sizes', sizes);
-      if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
-      if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
-    })(slideshowImg);
-    let slideIndex = 0;
-    function showSlide(idx) {
-      slideIndex = (idx + slideshowImages.length) % slideshowImages.length;
-      slideshowImg.src = slideshowImages[slideIndex];
-      slideshowImg.alt = projectName + " Slide " + (slideIndex + 1);
-    }
+  const slideshowContainer = document.querySelector('.slideshow-container');
+  const galleryContainer = document.querySelector('.gallery');
 
-    function nextSlide() {
-      if (slideshowImages.length > 1) showSlide(slideIndex + 1);
-    }
-
-    function prevSlide() {
-      if (slideshowImages.length > 1) showSlide(slideIndex - 1);
-    }
-
-    // Global functions for onclick handlers
-    window.changeSlide = function(direction) {
-      if (direction > 0) nextSlide();
-      else prevSlide();
-      if (resetTimer) resetTimer();
-    };
-
-    // Keyboard support on slideshow container
-    const slideshowContainer = document.querySelector('.slideshow-container');
-    if (slideshowContainer) {
-      slideshowContainer.setAttribute('tabindex', '0');
-      slideshowContainer.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowLeft') prevSlide();
-        if (e.key === 'ArrowRight') nextSlide();
-      });
-    }
-
-    // Auto-advance only if multiple images
-    let slideshowTimer;
-    if (slideshowImages.length > 1) {
-      slideshowTimer = setInterval(nextSlide, 7000);
-    }
-
-    function resetTimer() {
-      if (slideshowTimer) {
-        clearInterval(slideshowTimer);
-        if (slideshowImages.length > 1) {
-          slideshowTimer = setInterval(nextSlide, 7000);
-        }
-      }
-    }
-
-    showSlide(0);
+  // If not a project page (2–5) or no slideshow/gallery, do nothing
+  if (!isTargetProject || !slideshowImg || !slideshowContainer || !galleryContainer) {
+    initLightboxIfPresent();
+    return;
   }
 
-  // Lightbox logic for gallery
-  const galleryImgs = document.querySelectorAll('.gallery img');
-  const lightbox = document.getElementById('lightbox');
-  const lightboxImg = document.getElementById('lightbox-img');
-  const lightboxClose = document.querySelector('.lightbox-close');
+  const folderPath = `images/project ${projectNum}`; // note the space per your folder names
+  const manifestUrl = `${folderPath}/manifest.json`;
 
-  if (lightbox && lightboxImg && lightboxClose) {
-    // Add srcset/sizes for gallery thumbs and bind open handlers
+  // Default/fallback images (current ones in repo)
+  const defaultSets = {
+    '2': [
+      { src: 'images/project2-1.png', alt: 'RSPB visual 1' },
+      { src: 'images/project2-2.png', alt: 'RSPB visual 2' },
+      { src: 'images/project2-3.png', alt: 'RSPB visual 3' },
+    ],
+    '3': [
+      { src: 'images/resized/1200/preview3.jpg', alt: 'Facade Retrofit diagram' },
+    ],
+    '4': [
+      { src: 'images/resized/1200/preview4.jpg', alt: 'Architectural model photograph' },
+    ],
+    '5': [
+      { src: 'images/resized/1200/preview5.jpg', alt: 'Personal works visual' },
+    ]
+  };
+
+  const projectNames = { '2': 'RSPB', '3': 'Facade Retrofit', '4': 'Other Projects', '5': 'Personal Works' };
+  // Per-project 2x2 big tile fraction (tunable per page)
+  const BIG_FRACTION_BY_PROJECT = { '2': 0.12, '3': 0.12, '4': 0.12, '5': 0.12 };
+  // Per-load cache busting for image URLs (avoids stale browser caches after edits)
+  const CACHE_BUST = `v=${Date.now()}`;
+  function withBust(url) {
+    if (!url) return url;
+    // Only append to same-origin images path
+    if (url.startsWith('images/')) {
+      return encodeURI(url) + (url.includes('?') ? '&' : '?') + CACHE_BUST;
+    }
+    return url;
+  }
+
+  // Sort helper: natural, case-insensitive, by base filename only
+  function sortImagesByName(list) {
+    return (list || []).slice().sort((a, b) => {
+      const aName = (a && a.src ? a.src : '').split(/[\\\/]/).pop();
+      const bName = (b && b.src ? b.src : '').split(/[\\\/]/).pop();
+      return aName.localeCompare(bName, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }
+
+  // Fetch manifest if present; otherwise use defaults
+  async function loadProjectImages() {
+    try {
+      // Encode URL (handles spaces in folder names) and add cache-busting query to avoid stale CDN caches
+      const bust = `?v=${Date.now()}`;
+      const res = await fetch(encodeURI(manifestUrl) + bust, { cache: 'no-store' });
+      if (!res.ok) throw new Error('manifest not found');
+      const data = await res.json();
+      const list = Array.isArray(data?.images) ? data.images : [];
+      // Normalize src: if it's a bare filename, prefix with folderPath
+      const normalized = list
+        .map(item => ({
+          src: (item && typeof item.src === 'string') ? item.src.trim() : '',
+          alt: (item && typeof item.alt === 'string') ? item.alt.trim() : ''
+        }))
+        .filter(item => !!item.src)
+        .map(item => ({
+          src: (item.src.startsWith('images/')) ? item.src : `${folderPath}/${item.src}`,
+          alt: item.alt || `${projectNames[projectNum] || 'Project'} image`
+        }));
+      if (normalized.length > 0) return sortImagesByName(normalized);
+      return sortImagesByName(defaultSets[projectNum] || []);
+    } catch (_) {
+      return sortImagesByName(defaultSets[projectNum] || []);
+    }
+  }
+
+  function enhanceResponsive(imgEl) {
+    const raw = imgEl.getAttribute('src') || '';
+    const src = raw.split('?')[0]; // strip cache-busting for detection
+    const m = src.match(/^images\/resized\/1200\/(.+)\.(jpg|jpeg|png)$/i);
+    if (!m) return;
+    const base = m[1];
+    const ext = m[2].toLowerCase();
+    const widths = [400, 800, 1200];
+    const srcset = widths
+      .map(w => {
+        const u = `images/resized/${w}/${base}.${ext}`;
+        return `${u}?${CACHE_BUST} ${w}w`;
+      })
+      .join(', ');
+    const sizes = '(max-width: 900px) 100vw, 1200px';
+    imgEl.setAttribute('srcset', srcset);
+    imgEl.setAttribute('sizes', sizes);
+    if (!imgEl.hasAttribute('decoding')) imgEl.setAttribute('decoding', 'async');
+    if (!imgEl.hasAttribute('loading')) imgEl.setAttribute('loading', 'lazy');
+  }
+
+  function renderGallery(images) {
+    // Clear existing
+    galleryContainer.innerHTML = '';
+
+    images.forEach(item => {
+      const figure = document.createElement('figure');
+      figure.className = 'gallery-item';
+      // Apply dynamic span classes based on aspect classification if present
+      if (item._span === 'tall') figure.classList.add('tile-tall');
+      if (item._span === 'wide') figure.classList.add('tile-wide');
+      if (item._span === 'big') figure.classList.add('tile-big');
+
+      const img = document.createElement('img');
+  // Encode spaces and append cache-busting param to avoid stale caches after image changes
+  img.src = withBust(item.src);
+      img.alt = item.alt || '';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      img.tabIndex = 0; // focusable for keyboard users
+      // Add lazy-loading visual state until the image is fully loaded
+      img.classList.add('lazy');
+      img.addEventListener('load', () => { img.classList.add('loaded'); }, { once: true });
+      img.addEventListener('error', () => { img.classList.add('loaded'); }, { once: true });
+
+      // Add responsive attrs if using resized path
+      enhanceResponsive(img);
+
+      figure.appendChild(img);
+      galleryContainer.appendChild(figure);
+
+      // Keyboard support: Enter/Space opens lightbox
+      img.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); img.click(); }
+      });
+    });
+  }
+
+  function initLightboxForCurrentGallery() {
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const lightboxClose = document.querySelector('.lightbox-close');
+    if (!(lightbox && lightboxImg && lightboxClose)) return;
+
+    const images = Array.from(galleryContainer.querySelectorAll('img'));
+    images.forEach(img => {
+      img.addEventListener('click', () => {
+        lightbox.style.display = 'flex';
+        lightbox.setAttribute('aria-hidden', 'false');
+        lightboxImg.src = img.src;
+        lightboxImg.alt = img.alt;
+        lightbox._opener = img;
+        // Dim gallery behind the lightbox
+        try { galleryContainer.classList.add('lightbox-active'); } catch (e) {}
+        try { lightboxClose.focus(); } catch (e) { lightbox.focus(); }
+      });
+    });
+
+    window.changeLightboxImage = function(direction) {
+      const cur = lightboxImg.src;
+      const list = Array.from(galleryContainer.querySelectorAll('img'));
+      const idx = list.findIndex(i => i.src === cur);
+      if (idx !== -1) {
+        const nextIdx = (idx + direction + list.length) % list.length;
+        lightboxImg.src = list[nextIdx].src;
+        lightboxImg.alt = list[nextIdx].alt;
+      }
+    };
+    window.closeLightbox = function() {
+      lightbox.style.display = 'none';
+      lightbox.setAttribute('aria-hidden', 'true');
+      lightboxImg.src = '';
+      lightboxImg.alt = '';
+      try { if (lightbox._opener) lightbox._opener.focus(); } catch (e) {}
+      try { galleryContainer.classList.remove('lightbox-active'); } catch (e) {}
+    };
+    lightboxClose.addEventListener('click', window.closeLightbox);
+    lightbox.addEventListener('click', (e) => { if (e.target === lightbox) window.closeLightbox(); });
+    document.addEventListener('keydown', (e) => {
+      if (lightbox.style.display === 'flex') {
+        if (e.key === 'Escape' || e.key === 'Esc') window.closeLightbox();
+        if (e.key === 'ArrowLeft') window.changeLightboxImage(-1);
+        if (e.key === 'ArrowRight') window.changeLightboxImage(1);
+      }
+    });
+
+    // Basic swipe support on lightbox (mobile)
+    let touchStartX = null;
+    lightbox.addEventListener('touchstart', (e) => {
+      if (!e.touches || e.touches.length !== 1) return;
+      touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+    lightbox.addEventListener('touchend', (e) => {
+      if (touchStartX == null) return;
+      const dx = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX - touchStartX : 0;
+      const threshold = 40; // minimal swipe distance
+      if (Math.abs(dx) > threshold) {
+        window.changeLightboxImage(dx > 0 ? -1 : 1);
+      }
+      touchStartX = null;
+    });
+  }
+
+  function initLightboxIfPresent() {
+    // Keeps previous behavior for pages we didn't touch
+    const galleryImgs = document.querySelectorAll('.gallery img');
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const lightboxClose = document.querySelector('.lightbox-close');
+    if (!(lightbox && lightboxImg && lightboxClose)) return;
     galleryImgs.forEach(img => {
       const src = img.getAttribute('src') || '';
       const m = src.match(/^images\/resized\/(400|800|1200)\/(.+)\.(jpg|jpeg|png)$/i);
@@ -123,47 +230,258 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
       }
       img.addEventListener('click', () => {
-        // Open lightbox
         lightbox.style.display = 'flex';
         lightbox.setAttribute('aria-hidden', 'false');
         lightboxImg.src = img.src;
         lightboxImg.alt = img.alt;
-        // Save opener to restore focus when closed
         lightbox._opener = img;
-        // Focus the close button for immediate keyboard access
         try { lightboxClose.focus(); } catch (e) { lightbox.focus(); }
       });
     });
-
-    // Global function for lightbox navigation
-    window.changeLightboxImage = function(direction) {
-      const currentSrc = lightboxImg.src;
-      const currentIndex = Array.from(galleryImgs).findIndex(img => img.src === currentSrc);
-      if (currentIndex !== -1) {
-        const newIndex = (currentIndex + direction + galleryImgs.length) % galleryImgs.length;
-        const newImg = galleryImgs[newIndex];
-        lightboxImg.src = newImg.src;
-        lightboxImg.alt = newImg.alt;
-      }
-    };
-
     window.closeLightbox = function() {
       lightbox.style.display = 'none';
       lightbox.setAttribute('aria-hidden', 'true');
       lightboxImg.src = '';
       lightboxImg.alt = '';
-      // Restore focus to opener if available
       try { if (lightbox._opener) lightbox._opener.focus(); } catch (e) {}
     };
+  }
 
-    lightboxClose.addEventListener('click', window.closeLightbox);
-    lightbox.addEventListener('click', function(e) {
-      if (e.target === lightbox) window.closeLightbox();
-    });
-    document.addEventListener('keydown', function(e) {
-      if (lightbox.style.display === 'flex' && (e.key === 'Escape' || e.key === 'Esc')) {
-        window.closeLightbox();
-      }
+  // Slideshow state
+  let slideshowImages = [];
+  let slideIndex = 0;
+
+  function showSlide(idx) {
+    if (!slideshowImages.length) return;
+    slideIndex = (idx + slideshowImages.length) % slideshowImages.length;
+    const item = slideshowImages[slideIndex];
+  // Encode spaces and append cache-busting param for slideshow image as well
+  slideshowImg.src = withBust(item.src);
+    slideshowImg.alt = `${projectNames[projectNum]} Slide ${slideIndex + 1}`;
+    enhanceResponsive(slideshowImg);
+  }
+  function nextSlide() { if (slideshowImages.length > 1) showSlide(slideIndex + 1); }
+  function prevSlide() { if (slideshowImages.length > 1) showSlide(slideIndex - 1); }
+  window.changeSlide = function(direction) { if (direction > 0) nextSlide(); else prevSlide(); resetTimer(); };
+  if (slideshowContainer) {
+    slideshowContainer.setAttribute('tabindex', '0');
+    slideshowContainer.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') prevSlide();
+      if (e.key === 'ArrowRight') nextSlide();
     });
   }
+  let slideshowTimer; function resetTimer() { if (slideshowTimer) { clearInterval(slideshowTimer); } if (slideshowImages.length > 1) { slideshowTimer = setInterval(nextSlide, 7000); } }
+
+  // Initialize
+  loadProjectImages()
+    .then(async (images) => {
+      // Image metrics cache to avoid remeasuring images (aspect + dimensions)
+      const metricsCache = new Map();
+      async function getImageMetrics(url) {
+        const key = url;
+        if (metricsCache.has(key)) return metricsCache.get(key);
+        const value = await new Promise((resolve) => {
+          const im = new Image();
+          im.onload = () => {
+            const w = im.naturalWidth || 0;
+            const h = im.naturalHeight || 0;
+            const ar = (w && h) ? (w / h) : 1;
+            resolve({ ar: ar || 1, w, h });
+          };
+          im.onerror = () => resolve({ ar: 1, w: 0, h: 0 });
+          im.src = url && url.startsWith('images/') ? encodeURI(url) : url;
+          if (im.decode) { im.decode().catch(() => {}); }
+        });
+        metricsCache.set(key, value);
+        return value;
+      }
+
+      // Classify each image into one of 4 tile shapes:
+      // tall (1 x 2), wide (2 x 1), big (2 x 2), normal (1 x 1)
+      const nearSquareDelta = 0.12; // kept for reference, but big is chosen by measured tile AR
+      const withMetrics = await Promise.all(images.map(async (it) => {
+        const m = await getImageMetrics(it.src);
+        return { ...it, _ar: m.ar, _w: m.w, _h: m.h, _area: (m.w || 0) * (m.h || 0) };
+      }));
+
+      // Compute effective tile aspect ratios from the grid (uses a hidden probe)
+      function computeTileARs() {
+        try {
+          const cs = getComputedStyle(galleryContainer);
+          const rowPx = parseFloat(cs.gridAutoRows) || 200;
+          const colGap = parseFloat(cs.columnGap) || 0;
+          const rowGap = parseFloat(cs.rowGap) || 0;
+          const probe = document.createElement('figure');
+          probe.style.visibility = 'hidden';
+          probe.style.margin = '0';
+          probe.className = 'gallery-item';
+          galleryContainer.appendChild(probe);
+          const colPx = probe.clientWidth || galleryContainer.clientWidth || 200;
+          galleryContainer.removeChild(probe);
+          if (!rowPx || !colPx) throw new Error('bad grid metrics');
+          return {
+            normal: colPx / rowPx,
+            wide: (colPx * 2 + colGap) / rowPx,
+            tall: colPx / (rowPx * 2 + rowGap),
+            big: (colPx * 2 + colGap) / (rowPx * 2 + rowGap)
+          };
+        } catch (_) {
+          // Fallback to theoretical ratios
+          return { normal: 1.0, wide: 2.0, tall: 0.5, big: 1.0 };
+        }
+      }
+      // (Removed duplicate arrangeFromMetrics; enhanced version below)
+      function arrangeFromMetrics(metrics) {
+        const tileAR = computeTileARs();
+        const totalCount = metrics.length;
+        const bigFraction = BIG_FRACTION_BY_PROJECT[projectNum] ?? 0.12;
+        const bigTarget = Math.max(0, Math.round(totalCount * bigFraction));
+
+        // Prefer images closest to the measured big tile AR; break ties by larger area
+        // Use a strict threshold first, then a fallback to guarantee presence if desired
+        const maxBigCost = 0.28; // primary cap: reasonable matches for 2x2
+        const fallbackMaxBigCost = 0.42; // fallback cap if we still need to reach target
+        const costList = metrics
+          .map(it => ({ it, c: Math.abs(Math.log((it._ar || 1) / (tileAR.big || 1))) }))
+          .sort((a,b) => (a.c - b.c) || (b.it._area - a.it._area) || a.it.src.localeCompare(b.it.src));
+  let bigCandidates = costList.filter(x => x.c <= maxBigCost).slice(0, bigTarget).map(x => x.it);
+        if (bigCandidates.length === 0 && bigTarget > 0 && costList.length) {
+          // Ensure at least one big if configured
+          bigCandidates = [costList[0].it];
+        } else if (bigCandidates.length < bigTarget) {
+          for (const x of costList) {
+            if (bigCandidates.length >= bigTarget) break;
+            if (bigCandidates.some(it => it.src === x.it.src)) continue;
+            if (x.c <= fallbackMaxBigCost) bigCandidates.push(x.it);
+          }
+        }
+  bigCandidates = bigCandidates.sort((a,b) => a.src.localeCompare(b.src));
+  // Ensure inserted items carry the big span flag
+  const bigItems = bigCandidates.map(it => ({ ...it, _span: 'big' }));
+  const bigChosenSet = new Set(bigCandidates.map(it => it.src));
+
+        function cost(imgAR, boxAR) { return Math.abs(Math.log((imgAR || 1) / (boxAR || 1))); }
+        const classified = metrics.map(it => {
+          if (bigChosenSet.has(it.src)) return { ...it, _span: 'big' };
+          const cTall = cost(it._ar, tileAR.tall);
+          const cWide = cost(it._ar, tileAR.wide);
+          const cNorm = cost(it._ar, tileAR.normal);
+          const min = Math.min(cTall, cWide, cNorm);
+          let _span = null;
+          if (min === cNorm) _span = null; else if (min === cWide) _span = 'wide'; else _span = 'tall';
+          return { ...it, _span };
+        });
+
+        // Build base arrangement without bigs (apply cooldown for tall/wide)
+        const nonBigGroups = {
+          tall: classified.filter(it => it._span === 'tall').sort((a,b) => a.src.localeCompare(b.src)),
+          wide: classified.filter(it => it._span === 'wide').sort((a,b) => a.src.localeCompare(b.src)),
+          normal: classified.filter(it => !it._span).sort((a,b) => a.src.localeCompare(b.src)),
+        };
+        const baseArranged = [];
+        let lastKey = '', secondLastKey = '';
+        function nonBigRemaining() { return nonBigGroups.tall.length + nonBigGroups.wide.length + nonBigGroups.normal.length; }
+        while (nonBigRemaining() > 0) {
+          const rem = nonBigRemaining();
+          const shares = [
+            { k: 'tall', n: nonBigGroups.tall.length, share: nonBigGroups.tall.length / rem },
+            { k: 'wide', n: nonBigGroups.wide.length, share: nonBigGroups.wide.length / rem },
+            { k: 'normal', n: nonBigGroups.normal.length, share: nonBigGroups.normal.length / rem },
+          ].filter(x => x.n > 0)
+           .sort((a,b) => b.share - a.share || a.k.localeCompare(b.k));
+          const violatesCooldown = (k) => (k === 'tall' || k === 'wide') && (k === lastKey || k === secondLastKey);
+          let pickKey = (shares.find(s => s.k !== lastKey && !violatesCooldown(s.k))?.k)
+                      || (shares.find(s => s.k !== lastKey)?.k)
+                      || shares[0].k;
+          let item;
+          if (pickKey === 'tall') item = nonBigGroups.tall.shift();
+          else if (pickKey === 'wide') item = nonBigGroups.wide.shift();
+          else item = nonBigGroups.normal.shift();
+          baseArranged.push(item);
+          secondLastKey = lastKey; lastKey = pickKey;
+        }
+
+        // Evenly distribute bigs into the base sequence with a minimum gap
+        // and try to place them in different column buckets to avoid vertical stacking
+        const finalArr = baseArranged.slice();
+  const nBig = bigItems.length;
+        if (nBig > 0) {
+          const baseLen = baseArranged.length;
+          const finalLen = baseLen + nBig;
+          const minGap = Math.max(4, Math.floor(finalLen / (nBig + 1)) - 1); // ensure noticeable spacing
+          // Estimate number of columns based on probe width and container width
+          let approxCols = 1;
+          try {
+            const probe = document.createElement('figure');
+            probe.style.visibility = 'hidden';
+            probe.style.margin = '0';
+            probe.className = 'gallery-item';
+            galleryContainer.appendChild(probe);
+            const colPx = probe.clientWidth || 0;
+            const contW = galleryContainer.clientWidth || 0;
+            galleryContainer.removeChild(probe);
+            if (colPx > 0 && contW > 0) approxCols = Math.max(1, Math.round(contW / colPx));
+          } catch (_) { approxCols = 1; }
+
+          let lastPlaced = -Infinity;
+          let lastMod = -1;
+          for (let i = 1; i <= nBig; i++) {
+            const target = Math.max(0, Math.round((i * finalLen) / (nBig + 1)) - 1);
+            // Start near target considering already inserted items
+            let pos = Math.min(target, finalArr.length);
+            // Ensure minimum gap from previous big
+            if (pos - lastPlaced < minGap) pos = Math.min(finalArr.length, lastPlaced + minGap);
+            // Try to avoid same column bucket modulo approxCols
+            if (approxCols > 1) {
+              let attempts = 0;
+              const maxAttempts = Math.min(approxCols, 6);
+              // Prefer forward shift
+              while (attempts < maxAttempts && (pos % approxCols) === lastMod) { pos = Math.min(finalArr.length, pos + 1); attempts++; }
+              // If still same, try backward
+              attempts = 0;
+              while ((pos % approxCols) === lastMod && attempts < maxAttempts) { pos = Math.max(0, pos - 1); attempts++; }
+            }
+            // Clamp to bounds
+            pos = Math.max(0, Math.min(pos, finalArr.length));
+            const bigItem = bigItems[i - 1];
+            finalArr.splice(pos, 0, bigItem);
+            lastMod = approxCols > 1 ? (pos % approxCols) : -1;
+            lastPlaced = pos;
+          }
+        }
+        return finalArr;
+      }
+      
+
+      // Initial arrange and render using current grid metrics
+      let arranged = arrangeFromMetrics(withMetrics);
+
+  // Use arranged order for both slideshow and gallery so distribution changes are visible
+  slideshowImages = arranged.slice();
+      showSlide(0);
+      resetTimer();
+  renderGallery(arranged);
+      initLightboxForCurrentGallery();
+
+      // Debounced resize reflow: recompute tile ARs and reassign boxes when layout changes
+      let _reflowTimer = null;
+      window.addEventListener('resize', () => {
+        clearTimeout(_reflowTimer);
+        _reflowTimer = setTimeout(() => {
+          try {
+            arranged = arrangeFromMetrics(withMetrics);
+            renderGallery(arranged);
+            initLightboxForCurrentGallery();
+          } catch (e) { /* no-op */ }
+        }, 180);
+      });
+    })
+    .catch(() => {
+    // Fallback to defaults if something unexpected happened
+    const images = defaultSets[projectNum] || [];
+    slideshowImages = images.slice();
+    showSlide(0);
+    renderGallery(images);
+    initLightboxForCurrentGallery();
+    });
 });
