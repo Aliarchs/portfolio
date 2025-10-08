@@ -150,6 +150,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // Clear existing
     galleryContainer.innerHTML = '';
 
+    // Estimate number of columns to eagerly load first ~2 rows on larger screens
+    function getApproxColumns() {
+      try {
+        const probe = document.createElement('figure');
+        probe.className = 'gallery-item';
+        probe.style.visibility = 'hidden';
+        probe.style.margin = '0';
+        galleryContainer.appendChild(probe);
+        const colPx = probe.clientWidth || 0;
+        const contW = galleryContainer.clientWidth || 0;
+        galleryContainer.removeChild(probe);
+        if (colPx > 0 && contW > 0) return Math.max(1, Math.round(contW / colPx));
+      } catch {}
+      return 4; // sensible default
+    }
+    const eagerRows = 2;
+    const approxCols = getApproxColumns();
+    const eagerCount = Math.max(4, approxCols * eagerRows);
+
     images.forEach((item, idx) => {
       const figure = document.createElement('figure');
       figure.className = 'gallery-item';
@@ -164,8 +183,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Keep original as fallback src; srcset will point to resized assets
     img.src = withBust(item.src);
       img.alt = item.alt || '';
-      // Prioritize the first row visually; others remain lazy
-      if (idx < 4) { img.loading = 'eager'; img.setAttribute('fetchpriority', 'high'); }
+  // Prioritize the first rows visually; others remain lazy
+  if (idx < eagerCount) { img.loading = 'eager'; img.setAttribute('fetchpriority', 'high'); }
       else { img.loading = 'lazy'; img.setAttribute('fetchpriority', 'auto'); }
       img.decoding = 'async';
       img.tabIndex = 0; // focusable for keyboard users
