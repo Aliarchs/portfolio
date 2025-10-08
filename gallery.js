@@ -169,43 +169,69 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     const eagerRows = 2;
     const approxCols = getApproxColumns();
-    const eagerCount = Math.max(4, approxCols * eagerRows);
+    const chunkSize = Math.max(8, approxCols * eagerRows);
+    let rendered = 0;
 
-    images.forEach((item, idx) => {
+    function appendOne(item, idxGlobal) {
       const figure = document.createElement('figure');
       figure.className = 'gallery-item';
-      // Apply dynamic span classes based on aspect classification if present
-  if (item._span === 'tall') figure.classList.add('tile-tall');
-  if (item._span === 'wide') figure.classList.add('tile-wide');
-  if (item._span === 'big') figure.classList.add('tile-big');
+      if (item._span === 'tall') figure.classList.add('tile-tall');
+      if (item._span === 'wide') figure.classList.add('tile-wide');
+      if (item._span === 'big') figure.classList.add('tile-big');
 
-    // Use <picture> to enable WebP + fallback
-    const picture = document.createElement('picture');
-    const img = document.createElement('img');
-    // Keep original as fallback src; srcset will point to resized assets
-    img.src = withBust(item.src);
+      const picture = document.createElement('picture');
+      const img = document.createElement('img');
+      img.src = withBust(item.src);
       img.alt = item.alt || '';
-  // Prioritize the first rows visually; others remain lazy
-  if (idx < eagerCount) { img.loading = 'eager'; img.setAttribute('fetchpriority', 'high'); }
+      if (idxGlobal < chunkSize) { img.loading = 'eager'; img.setAttribute('fetchpriority', 'high'); }
       else { img.loading = 'lazy'; img.setAttribute('fetchpriority', 'auto'); }
       img.decoding = 'async';
-      img.tabIndex = 0; // focusable for keyboard users
-      // Add lazy-loading visual state until the image is fully loaded
+      img.tabIndex = 0;
       img.classList.add('lazy');
       img.addEventListener('load', () => { img.classList.add('loaded'); }, { once: true });
       img.addEventListener('error', () => { img.classList.add('loaded'); }, { once: true });
 
-  // Add responsive attrs and insert WebP <source>
-  figure.appendChild(picture);
-  picture.appendChild(img);
-  enhanceResponsive(img);
+      figure.appendChild(picture);
+      picture.appendChild(img);
+      enhanceResponsive(img);
       galleryContainer.appendChild(figure);
 
-      // Keyboard support: Enter/Space opens lightbox
       img.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); img.click(); }
       });
-    });
+    }
+
+    function renderChunk() {
+      const end = Math.min(rendered + chunkSize, images.length);
+      for (let i = rendered; i < end; i++) appendOne(images[i], i);
+      rendered = end;
+      initLightboxForCurrentGallery();
+      if (rendered >= images.length) {
+        // all done
+        if (sentinel && observer) observer.unobserve(sentinel);
+        if (sentinel && sentinel.parentElement) sentinel.parentElement.removeChild(sentinel);
+      }
+    }
+
+    // Initial chunk
+    renderChunk();
+
+    // Progressive chunks on scroll
+    let sentinel = document.createElement('div');
+    sentinel.className = 'gallery-sentinel';
+    sentinel.setAttribute('aria-hidden', 'true');
+    galleryContainer.appendChild(sentinel);
+    let observer = null;
+    if ('IntersectionObserver' in window) {
+      observer = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting && rendered < images.length) {
+            renderChunk();
+          }
+        }
+      }, { rootMargin: '100px 0px' });
+      observer.observe(sentinel);
+    }
   }
 
   function initLightboxForCurrentGallery() {
