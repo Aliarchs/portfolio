@@ -34,7 +34,7 @@
     margin: 0 auto !important;
     padding: 0 !important;
     background: transparent !important;
-    box-shadow: none !important;
+  /* Restore .book-controls spacing so arrows appear below the image and adjust gallery layout */
   }
   .book {
     flex-direction: row !important;
@@ -1596,3 +1596,37 @@ img.lazy.loaded {
 }
 /* Force-show utility if cascade conflicts */
 .book-mobile.force-show { display:block !important; visibility:visible !important; opacity:1 !important; }
+
+/* --- Final mobile override: ensure stacked, non-square gallery on small screens --- */
+@media (max-width: 768px) {
+  .gallery {
+    display: block !important;            /* disable grid */
+    width: 88vw !important;               /* side gutters */
+    max-width: 88vw !important;
+    margin: 1rem auto 0 auto !important;  /* center */
+    grid-auto-rows: auto !important;      /* ignore square rows if grid was applied */
+  }
+  .gallery figure,
+  .gallery .gallery-item {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 0 0.9rem 0 !important;
+    overflow: hidden !important;
+  }
+  .gallery img {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;              /* natural aspect ratio */
+    inline-size: 100% !important;
+    block-size: auto !important;
+    object-fit: contain !important;       /* avoid cropping */
+    grid-area: auto !important;
+  }
+  .gallery .tile-tall,
+  .gallery .tile-wide,
+  .gallery .tile-big {
+    grid-area: auto !important;
+    grid-column: auto !important;
+    grid-row: auto !important;
+  }
+}
