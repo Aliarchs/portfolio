@@ -1,5 +1,5 @@
 /* --- Mobile Flipbook Portrait and Landscape --- */
-@media (max-width: 600px) and (orientation: portrait) {
+@media (max-width: 768px) and (orientation: portrait) {
   .book-mobile {
     display: block !important;
   }
@@ -1072,6 +1072,40 @@ textarea:focus,
   .gallery .tile-wide { grid-column: span 2; grid-row: auto; }   /* 2 x 1 */
   .gallery .tile-big  { grid-area: span 2 / span 2; }            /* 2 x 2 */
   /* Default is 1 x 1 (no class) */
+}
+
+/* --- Mobile Portrait: make gallery a simple scrollable stack --- */
+@media (max-width: 600px) and (orientation: portrait) {
+  .gallery {
+    display: block;                 /* drop grid layout */
+    width: 88vw;                    /* narrower than screen for side gutters */
+    max-width: 88vw;
+    margin: 1rem auto 0 auto;       /* slightly tighter top margin */
+  }
+  .gallery figure,
+  .gallery .gallery-item {
+    display: block;
+    width: 100%;
+    margin: 0 0 0.9rem 0;          /* vertical spacing between items */
+    overflow: hidden;              /* keep consistent edges */
+  }
+  .gallery img {
+    display: block;
+    width: 100%;
+    height: auto;                  /* natural aspect ratio */
+    inline-size: 100% !important;  /* ensure full width */
+    block-size: auto !important;   /* override grid sizing from desktop */
+    object-fit: contain !important;/* avoid cropping */
+    grid-area: auto;               /* no grid positioning in block flow */
+  }
+  /* Ignore tile span classes on mobile portrait */
+  .gallery .tile-tall,
+  .gallery .tile-wide,
+  .gallery .tile-big {
+    grid-area: auto !important;
+    grid-column: auto !important;
+    grid-row: auto !important;
+  }
 }
 
 /* --- Simple placeholder/coming-soon state --- */

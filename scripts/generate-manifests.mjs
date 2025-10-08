@@ -6,6 +6,8 @@ import { pathToFileURL } from 'url';
 const root = path.resolve(process.cwd());
 const imagesDir = path.join(root, 'images');
 export const projectDirs = ['project 2', 'project 3', 'project 4', 'project 5'];
+const responsiveRoot = path.join(imagesDir, 'resized');
+const RESPONSIVE_SIZES = [400, 800, 1200];
 
 /**
  * Generate a human-friendly alt text from a filename.
@@ -72,6 +74,56 @@ async function needsRebuild(srcPath, destPath) {
   }
 }
 
+/**
+ * Ensure resized and WebP variants exist for an image inside a project directory.
+ * Writes to images/resized/{size}/{projectDir}/{filename|.webp}.
+ * No-op if sharp isn't installed; returns false in that case.
+ */
+async function ensureResponsiveVariants(projectDirName, filename) {
+  const sharp = await getSharp();
+  if (!sharp) {
+    // Keep working without hard failure; the site will just use originals
+    return false;
+  }
+  const srcAbs = path.join(imagesDir, projectDirName, filename);
+  const ext = path.extname(filename).toLowerCase();
+  const base = path.basename(filename, ext);
+
+  // Skip if source doesn't exist (e.g., a stale entry)
+  if (!(await fileExists(srcAbs))) return false;
+
+  let wroteAny = false;
+  for (const size of RESPONSIVE_SIZES) {
+    const outDir = path.join(responsiveRoot, String(size), projectDirName);
+    await fs.mkdir(outDir, { recursive: true }).catch(() => {});
+
+    const destAbs = path.join(outDir, filename);
+    const needRaster = await needsRebuild(srcAbs, destAbs);
+    if (needRaster) {
+      try {
+        await sharp(srcAbs).resize({ width: size }).toFile(destAbs);
+        wroteAny = true;
+      } catch (e) {
+        // continue to try webp, but don't throw
+        // console.error(`[responsive] raster fail ${projectDirName}/${filename}@${size}:`, e.message);
+      }
+    }
+
+    // Write WebP variant as well
+    const webpAbs = path.join(outDir, base + '.webp');
+    const needWebp = await needsRebuild(srcAbs, webpAbs);
+    if (needWebp) {
+      try {
+        await sharp(srcAbs).resize({ width: size }).webp({ quality: 80 }).toFile(webpAbs);
+        wroteAny = true;
+      } catch (e) {
+        // console.error(`[responsive] webp fail ${projectDirName}/${filename}@${size}:`, e.message);
+      }
+    }
+  }
+  return wroteAny;
+}
+
 async function convertTiffToWebpIfNeeded(dir, filename) {
   const sharp = await getSharp();
   if (!sharp) {
@@ -122,6 +174,11 @@ export async function updateManifestForProject(projectDirName) {
       processed.push(name);
     }
   }
+
+  // Build responsive assets in parallel (best-effort)
+  await Promise.all(
+    processed.map(name => ensureResponsiveVariants(projectDirName, name).catch(() => false))
+  );
 
   // Build new list preserving manual order for files that still exist
   const fileSet = new Set(processed);

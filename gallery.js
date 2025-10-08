@@ -15,6 +15,14 @@ document.addEventListener('DOMContentLoaded', function() {
     return;
   }
 
+  // Ensure slideshow image is inside a <picture> so we can add WebP source
+  if (slideshowImg && slideshowImg.parentElement && slideshowImg.parentElement.tagName !== 'PICTURE') {
+    const parent = slideshowImg.parentElement;
+    const picture = document.createElement('picture');
+    parent.insertBefore(picture, slideshowImg);
+    picture.appendChild(slideshowImg);
+  }
+
   const folderPath = `images/project ${projectNum}`; // note the space per your folder names
   const manifestUrl = `${folderPath}/manifest.json`;
 
@@ -88,22 +96,54 @@ document.addEventListener('DOMContentLoaded', function() {
   function enhanceResponsive(imgEl) {
     const raw = imgEl.getAttribute('src') || '';
     const src = raw.split('?')[0]; // strip cache-busting for detection
-    const m = src.match(/^images\/resized\/1200\/(.+)\.(jpg|jpeg|png)$/i);
-    if (!m) return;
-    const base = m[1];
-    const ext = m[2].toLowerCase();
+    // Support either images/resized/{w}/<path>.<ext> or images/project X/<file>.<ext>
+    let relPath = '';
+    let ext = '';
+    let m = src.match(/^images\/resized\/(?:400|800|1200)\/(.+)\.(jpg|jpeg|png|webp)$/i);
+    if (m) {
+      relPath = m[1];
+      ext = (m[2] || '').toLowerCase();
+    } else {
+      m = src.match(/^images\/(project\s+\d+)\/([^\.?]+)\.(jpg|jpeg|png|webp)$/i);
+      if (m) {
+        relPath = `${m[1]}/${m[2]}`;
+        ext = (m[3] || '').toLowerCase();
+      } else {
+        // Last chance: images/<name>.<ext> in root
+        m = src.match(/^images\/([^\/]+)\.(jpg|jpeg|png|webp)$/i);
+        if (!m) return;
+        relPath = m[1];
+        ext = (m[2] || '').toLowerCase();
+      }
+    }
+
     const widths = [400, 800, 1200];
-    const srcset = widths
-      .map(w => {
-        const u = `images/resized/${w}/${base}.${ext}`;
-        return `${u}?${IMG_CACHE_VER} ${w}w`;
-      })
-      .join(', ');
     const sizes = '(max-width: 900px) 100vw, 1200px';
-    imgEl.setAttribute('srcset', srcset);
+    let legacyCandidates = widths.map(w => `images/resized/${w}/${relPath}.${ext}?${IMG_CACHE_VER} ${w}w`);
+    // Add original as the largest candidate to guarantee a working fallback if resized files are missing
+    if (imgEl.src) {
+      legacyCandidates.push(`${imgEl.src} 2000w`);
+    }
+    const legacySrcset = legacyCandidates.join(', ');
+    const webpSrcset = widths.map(w => `images/resized/${w}/${relPath}.webp?${IMG_CACHE_VER} ${w}w`).join(', ');
+
+    // Always add legacy srcset on the <img>
+    imgEl.setAttribute('srcset', legacySrcset);
     imgEl.setAttribute('sizes', sizes);
     if (!imgEl.hasAttribute('decoding')) imgEl.setAttribute('decoding', 'async');
     if (!imgEl.hasAttribute('loading')) imgEl.setAttribute('loading', 'lazy');
+
+    // If wrapped in <picture>, prepend a WebP <source>
+    const picture = imgEl.parentElement && imgEl.parentElement.tagName === 'PICTURE' ? imgEl.parentElement : null;
+    if (picture) {
+      // Remove any previous sources to avoid duplication on re-renders
+      Array.from(picture.querySelectorAll('source')).forEach(s => s.remove());
+      const sWebp = document.createElement('source');
+      sWebp.type = 'image/webp';
+      sWebp.setAttribute('srcset', webpSrcset);
+      sWebp.setAttribute('sizes', sizes);
+      picture.insertBefore(sWebp, imgEl);
+    }
   }
 
   function renderGallery(images) {
@@ -118,9 +158,11 @@ document.addEventListener('DOMContentLoaded', function() {
       if (item._span === 'wide') figure.classList.add('tile-wide');
       if (item._span === 'big') figure.classList.add('tile-big');
 
-      const img = document.createElement('img');
-  // Encode spaces and append cache-busting param to avoid stale caches after image changes
-  img.src = withBust(item.src);
+    // Use <picture> to enable WebP + fallback
+    const picture = document.createElement('picture');
+    const img = document.createElement('img');
+    // Keep original as fallback src; srcset will point to resized assets
+    img.src = withBust(item.src);
       img.alt = item.alt || '';
       // Prioritize the first row visually; others remain lazy
       if (idx < 4) { img.loading = 'eager'; img.setAttribute('fetchpriority', 'high'); }
@@ -132,10 +174,10 @@ document.addEventListener('DOMContentLoaded', function() {
       img.addEventListener('load', () => { img.classList.add('loaded'); }, { once: true });
       img.addEventListener('error', () => { img.classList.add('loaded'); }, { once: true });
 
-      // Add responsive attrs if using resized path
-      enhanceResponsive(img);
-
-      figure.appendChild(img);
+  // Add responsive attrs and insert WebP <source>
+  figure.appendChild(picture);
+  picture.appendChild(img);
+  enhanceResponsive(img);
       galleryContainer.appendChild(figure);
 
       // Keyboard support: Enter/Space opens lightbox
@@ -156,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
       img.addEventListener('click', () => {
         lightbox.style.display = 'flex';
         lightbox.setAttribute('aria-hidden', 'false');
-        lightboxImg.src = img.src;
+        lightboxImg.src = img.currentSrc || img.src;
         lightboxImg.alt = img.alt;
         lightbox._opener = img;
         // Dim gallery behind the lightbox
