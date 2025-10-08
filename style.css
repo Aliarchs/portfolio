@@ -1573,6 +1573,7 @@ img.lazy.loaded {
 .half-width-inline { display: inline-block !important; width: 50vw !important; max-width: 50vw !important; }
 .footer-muted { color: #60606060 !important; text-align: center !important; font-size: 0.8em !important; }
 .mt-3-5 { margin-top: 3.5rem !important; }
+.linkedin-badge-wrap { display: flex; justify-content: center; }
 
 /* --- Consolidated Mobile Flipbook Rules (override scattered earlier blocks) --- */
 @media (max-width: 900px) {

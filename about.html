@@ -42,7 +42,32 @@
   <div class="mt-3em">
        I am a RIBA part-1 graduate from the University of Dundee and also hold a HNC in Architectural technology. Giving me four years of architectural education. I am always keen to learn new things and am driven by the opportunity to create change for the better.
       </div>
+      
+      <!-- LinkedIn Profile Badge -->
+      <div class="mt-3-5 linkedin-badge-wrap">
+        <div class="badge-base LI-profile-badge" data-locale="en_US" data-size="small" data-theme="light" data-type="VERTICAL" data-vanity="ali-s-architecture" data-version="v1">
+          <a class="badge-base__link LI-simple-link" href="https://uk.linkedin.com/in/ali-s-architecture?trk=profile-badge" aria-label="View Ali S. on LinkedIn">Ali S.</a>
+        </div>
+      </div>
     </div>
   </main>
+  
+  <!-- LinkedIn Badge SDK (loads asynchronously) -->
+  <script src="https://platform.linkedin.com/badges/js/profile.js" async defer type="text/javascript"></script>
+  <script>
+    (function ensureLinkedInBadge() {
+      var tries = 0;
+      function tick() {
+        tries++;
+        try {
+          if (typeof window.LIRenderAll === 'function') { window.LIRenderAll(); return; }
+        } catch (e) { /* ignore */ }
+        if (tries < 40) setTimeout(tick, 200);
+      }
+      if (document.readyState === 'complete' || document.readyState === 'interactive') tick();
+      else window.addEventListener('DOMContentLoaded', tick);
+      window.addEventListener('load', tick);
+    })();
+  </script>
 </body>
 </html>
