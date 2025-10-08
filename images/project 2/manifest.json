@@ -2,12 +2,35 @@
   "title": "RSPB",
   "images": [
     {
+      "src": "20230321_034346.webp",
+      "alt": "20230321 034346"
+    },
+    {
+      "src": "20230321_034346.webp",
+      "alt": "20230321 034346"
+    },
+    {
+      "src": "20230329_201036.webp",
+      "alt": "20230329 201036"
+    },
+    {
+      "src": "20230329_201036.webp",
+      "alt": "20230329 201036"
+    },
+    {
       "src": "Asset 1.png",
-      "alt": "Asset 1"
+      "alt": "Asset 1",
+      "span": "big"
+    },
+    {
+      "src": "Asset 2.png",
+      "alt": "Asset 2",
+      "span": "big"
     },
     {
       "src": "Asset 3.png",
-      "alt": "Asset 3"
+      "alt": "Asset 3",
+      "span": "big"
     },
     {
       "src": "Asset 4.png",
@@ -15,7 +38,8 @@
     },
     {
       "src": "Asset 5.png",
-      "alt": "Asset 5"
+      "alt": "Asset 5",
+      "span": "big"
     },
     {
       "src": "Asset 6.png",
@@ -23,11 +47,17 @@
     },
     {
       "src": "CORRIDOR 1.jpg",
-      "alt": "CORRIDOR 1"
+      "alt": "CORRIDOR 1",
+      "span": "wide"
+    },
+    {
+      "src": "DSVF.png",
+      "alt": "DSVF"
     },
     {
       "src": "facade s.png",
-      "alt": "facade s"
+      "alt": "facade s",
+      "span": "wide"
     },
     {
       "src": "FGJHKBJ.png",
@@ -47,11 +77,13 @@
     },
     {
       "src": "horizontL SECTION.png",
-      "alt": "horizontL SECTION"
+      "alt": "horizontL SECTION",
+      "span": "wide"
     },
     {
       "src": "jvgfgnv.png",
-      "alt": "jvgfgnv"
+      "alt": "jvgfgnv",
+      "span": "wide"
     },
     {
       "src": "Layer 2 copy.png",
@@ -63,27 +95,38 @@
     },
     {
       "src": "north facade.png",
-      "alt": "north facade"
+      "alt": "north facade",
+      "span": "wide"
     },
     {
       "src": "NW section long.png",
-      "alt": "NW section long"
+      "alt": "NW section long",
+      "span": "wide"
     },
     {
       "src": "NW section.png",
-      "alt": "NW section"
+      "alt": "NW section",
+      "span": "wide"
     },
     {
       "src": "page.png",
-      "alt": "page"
+      "alt": "page",
+      "span": "wide"
     },
     {
       "src": "SE SECTION.png",
-      "alt": "SE SECTION"
+      "alt": "SE SECTION",
+      "span": "wide"
     },
     {
       "src": "section NE.png",
-      "alt": "section NE"
+      "alt": "section NE",
+      "span": "wide"
+    },
+    {
+      "src": "Untitled (1).png",
+      "alt": "Untitled (1)",
+      "span": "tall"
     },
     {
       "src": "viewing area 1.jpg",
@@ -92,26 +135,6 @@
     {
       "src": "ytufygukh.jpg",
       "alt": "ytufygukh"
-    },
-    {
-      "src": "Asset 2.png",
-      "alt": "Asset 2"
-    },
-    {
-      "src": "DSVF.png",
-      "alt": "DSVF"
-    },
-    {
-      "src": "20230321_034346.webp",
-      "alt": "20230321 034346"
-    },
-    {
-      "src": "20230329_201036.webp",
-      "alt": "20230329 201036"
-    },
-    {
-      "src": "Untitled (1).png",
-      "alt": "Untitled (1)"
     }
   ]
 }

@@ -3,7 +3,8 @@
   "images": [
     {
       "src": "20220428_114537-2.jpg",
-      "alt": "20220428 114537 2"
+      "alt": "20220428 114537 2",
+      "span": "big"
     },
     {
       "src": "20220428_114628-3-2.jpg",
@@ -39,7 +40,8 @@
     },
     {
       "src": "mdmylafm.png",
-      "alt": "mdmylafm"
+      "alt": "mdmylafm",
+      "span": "wide"
     }
   ]
 }

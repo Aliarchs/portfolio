@@ -180,6 +180,79 @@ export async function updateManifestForProject(projectDirName) {
     processed.map(name => ensureResponsiveVariants(projectDirName, name).catch(() => false))
   );
 
+  // Optionally enrich with dimensions and a precomputed span for certain projects
+  // so the client-side can avoid computing layout every time.
+  const shouldPrecomputeLayout = /^(project\s+(2|3|4))$/i.test(projectDirName);
+  let dimsMap = new Map();
+  if (shouldPrecomputeLayout) {
+    const sharp = await getSharp();
+    async function getDims(filename) {
+      // Try detecting from resized variant first (fast), fallback to original
+      const tryPaths = [
+        path.join(responsiveRoot, '1200', projectDirName, filename),
+        path.join(folder, filename)
+      ];
+      for (const p of tryPaths) {
+        try {
+          const st = await fs.stat(p);
+          if (!st) continue;
+          if (sharp) {
+            const m = await sharp(p).metadata();
+            const w = m.width || 0, h = m.height || 0;
+            if (w && h) return { w, h, ar: w / h };
+          }
+        } catch {}
+      }
+      return { w: 0, h: 0, ar: 1 };
+    }
+    const dims = await Promise.all(processed.map(async (name) => {
+      const d = await getDims(name);
+      return [name, d];
+    }));
+    dimsMap = new Map(dims);
+
+    // Classify spans deterministically based on aspect ratio and a conservative big fraction
+    const BIG_FRACTION = 0.12;
+    const orderedNames = processed.slice(); // preserve order from existing/remaining
+    const itemsForCost = orderedNames.map(name => ({
+      name,
+      ...dimsMap.get(name),
+      // closeness to square (for big), log metric
+      costBig: Math.abs(Math.log(((dimsMap.get(name)?.ar || 1) / 1.0)))
+    }));
+    const bigTarget = Math.max(0, Math.round(itemsForCost.length * BIG_FRACTION));
+    itemsForCost.sort((a,b) => (a.costBig - b.costBig) || ((b.w*b.h) - (a.w*b.h ? b.h : 0)) || a.name.localeCompare(b.name));
+    const bigChosen = new Set(itemsForCost.slice(0, bigTarget).map(x => x.name));
+
+    function classifySpan(d) {
+      const ar = d?.ar || 1;
+      if (bigChosen.has(d.name)) return 'big';
+      if (ar >= 1.65) return 'wide';
+      if (ar <= 0.66) return 'tall';
+      return null; // normal
+    }
+
+    // Merge span back into ordered list
+    for (const name of orderedNames) {
+      const d = dimsMap.get(name) || { ar: 1 };
+      const span = classifySpan({ ...d, name });
+      // Attach span to existingMap so we can output it below
+      const prevAlt = existingMap.get(name) || altFromFilename(name);
+      existingMap.set(name, prevAlt);
+      // We will build final 'images' below using 'ordered'
+    }
+    // Overwrite 'ordered' with span-bearing entries
+    const withSpan = [];
+    for (const name of orderedNames) {
+      const prevAlt = existingMap.get(name) || altFromFilename(name);
+      const d = dimsMap.get(name) || { ar: 1 };
+      const span = classifySpan({ ...d, name });
+      withSpan.push({ src: name, alt: prevAlt, span: span || undefined });
+    }
+    // Replace images with span-enriched list
+    var images = withSpan;
+  }
+
   // Build new list preserving manual order for files that still exist
   const fileSet = new Set(processed);
   const ordered = [];
@@ -196,12 +269,18 @@ export async function updateManifestForProject(projectDirName) {
     ordered.push({ src: name, alt: existingMap.get(name) || altFromFilename(name) });
   }
 
-  const images = ordered;
-
-  const title = existing?.title || projectDirName.replace(/^project\s+/i, 'Project ');
-  const manifest = { title, images };
-  await writeJsonPretty(manifestPath, manifest);
-  return { project: projectDirName, count: images.length };
+  if (typeof images === 'undefined') {
+    const images = ordered;
+    const title = existing?.title || projectDirName.replace(/^project\s+/i, 'Project ');
+    const manifest = { title, images };
+    await writeJsonPretty(manifestPath, manifest);
+    return { project: projectDirName, count: images.length };
+  } else {
+    const title = existing?.title || projectDirName.replace(/^project\s+/i, 'Project ');
+    const manifest = { title, images };
+    await writeJsonPretty(manifestPath, manifest);
+    return { project: projectDirName, count: images.length };
+  }
 }
 
 export async function updateAllManifests() {

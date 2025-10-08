@@ -3,35 +3,17 @@
   "images": [
     {
       "src": "FACADE 2.2.png",
-      "alt": "FACADE 2.2"
-    },
-    {
-      "src": "GJHKJLKL.jpg",
-      "alt": "GJHKJLKL"
-    },
-    {
-      "src": "l9nx500e.png",
-      "alt": "l9nx500e"
-    },
-    {
-      "src": "muhiounhiou.jpg",
-      "alt": "muhiounhiou"
-    },
-    {
-      "src": "SDCVB MN.png",
-      "alt": "SDCVB MN"
-    },
-    {
-      "src": "xfbxcfv zcv.jpg",
-      "alt": "xfbxcfv zcv"
-    },
-    {
-      "src": "Untitled-2 (1)Asset 12.webp",
-      "alt": "Untitled 2 (1)Asset 12"
+      "alt": "FACADE 2.2",
+      "span": "wide"
     },
     {
       "src": "facade design 1.jpg",
       "alt": "facade design 1"
+    },
+    {
+      "src": "GJHKJLKL.jpg",
+      "alt": "GJHKJLKL",
+      "span": "big"
     },
     {
       "src": "Illustration3.jpg",
@@ -42,8 +24,38 @@
       "alt": "Illustration4"
     },
     {
+      "src": "l9nx500e.png",
+      "alt": "l9nx500e",
+      "span": "wide"
+    },
+    {
+      "src": "muhiounhiou.jpg",
+      "alt": "muhiounhiou",
+      "span": "big"
+    },
+    {
+      "src": "SDCVB MN.png",
+      "alt": "SDCVB MN"
+    },
+    {
       "src": "Untitled-1.webp",
       "alt": "Untitled 1"
+    },
+    {
+      "src": "Untitled-1.webp",
+      "alt": "Untitled 1"
+    },
+    {
+      "src": "Untitled-2 (1)Asset 12.webp",
+      "alt": "Untitled 2 (1)Asset 12"
+    },
+    {
+      "src": "Untitled-2 (1)Asset 12.webp",
+      "alt": "Untitled 2 (1)Asset 12"
+    },
+    {
+      "src": "xfbxcfv zcv.jpg",
+      "alt": "xfbxcfv zcv"
     }
   ]
 }

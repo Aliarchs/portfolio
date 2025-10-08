@@ -79,12 +79,14 @@ document.addEventListener('DOMContentLoaded', function() {
       const normalized = list
         .map(item => ({
           src: (item && typeof item.src === 'string') ? item.src.trim() : '',
-          alt: (item && typeof item.alt === 'string') ? item.alt.trim() : ''
+          alt: (item && typeof item.alt === 'string') ? item.alt.trim() : '',
+          span: (item && typeof item.span === 'string') ? item.span.trim() : undefined
         }))
         .filter(item => !!item.src)
         .map(item => ({
           src: (item.src.startsWith('images/')) ? item.src : `${folderPath}/${item.src}`,
-          alt: item.alt || `${projectNames[projectNum] || 'Project'} image`
+          alt: item.alt || `${projectNames[projectNum] || 'Project'} image`,
+          _span: item.span || undefined
         }));
       if (normalized.length > 0) return sortImagesByName(normalized);
       return sortImagesByName(defaultSets[projectNum] || []);
@@ -173,9 +175,9 @@ document.addEventListener('DOMContentLoaded', function() {
       const figure = document.createElement('figure');
       figure.className = 'gallery-item';
       // Apply dynamic span classes based on aspect classification if present
-      if (item._span === 'tall') figure.classList.add('tile-tall');
-      if (item._span === 'wide') figure.classList.add('tile-wide');
-      if (item._span === 'big') figure.classList.add('tile-big');
+  if (item._span === 'tall') figure.classList.add('tile-tall');
+  if (item._span === 'wide') figure.classList.add('tile-wide');
+  if (item._span === 'big') figure.classList.add('tile-big');
 
     // Use <picture> to enable WebP + fallback
     const picture = document.createElement('picture');
@@ -351,6 +353,15 @@ document.addEventListener('DOMContentLoaded', function() {
       resetTimer();
       renderGallery(images);
       initLightboxForCurrentGallery();
+
+      // If spans are already provided (projects 2–4), skip runtime measurement and arrangement
+      const hasPrecomputedSpans = images.every(it => typeof it._span !== 'undefined');
+      if (hasPrecomputedSpans) {
+        // Keep original order and render immediately
+        renderGallery(images);
+        initLightboxForCurrentGallery();
+        return; // skip dynamic metrics/arrangement
+      }
 
       // Image metrics cache to avoid remeasuring images (aspect + dimensions)
       const metricsCache = new Map();
