@@ -1574,6 +1574,21 @@ img.lazy.loaded {
 .footer-muted { color: #60606060 !important; text-align: center !important; font-size: 0.8em !important; }
 .mt-3-5 { margin-top: 3.5rem !important; }
 .linkedin-badge-wrap { display: flex; justify-content: center; }
+/* Fallback card if LinkedIn badge fails to render */
+.li-fallback-card {
+  display: none; /* only shown if script fails */
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  background: #fff;
+  padding: 1rem 1.2rem;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  color: #0a66c2;
+  text-decoration: none;
+  font-weight: 600;
+}
+.li-fallback-card:hover, .li-fallback-card:focus {
+  text-decoration: underline;
+}
 
 /* --- Consolidated Mobile Flipbook Rules (override scattered earlier blocks) --- */
 @media (max-width: 900px) {

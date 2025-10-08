@@ -48,6 +48,7 @@
         <div class="badge-base LI-profile-badge" data-locale="en_US" data-size="small" data-theme="light" data-type="VERTICAL" data-vanity="ali-s-architecture" data-version="v1">
           <a class="badge-base__link LI-simple-link" href="https://uk.linkedin.com/in/ali-s-architecture?trk=profile-badge" aria-label="View Ali S. on LinkedIn">Ali S.</a>
         </div>
+        <a class="li-fallback-card" href="https://uk.linkedin.com/in/ali-s-architecture" target="_blank" rel="noopener">View Ali S. on LinkedIn</a>
       </div>
     </div>
   </main>
@@ -60,9 +61,18 @@
       function tick() {
         tries++;
         try {
-          if (typeof window.LIRenderAll === 'function') { window.LIRenderAll(); return; }
+          if (typeof window.LIRenderAll === 'function') {
+            window.LIRenderAll();
+            var fb = document.querySelector('.li-fallback-card');
+            if (fb) fb.style.display = 'none';
+            return;
+          }
         } catch (e) { /* ignore */ }
         if (tries < 40) setTimeout(tick, 200);
+        else {
+          var fb = document.querySelector('.li-fallback-card');
+          if (fb) fb.style.display = 'inline-block';
+        }
       }
       if (document.readyState === 'complete' || document.readyState === 'interactive') tick();
       else window.addEventListener('DOMContentLoaded', tick);
