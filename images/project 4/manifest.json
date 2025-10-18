@@ -2,19 +2,6 @@
   "title": "St. Andrews Bakery",
   "images": [
     {
-      "src": "BAKEY final jpg.jpg",
-      "alt": "St Andrews Bakery final elevation"
-    },
-    {
-      "src": "DSCF1074-2.jpg",
-      "alt": "St Andrews Bakery photo DSCF1074 2"
-    },
-    {
-      "src": "mdmylafm.png",
-      "alt": "St Andrews Bakery diagram mdmylafm",
-      "span": "wide"
-    },
-    {
       "src": "20220428_114537-2.jpg",
       "alt": "St Andrews Bakery model 114537 2",
       "span": "big"
@@ -42,6 +29,19 @@
     {
       "src": "20220428_125556.jpg",
       "alt": "St Andrews Bakery model 125556"
+    },
+    {
+      "src": "BAKEY final jpg.jpg",
+      "alt": "St Andrews Bakery final elevation"
+    },
+    {
+      "src": "DSCF1074-2.jpg",
+      "alt": "St Andrews Bakery photo DSCF1074 2"
+    },
+    {
+      "src": "mdmylafm.png",
+      "alt": "St Andrews Bakery diagram mdmylafm",
+      "span": "wide"
     }
   ]
 }

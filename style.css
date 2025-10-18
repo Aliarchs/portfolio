@@ -943,18 +943,7 @@ picture img, .page img {
   cursor: url('images/cursor-hover.svg'), pointer;
 }
 
-/* --- Make arrows smaller (override) ---
-/* This keeps the change targeted so you can tweak sizes easily. */
-.book-arrow,
-.slideshow-arrow {
-  /* smaller visual size */
-  font-size: 1rem;          /* controls glyph size */
-  width: 2.2rem;            /* button box size */
-  height: 2.2rem;
-  padding: 0.25rem;         /* reduce internal padding */
-  line-height: 1.8rem;      /* align glyph vertically */
-  border-radius: 0.35rem;   /* slightly rounded */
-}
+/* (Removed redundant size override for .book-arrow/.slideshow-arrow to reduce specificity churn) */
 
 /* If arrows contain SVG or icon elements, scale them down too */
 .book-arrow svg,
