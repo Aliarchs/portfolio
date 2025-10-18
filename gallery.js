@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       // Filter out entries that point to obviously wrong extensions we don't have (e.g., .webp without file present)
       // Since we can't stat files here, we rely on the later onerror handler to prune any broken ones.
-      if (normalized.length > 0) return sortImagesByName(normalized);
+  if (normalized.length > 0) return normalized;
       return sortImagesByName(defaultSets[projectNum] || []);
     } catch (_) {
       return sortImagesByName(defaultSets[projectNum] || []);
@@ -129,25 +129,24 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 
-    // If source is from a project folder (e.g., images/project 2/...), skip generating
-    // srcset pointing to images/resized/... unless we know resized variants exist.
-    // This avoids browsers choosing a 404 candidate and leaving images blank.
-    if (/^project\s+\d+\//i.test(relPath)) {
-      // Still add helpful attributes, but keep the original src only.
-      if (!imgEl.hasAttribute('decoding')) imgEl.setAttribute('decoding', 'async');
-      if (!imgEl.hasAttribute('loading')) imgEl.setAttribute('loading', 'lazy');
-      return;
-    }
+    // Determine if resized variants exist for project folders we ship (2,3,4).
+    const projectFolderMatch = relPath.match(/^project\s+(\d+)\//i);
+    const resizedExistsForProject = projectFolderMatch ? ['2','3','4'].includes(projectFolderMatch[1]) : false;
 
     const widths = [400, 800, 1200];
     const sizes = '(max-width: 900px) 100vw, 1200px';
-    let legacyCandidates = widths.map(w => `images/resized/${w}/${relPath}.${ext}?${IMG_CACHE_VER} ${w}w`);
+    let legacyCandidates = [];
+    if (!projectFolderMatch || resizedExistsForProject) {
+      legacyCandidates = widths.map(w => `images/resized/${w}/${relPath}.${ext}?${IMG_CACHE_VER} ${w}w`);
+    }
     // Add original as the largest candidate to guarantee a working fallback if resized files are missing
     if (imgEl.src) {
       legacyCandidates.push(`${imgEl.src} 2000w`);
     }
     const legacySrcset = legacyCandidates.join(', ');
-    const webpSrcset = widths.map(w => `images/resized/${w}/${relPath}.webp?${IMG_CACHE_VER} ${w}w`).join(', ');
+    const webpSrcset = (!projectFolderMatch || resizedExistsForProject)
+      ? widths.map(w => `images/resized/${w}/${relPath}.webp?${IMG_CACHE_VER} ${w}w`).join(', ')
+      : '';
 
   // Always add legacy srcset on the <img> (only for non-project paths)
     imgEl.setAttribute('srcset', legacySrcset);
@@ -160,11 +159,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (picture) {
       // Remove any previous sources to avoid duplication on re-renders
       Array.from(picture.querySelectorAll('source')).forEach(s => s.remove());
-      const sWebp = document.createElement('source');
-      sWebp.type = 'image/webp';
-      sWebp.setAttribute('srcset', webpSrcset);
-      sWebp.setAttribute('sizes', sizes);
-      picture.insertBefore(sWebp, imgEl);
+      if (webpSrcset) {
+        const sWebp = document.createElement('source');
+        sWebp.type = 'image/webp';
+        sWebp.setAttribute('srcset', webpSrcset);
+        sWebp.setAttribute('sizes', sizes);
+        picture.insertBefore(sWebp, imgEl);
+      }
     }
   }
 
@@ -181,7 +182,23 @@ document.addEventListener('DOMContentLoaded', function() {
     return seq.map(e => `${base}.${e}`).filter(candidate => candidate.toLowerCase() !== clean.toLowerCase());
   }
 
+  let currentGalleryItems = [];
+  let galleryRefreshTimer = null;
+  function scheduleGalleryRefresh() {
+    clearTimeout(galleryRefreshTimer);
+    galleryRefreshTimer = setTimeout(() => {
+      if (!currentGalleryItems.length) {
+        galleryContainer.innerHTML = '';
+        return;
+      }
+      renderGallery(currentGalleryItems);
+      initLightboxForCurrentGallery();
+    }, 60);
+  }
+
   function renderGallery(images) {
+    currentGalleryItems = images.slice();
+    const working = currentGalleryItems;
     // Clear existing
     galleryContainer.innerHTML = '';
 
@@ -235,6 +252,11 @@ document.addEventListener('DOMContentLoaded', function() {
         img.removeEventListener('error', handleError);
         const fig = img.closest('figure');
         if (fig && fig.parentElement) fig.parentElement.removeChild(fig);
+        const originalSrc = item.src;
+        const before = currentGalleryItems.length;
+        currentGalleryItems = currentGalleryItems.filter(it => it.src !== originalSrc);
+        slideshowImages = slideshowImages.filter(it => it.src !== originalSrc);
+        if (currentGalleryItems.length !== before) scheduleGalleryRefresh();
       };
       img.addEventListener('error', handleError);
 
@@ -249,11 +271,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderChunk() {
-      const end = Math.min(rendered + chunkSize, images.length);
-      for (let i = rendered; i < end; i++) appendOne(images[i], i);
+      const end = Math.min(rendered + chunkSize, working.length);
+      for (let i = rendered; i < end; i++) appendOne(working[i], i);
       rendered = end;
       initLightboxForCurrentGallery();
-      if (rendered >= images.length) {
+      if (rendered >= working.length) {
         // all done
         if (sentinel && observer) observer.unobserve(sentinel);
         if (sentinel && sentinel.parentElement) sentinel.parentElement.removeChild(sentinel);
@@ -272,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if ('IntersectionObserver' in window) {
       observer = new IntersectionObserver((entries) => {
         for (const e of entries) {
-          if (e.isIntersecting && rendered < images.length) {
+          if (e.isIntersecting && rendered < working.length) {
             renderChunk();
           }
         }

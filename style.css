@@ -978,9 +978,9 @@ textarea:focus,
 
 /* --- Slideshow Styles --- */
 .slideshow-container {
-  width: 95vw;
+  width: min(88vw, 1400px);   /* slightly narrower overall */
   max-width: 1400px;
-  margin: 2rem 0;
+  margin: 2rem auto;          /* center horizontally */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1034,15 +1034,55 @@ textarea:focus,
 }
 
 /* --- Gallery Styles --- */
-/* --- CodePen-style Gallery (clean & flat) --- */
+/* Fixed-column, fluid cell grid: the whole gallery shrinks uniformly with the viewport
+   until the mobile portrait breakpoint (<=600px), where it becomes a single column. */
 .gallery {
+  /* Tunables */
+  --gallery-cols: 5;                    /* default columns on large screens */
+  --gallery-gap: 0.75rem;               /* gap between cells */
+  --gallery-max-width: 1800px;          /* hard max width for the gallery container */
+
+  /* Derived cell size based on container width and constant column count */
+  --gallery-side: calc((min(92vw, var(--gallery-max-width)) - ((var(--gallery-cols) - 1) * var(--gallery-gap))) / var(--gallery-cols));
+
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
-  grid-auto-rows: 12.5rem;
+  grid-template-columns: repeat(var(--gallery-cols), minmax(0, var(--gallery-side)));
+  grid-auto-rows: var(--gallery-side);
   grid-auto-flow: dense;
-  gap: 0.75rem;
-  width: min(92vw, 1800px);
+  gap: var(--gallery-gap);
+  width: min(92vw, var(--gallery-max-width));
   margin: 2rem auto 0 auto;
+  position: relative; /* allow absolutely-positioned sentinel without affecting layout */
+}
+
+/* Keep tiles readable as the viewport narrows by stepping down columns. */
+@media (max-width: 1400px) {
+  .gallery { --gallery-cols: 4; }
+}
+@media (max-width: 1100px) {
+  .gallery { --gallery-cols: 3; }
+}
+/* Performance: reduce work for offscreen tiles */
+.gallery figure {
+  /* Skip paint/layout until scrolled near view (Chrome/Edge/Opera/Safari TP) */
+  content-visibility: auto;
+  /* Reserve a reasonable intrinsic size to avoid layout shifts before reveal */
+  contain-intrinsic-size: 320px 320px;
+}
+/* Landscape small tablets/phones: still a grid, but only two columns */
+@media (max-width: 760px) and (orientation: landscape) {
+  .gallery { --gallery-cols: 2; }
+}
+.gallery-sentinel {
+  /* Prevent the infinite-scroll sentinel from showing up as an empty grid tile */
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  height: 1px; /* tiny, invisible target at container bottom */
+  opacity: 0;
+  pointer-events: none;
 }
 .gallery figure {
   container: figure / inline-size;
@@ -1089,6 +1129,8 @@ textarea:focus,
     margin: 0 0 0.9rem 0;          /* vertical spacing between items */
     overflow: hidden;              /* keep consistent edges */
   }
+  /* Tune intrinsic size to match mobile portrait width for smoother reveal */
+  .gallery figure { contain-intrinsic-size: 88vw 88vw; }
   .gallery img {
     display: block;
     width: 100%;
@@ -1540,6 +1582,23 @@ body.landing .site-name {
   }
 }
 
+/* Portrait phones: keep single-column gallery narrower than the screen (side gutters) */
+@media (max-width: 600px) and (orientation: portrait) {
+  .gallery {
+    width: 88vw !important;        /* narrower than full width */
+    max-width: 88vw !important;
+    margin-left: auto !important;  /* center the column */
+    margin-right: auto !important;
+    overflow-x: hidden !important; /* no horizontal scroll for single column */
+  }
+  .slideshow-container {
+    width: 88vw !important;        /* match gallery gutters */
+    max-width: 88vw !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+}
+
 /* Lazy-loading placeholders */
 img.lazy {
   background: linear-gradient(90deg, rgba(0,0,0,0.02), rgba(0,0,0,0.05));
@@ -1613,36 +1672,5 @@ img.lazy.loaded {
 /* Force-show utility if cascade conflicts */
 .book-mobile.force-show { display:block !important; visibility:visible !important; opacity:1 !important; }
 
-/* --- Final mobile override: ensure stacked, non-square gallery on small screens --- */
-@media (max-width: 768px) {
-  .gallery {
-    display: block !important;            /* disable grid */
-    width: 88vw !important;               /* side gutters */
-    max-width: 88vw !important;
-    margin: 1rem auto 0 auto !important;  /* center */
-    grid-auto-rows: auto !important;      /* ignore square rows if grid was applied */
-  }
-  .gallery figure,
-  .gallery .gallery-item {
-    display: block !important;
-    width: 100% !important;
-    margin: 0 0 0.9rem 0 !important;
-    overflow: hidden !important;
-  }
-  .gallery img {
-    display: block !important;
-    width: 100% !important;
-    height: auto !important;              /* natural aspect ratio */
-    inline-size: 100% !important;
-    block-size: auto !important;
-    object-fit: contain !important;       /* avoid cropping */
-    grid-area: auto !important;
-  }
-  .gallery .tile-tall,
-  .gallery .tile-wide,
-  .gallery .tile-big {
-    grid-area: auto !important;
-    grid-column: auto !important;
-    grid-row: auto !important;
-  }
-}
+/* No 768px-wide override: keep the grid intact and let it scale down smoothly.
+   The single-column switch remains handled by the 600px portrait rule above. */

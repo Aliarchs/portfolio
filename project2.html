@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="style.css?v=20251008">
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="canonical" href="https://alishabestary.com/project2.html">
+  <!-- Preload hero image to improve LCP on this page -->
+  <link rel="preload" as="image" href="images/project2-1.png">
 </head>
 <body class="projects-page">
   <header>
@@ -24,7 +26,7 @@
     <p class="text-center" id="main-title-muted">Concept visuals for an RSPB space. Gallery and lightbox below.</p>
 
     <section class="slideshow-container" aria-label="Hero slideshow">
-      <img class="slideshow-image" src="images/project2-1.png" alt="RSPB Slide 1" loading="eager" decoding="async">
+  <img class="slideshow-image" src="images/project2-1.png" alt="RSPB Slide 1" loading="eager" decoding="async">
       <div class="slideshow-arrows-mobile">
         <button class="slideshow-arrow" aria-label="Previous image" onclick="changeSlide(-1)">‹</button>
         <button class="slideshow-arrow" aria-label="Next image" onclick="changeSlide(1)">›</button>
@@ -49,7 +51,7 @@
     <img id="lightbox-img" class="lightbox-img" alt="">
   </div>
 
-  <script src="gallery.js?v=20251008"></script>
+  <script defer src="gallery.js?v=20251008"></script>
   <!-- Cloudflare Web Analytics -->
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "2bf51f27e97d4e239093462e66dd4b5f"}'></script>
 </body>

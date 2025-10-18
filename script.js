@@ -319,7 +319,25 @@ document.addEventListener('DOMContentLoaded', function() {
           if (node.tagName && node.tagName.toLowerCase() === 'img') {
             const img = node;
             const src = img.getAttribute('data-src');
-            if (src) img.src = src;
+            if (src) {
+              img.src = src;
+              // If this image is part of the project grid, add responsive candidates
+              const inProjectGrid = !!img.closest('.project-grid');
+              const m = src.match(/images\/(?!resized\/)([^\/]+\.(?:jpe?g|png))/i);
+              if (inProjectGrid && m) {
+                const fname = m[1];
+                const jpg400 = `images/resized/400/${fname}`;
+                const jpg800 = `images/resized/800/${fname}`;
+                const jpg1200 = `images/resized/1200/${fname}`;
+                // Provide a conservative sizes hint: nearly full width on small screens,
+                // about a third on medium, a quarter on large.
+                const sizes = '(max-width: 500px) 95vw, (max-width: 1100px) 33vw, 25vw';
+                img.setAttribute('sizes', sizes);
+                img.setAttribute('srcset', `${jpg400} 400w, ${jpg800} 800w, ${jpg1200} 1200w`);
+              }
+              if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
+              if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
+            }
             img.addEventListener('load', function onload() {
               img.classList.add('loaded');
               img.removeEventListener('load', onload);
