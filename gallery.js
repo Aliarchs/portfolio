@@ -168,6 +168,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  function buildFallbacks(src) {
+    if (!src) return [];
+    const clean = src.split('?')[0];
+    const m = clean.match(/^(.*)\.([a-z0-9]+)$/i);
+    if (!m) return [];
+    const base = m[1];
+    const ext = (m[2] || '').toLowerCase();
+    const order = ['webp', 'png', 'jpg', 'jpeg'];
+    const idx = order.indexOf(ext);
+    const seq = idx >= 0 ? [...order.slice(idx + 1), ...order.slice(0, idx)] : order;
+    return seq.map(e => `${base}.${e}`).filter(candidate => candidate.toLowerCase() !== clean.toLowerCase());
+  }
+
   function renderGallery(images) {
     // Clear existing
     galleryContainer.innerHTML = '';
@@ -208,15 +221,22 @@ document.addEventListener('DOMContentLoaded', function() {
       img.decoding = 'async';
       img.tabIndex = 0;
       img.classList.add('lazy');
+      const fallbacks = buildFallbacks(item.src);
+      if (fallbacks.length) img.dataset.fallbackIndex = '0';
       img.addEventListener('load', () => { img.classList.add('loaded'); }, { once: true });
-      img.addEventListener('error', () => {
-        // Mark loaded to remove shimmer; remove broken figure to avoid blank tile
+      const handleError = () => {
         img.classList.add('loaded');
-        const fig = img.closest('figure');
-        if (fig && fig.parentElement) {
-          fig.parentElement.removeChild(fig);
+        const idx = parseInt(img.dataset.fallbackIndex || '0', 10);
+        if (!Number.isNaN(idx) && idx < fallbacks.length) {
+          img.dataset.fallbackIndex = String(idx + 1);
+          img.src = withBust(fallbacks[idx]);
+          return;
         }
-      }, { once: true });
+        img.removeEventListener('error', handleError);
+        const fig = img.closest('figure');
+        if (fig && fig.parentElement) fig.parentElement.removeChild(fig);
+      };
+      img.addEventListener('error', handleError);
 
       figure.appendChild(picture);
       picture.appendChild(img);
@@ -629,7 +649,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
 
     // Arrange and re-render once metrics are available
-    let arranged = arrangeFromMetrics(withMetrics);
+  let arranged = arrangeFromMetrics(withMetrics);
     slideshowImages = arranged.slice();
     showSlide(slideIndex);
     renderGallery(arranged);
