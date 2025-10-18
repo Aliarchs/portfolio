@@ -282,6 +282,25 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
 
+    // Minimal focus trap: keep focus inside the lightbox when open
+    function trapFocus(e) {
+      if (lightbox.style.display !== 'flex') return;
+      const focusable = [lightboxClose, lightboxImg].filter(Boolean);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.key === 'Tab') {
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+    document.addEventListener('keydown', trapFocus);
+
     // Basic swipe support on lightbox (mobile)
     let touchStartX = null;
     lightbox.addEventListener('touchstart', (e) => {

@@ -1,0 +1,5 @@
+# robots.txt for https://alishabestary.com/
+User-agent: *
+Allow: /
+
+Sitemap: https://alishabestary.com/sitemap.xml
