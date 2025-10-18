@@ -119,6 +119,16 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 
+    // If source is from a project folder (e.g., images/project 2/...), skip generating
+    // srcset pointing to images/resized/... unless we know resized variants exist.
+    // This avoids browsers choosing a 404 candidate and leaving images blank.
+    if (/^project\s+\d+\//i.test(relPath)) {
+      // Still add helpful attributes, but keep the original src only.
+      if (!imgEl.hasAttribute('decoding')) imgEl.setAttribute('decoding', 'async');
+      if (!imgEl.hasAttribute('loading')) imgEl.setAttribute('loading', 'lazy');
+      return;
+    }
+
     const widths = [400, 800, 1200];
     const sizes = '(max-width: 900px) 100vw, 1200px';
     let legacyCandidates = widths.map(w => `images/resized/${w}/${relPath}.${ext}?${IMG_CACHE_VER} ${w}w`);
@@ -129,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const legacySrcset = legacyCandidates.join(', ');
     const webpSrcset = widths.map(w => `images/resized/${w}/${relPath}.webp?${IMG_CACHE_VER} ${w}w`).join(', ');
 
-    // Always add legacy srcset on the <img>
+  // Always add legacy srcset on the <img> (only for non-project paths)
     imgEl.setAttribute('srcset', legacySrcset);
     imgEl.setAttribute('sizes', sizes);
     if (!imgEl.hasAttribute('decoding')) imgEl.setAttribute('decoding', 'async');
