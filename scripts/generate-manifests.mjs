@@ -221,7 +221,10 @@ export async function updateManifestForProject(projectDirName) {
       costBig: Math.abs(Math.log(((dimsMap.get(name)?.ar || 1) / 1.0)))
     }));
     const bigTarget = Math.max(0, Math.round(itemsForCost.length * BIG_FRACTION));
-    itemsForCost.sort((a,b) => (a.costBig - b.costBig) || ((b.w*b.h) - (a.w*b.h ? b.h : 0)) || a.name.localeCompare(b.name));
+    // Sort by closeness to square first, then by larger pixel area, then by name
+    itemsForCost.sort((a,b) => (a.costBig - b.costBig)
+      || (((b.w || 0)*(b.h || 0)) - ((a.w || 0)*(a.h || 0)))
+      || a.name.localeCompare(b.name));
     const bigChosen = new Set(itemsForCost.slice(0, bigTarget).map(x => x.name));
 
     function classifySpan(d) {
