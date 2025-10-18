@@ -76,6 +76,8 @@ document.addEventListener('DOMContentLoaded', function() {
       const data = await res.json();
       const list = Array.isArray(data?.images) ? data.images : [];
       // Normalize src: if it's a bare filename, prefix with folderPath
+      // Deduplicate and normalize
+      const seen = new Set();
       const normalized = list
         .map(item => ({
           src: (item && typeof item.src === 'string') ? item.src.trim() : '',
@@ -87,7 +89,15 @@ document.addEventListener('DOMContentLoaded', function() {
           src: (item.src.startsWith('images/')) ? item.src : `${folderPath}/${item.src}`,
           alt: item.alt || `${projectNames[projectNum] || 'Project'} image`,
           _span: item.span || undefined
-        }));
+        }))
+        .filter(item => {
+          const key = item.src.toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      // Filter out entries that point to obviously wrong extensions we don't have (e.g., .webp without file present)
+      // Since we can't stat files here, we rely on the later onerror handler to prune any broken ones.
       if (normalized.length > 0) return sortImagesByName(normalized);
       return sortImagesByName(defaultSets[projectNum] || []);
     } catch (_) {
@@ -199,7 +209,14 @@ document.addEventListener('DOMContentLoaded', function() {
       img.tabIndex = 0;
       img.classList.add('lazy');
       img.addEventListener('load', () => { img.classList.add('loaded'); }, { once: true });
-      img.addEventListener('error', () => { img.classList.add('loaded'); }, { once: true });
+      img.addEventListener('error', () => {
+        // Mark loaded to remove shimmer; remove broken figure to avoid blank tile
+        img.classList.add('loaded');
+        const fig = img.closest('figure');
+        if (fig && fig.parentElement) {
+          fig.parentElement.removeChild(fig);
+        }
+      }, { once: true });
 
       figure.appendChild(picture);
       picture.appendChild(img);
@@ -373,12 +390,26 @@ document.addEventListener('DOMContentLoaded', function() {
   function showSlide(idx) {
     if (!slideshowImages.length) return;
     slideIndex = (idx + slideshowImages.length) % slideshowImages.length;
-    const item = slideshowImages[slideIndex];
+    let item = slideshowImages[slideIndex];
   // Encode spaces and append cache-busting param for slideshow image as well
-  slideshowImg.src = withBust(item.src);
+  const setSlideSrc = (src) => { slideshowImg.src = withBust(src); };
+  setSlideSrc(item.src);
     slideshowImg.alt = `${projectNames[projectNum]} Slide ${slideIndex + 1}`;
     enhanceResponsive(slideshowImg);
     try { slideshowImg.setAttribute('fetchpriority', 'high'); } catch (e) {}
+    // If slideshow image fails, skip to the next available one
+    const onErr = () => {
+      const maxHops = slideshowImages.length;
+      let hops = 0;
+      while (hops < maxHops) {
+        slideIndex = (slideIndex + 1) % slideshowImages.length;
+        const cand = slideshowImages[slideIndex];
+        if (cand && cand.src) { setSlideSrc(cand.src); break; }
+        hops++;
+      }
+    };
+    // Attach one-time error listener for the current set
+    slideshowImg.addEventListener('error', onErr, { once: true });
   }
   function nextSlide() { if (slideshowImages.length > 1) showSlide(slideIndex + 1); }
   function prevSlide() { if (slideshowImages.length > 1) showSlide(slideIndex - 1); }
