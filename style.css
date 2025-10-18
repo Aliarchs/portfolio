@@ -596,6 +596,8 @@ body.projects-page {
   display: none; /* hidden until hover */
   align-items: center;
   justify-content: center;
+  /* Don't block scroll/touch interactions when shown */
+  pointer-events: none;
 }
 .project-item .preview img {
   width: 100%;
@@ -627,13 +629,15 @@ body.projects-page {
   transition: opacity 0.2s;
   display: flex;
 }
-.project-item:hover .title {
-  opacity: 1;
-  pointer-events: auto;
+/* Enable hover effects only on devices that actually support hover (mouse/trackpad) */
+@media (hover: hover) and (pointer: fine) {
+  .project-item:hover .title {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  /* Show the hover preview overlay using display toggle (desktop only) */
+  .project-item:hover .preview { display: flex; }
 }
-
-/* Show the hover preview overlay using display toggle (former behavior) */
-.project-item:hover .preview { display: flex; }
 
 /* --- About & Contact Pages --- */
 body.other-page {
@@ -1101,10 +1105,14 @@ textarea:focus,
 }
 /* Performance: reduce work for offscreen tiles */
 .gallery figure {
-  /* Skip paint/layout until scrolled near view (Chrome/Edge/Opera/Safari TP) */
-  content-visibility: auto;
-  /* Reserve a reasonable intrinsic size to avoid layout shifts before reveal */
-  contain-intrinsic-size: 320px 320px;
+  /* Ensure figures don't collapse while images decode */
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .gallery img { transition: none !important; }
 }
 /* Landscape small tablets/phones: still a grid, but only two columns */
 @media (max-width: 760px) and (orientation: landscape) {
@@ -1134,9 +1142,15 @@ textarea:focus,
   block-size: 100%;
   object-fit: cover;
   grid-area: 1 / 1 / -1 / -1;
-  transition: scale 1s ease-in-out;
+  /* No fade-in: show images fully opaque */
+  opacity: 1;
+  transition: none;
   cursor: url('images/cursor-pointer.svg'), pointer;
+  background: none;
+  animation: none;
+  filter: none;
 }
+.gallery img.loaded { opacity: 1; filter: none; }
 /* Flat: no hover zoom */
 .gallery figure:hover img { scale: 1; }
 
@@ -1558,8 +1572,9 @@ body.landing .site-name {
     margin-right: 0 !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
-    overflow-x: auto !important;
   }
+  /* On individual project pages, prevent sideways scrolling in the gallery */
+  body.projects-page .gallery { overflow-x: hidden !important; }
   button,
   .book-arrow,
   .slideshow-arrow {
@@ -1644,9 +1659,9 @@ img.lazy {
   background-size: 200% 100%;
   animation: lazy-pulse 1.2s infinite linear;
   display: block;
-  transition: opacity 220ms ease, filter 220ms ease, background-color 220ms ease;
-  opacity: 0.85;
-  filter: blur(0.6px) saturate(0.98);
+  transition: opacity 200ms ease, filter 200ms ease, background-color 200ms ease;
+  opacity: 0.72;
+  filter: blur(0.4px) saturate(0.98);
 }
 img.lazy.loaded {
   animation: none;

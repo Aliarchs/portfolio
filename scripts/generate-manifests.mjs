@@ -180,11 +180,12 @@ export async function updateManifestForProject(projectDirName) {
     processed.map(name => ensureResponsiveVariants(projectDirName, name).catch(() => false))
   );
 
-  // Optionally enrich with dimensions and a precomputed span for certain projects
-  // so the client-side can avoid computing layout every time.
+  // Enrich with dimensions and a precomputed span for certain projects so the client-side
+  // can avoid computing layout every time and reserve space to prevent layout shift.
+  // We include dimensions for ALL projects; we only precompute span for specific ones.
   const shouldPrecomputeLayout = /^(project\s+(2|3|4))$/i.test(projectDirName);
   let dimsMap = new Map();
-  if (shouldPrecomputeLayout) {
+  {
     const sharp = await getSharp();
     async function getDims(filename) {
       // Try detecting from resized variant first (fast), fallback to original
@@ -211,49 +212,48 @@ export async function updateManifestForProject(projectDirName) {
     }));
     dimsMap = new Map(dims);
 
-    // Classify spans deterministically based on aspect ratio and a conservative big fraction
-    const BIG_FRACTION = 0.12;
-    const orderedNames = processed.slice(); // preserve order from existing/remaining
-    const itemsForCost = orderedNames.map(name => ({
-      name,
-      ...dimsMap.get(name),
-      // closeness to square (for big), log metric
-      costBig: Math.abs(Math.log(((dimsMap.get(name)?.ar || 1) / 1.0)))
-    }));
-    const bigTarget = Math.max(0, Math.round(itemsForCost.length * BIG_FRACTION));
-    // Sort by closeness to square first, then by larger pixel area, then by name
-    itemsForCost.sort((a,b) => (a.costBig - b.costBig)
-      || (((b.w || 0)*(b.h || 0)) - ((a.w || 0)*(a.h || 0)))
-      || a.name.localeCompare(b.name));
-    const bigChosen = new Set(itemsForCost.slice(0, bigTarget).map(x => x.name));
+    // Precompute spans only for select projects, but always include dimensions
+    let imagesWithDims;
+    if (shouldPrecomputeLayout) {
+      // Classify spans deterministically based on aspect ratio and a conservative big fraction
+      const BIG_FRACTION = 0.12;
+      const orderedNames = processed.slice(); // preserve order from existing/remaining
+      const itemsForCost = orderedNames.map(name => ({
+        name,
+        ...dimsMap.get(name),
+        // closeness to square (for big), log metric
+        costBig: Math.abs(Math.log(((dimsMap.get(name)?.ar || 1) / 1.0)))
+      }));
+      const bigTarget = Math.max(0, Math.round(itemsForCost.length * BIG_FRACTION));
+      // Sort by closeness to square first, then by larger pixel area, then by name
+      itemsForCost.sort((a,b) => (a.costBig - b.costBig)
+        || (((b.w || 0)*(b.h || 0)) - ((a.w || 0)*(a.h || 0)))
+        || a.name.localeCompare(b.name));
+      const bigChosen = new Set(itemsForCost.slice(0, bigTarget).map(x => x.name));
 
-    function classifySpan(d) {
-      const ar = d?.ar || 1;
-      if (bigChosen.has(d.name)) return 'big';
-      if (ar >= 1.65) return 'wide';
-      if (ar <= 0.66) return 'tall';
-      return null; // normal
+      function classifySpan(d) {
+        const ar = d?.ar || 1;
+        if (bigChosen.has(d.name)) return 'big';
+        if (ar >= 1.65) return 'wide';
+        if (ar <= 0.66) return 'tall';
+        return null; // normal
+      }
+      imagesWithDims = processed.map(name => {
+        const d = dimsMap.get(name) || { w: 0, h: 0, ar: 1 };
+        const span = classifySpan({ ...d, name }) || undefined;
+        const alt = existingMap.get(name) || altFromFilename(name);
+        return { src: name, alt, span, w: d.w || undefined, h: d.h || undefined };
+      });
+    } else {
+      // No span precompute; still include dims
+      imagesWithDims = processed.map(name => {
+        const d = dimsMap.get(name) || { w: 0, h: 0, ar: 1 };
+        const alt = existingMap.get(name) || altFromFilename(name);
+        return { src: name, alt, w: d.w || undefined, h: d.h || undefined };
+      });
     }
-
-    // Merge span back into ordered list
-    for (const name of orderedNames) {
-      const d = dimsMap.get(name) || { ar: 1 };
-      const span = classifySpan({ ...d, name });
-      // Attach span to existingMap so we can output it below
-      const prevAlt = existingMap.get(name) || altFromFilename(name);
-      existingMap.set(name, prevAlt);
-      // We will build final 'images' below using 'ordered'
-    }
-    // Overwrite 'ordered' with span-bearing entries
-    const withSpan = [];
-    for (const name of orderedNames) {
-      const prevAlt = existingMap.get(name) || altFromFilename(name);
-      const d = dimsMap.get(name) || { ar: 1 };
-      const span = classifySpan({ ...d, name });
-      withSpan.push({ src: name, alt: prevAlt, span: span || undefined });
-    }
-    // Replace images with span-enriched list
-    var images = withSpan;
+    // Replace images with enriched list
+    var images = imagesWithDims;
   }
 
   // Build new list preserving manual order for files that still exist
@@ -262,14 +262,17 @@ export async function updateManifestForProject(projectDirName) {
   // 1) Keep existing order entries that still exist
   for (const src of existingOrder) {
     if (fileSet.has(src)) {
-      ordered.push({ src, alt: existingMap.get(src) || altFromFilename(src) });
+      // Preserve any dimension info we may have gathered above
+      const d = dimsMap.get(src) || { w: undefined, h: undefined };
+      ordered.push({ src, alt: existingMap.get(src) || altFromFilename(src), w: d.w || undefined, h: d.h || undefined });
       fileSet.delete(src);
     }
   }
   // 2) Append any new files not present in existing order (sorted)
   const remaining = Array.from(fileSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
   for (const name of remaining) {
-    ordered.push({ src: name, alt: existingMap.get(name) || altFromFilename(name) });
+    const d = dimsMap.get(name) || { w: undefined, h: undefined };
+    ordered.push({ src: name, alt: existingMap.get(name) || altFromFilename(name), w: d.w || undefined, h: d.h || undefined });
   }
 
   if (typeof images === 'undefined') {

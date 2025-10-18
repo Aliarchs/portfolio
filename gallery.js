@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const m = (window.location.pathname.match(/project(\d+)/i) || []);
   const projectNum = m[1] || '';
   const isTargetProject = ['2','3','4','5'].includes(projectNum);
-
   // Elements
   const slideshowImg = document.querySelector('.slideshow-image');
   const slideshowContainer = document.querySelector('.slideshow-container');
@@ -25,7 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   const folderPath = `images/project ${projectNum}`; // note the space per your folder names
   const manifestUrl = `${folderPath}/manifest.json`;
-
   // Allow per-page override: if the gallery declares data-source="html", we use the images from the markup
   const gallerySource = (galleryContainer.getAttribute('data-source') || '').toLowerCase();
   const isHtmlSource = gallerySource === 'html';
@@ -51,16 +49,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const projectNames = { '2': 'RSPB', '3': 'Facade Retrofit', '4': 'St. Andrews Bakery', '5': 'Personal Works' };
   // Per-project 2x2 big tile fraction (tunable per page)
   const BIG_FRACTION_BY_PROJECT = { '2': 0.12, '3': 0.12, '4': 0.12, '5': 0.12 };
-  // Stable cache version for images derived from manifest, improves caching across sessions
-  let IMG_CACHE_VER = 'v=1';
-  function withBust(url) {
-    if (!url) return url;
-    // Only append to same-origin images path
-    if (url.startsWith('images/')) {
-      return encodeURI(url) + (url.includes('?') ? '&' : '?') + IMG_CACHE_VER;
-    }
-    return url;
-  }
+  // Avoid changing image URLs once rendered to let the browser cache be effective.
+  // No cache-buster param; rely on filename changes or HTTP caching instead.
+  function withBust(url) { return url ? encodeURI(url) : url; }
 
   // Sort helper: natural, case-insensitive, by base filename only
   function sortImagesByName(list) {
@@ -97,13 +88,17 @@ document.addEventListener('DOMContentLoaded', function() {
         .map(item => ({
           src: (item && typeof item.src === 'string') ? item.src.trim() : '',
           alt: (item && typeof item.alt === 'string') ? item.alt.trim() : '',
-          span: (item && typeof item.span === 'string') ? item.span.trim() : undefined
+          span: (item && typeof item.span === 'string') ? item.span.trim() : undefined,
+          w: (item && typeof item.w === 'number') ? item.w : undefined,
+          h: (item && typeof item.h === 'number') ? item.h : undefined,
         }))
         .filter(item => !!item.src)
         .map(item => ({
           src: (item.src.startsWith('images/')) ? item.src : `${folderPath}/${item.src}`,
           alt: item.alt || `${projectNames[projectNum] || 'Project'} image`,
-          _span: item.span || undefined
+          _span: item.span || undefined,
+          w: item.w,
+          h: item.h,
         }))
         .filter(item => {
           const key = item.src.toLowerCase();
@@ -159,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const sizes = '(max-width: 900px) 100vw, 1200px';
     let legacyCandidates = [];
     if (!projectFolderMatch || resizedExistsForProject) {
-      legacyCandidates = widths.map(w => `images/resized/${w}/${relPath}.${ext}?${IMG_CACHE_VER} ${w}w`);
+  legacyCandidates = widths.map(w => `images/resized/${w}/${relPath}.${ext} ${w}w`);
     }
     // Add original as the largest candidate to guarantee a working fallback if resized files are missing
     if (imgEl.src) {
@@ -167,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     const legacySrcset = legacyCandidates.join(', ');
     const webpSrcset = (!projectFolderMatch || resizedExistsForProject)
-      ? widths.map(w => `images/resized/${w}/${relPath}.webp?${IMG_CACHE_VER} ${w}w`).join(', ')
+  ? widths.map(w => `images/resized/${w}/${relPath}.webp ${w}w`).join(', ')
       : '';
 
   // Always add legacy srcset on the <img> (only for non-project paths)
@@ -206,6 +201,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
   let currentGalleryItems = [];
   let galleryRefreshTimer = null;
+  // Remember which original item srcs have already finished loading so we can
+  // keep them "loaded" across re-renders and avoid flicker/shimmer.
+  const loadedSrcSet = new Set();
+  function srcKey(s) { try { return (s || '').split('?')[0].toLowerCase(); } catch { return (s || '').toLowerCase(); } }
+  function isMobilePortrait() {
+    try { return window.matchMedia && window.matchMedia('(max-width: 600px) and (orientation: portrait)').matches; } catch { return false; }
+  }
   function scheduleGalleryRefresh() {
     clearTimeout(galleryRefreshTimer);
     galleryRefreshTimer = setTimeout(() => {
@@ -221,7 +223,13 @@ document.addEventListener('DOMContentLoaded', function() {
   function renderGallery(images) {
     currentGalleryItems = images.slice();
     const working = currentGalleryItems;
-    // Clear existing
+    // Preserve scroll position relative to the gallery container to avoid jumps on re-render
+    let prevAbsTop = 0;
+    try {
+      const prevTop = galleryContainer.getBoundingClientRect().top || 0;
+      prevAbsTop = (window.scrollY || window.pageYOffset || 0) + prevTop;
+    } catch (_) { prevAbsTop = 0; }
+    // Clear existing content
     galleryContainer.innerHTML = '';
 
     // Estimate number of columns to eagerly load first ~2 rows on larger screens
@@ -255,16 +263,24 @@ document.addEventListener('DOMContentLoaded', function() {
       const img = document.createElement('img');
       img.src = withBust(item.src);
       img.alt = item.alt || '';
+      // Reserve space to prevent layout shift using known dimensions.
+      // Prefer manifest-provided w/h; fallback to runtime metrics (_w/_h) if available.
+      const dimW = (typeof item.w === 'number' && item.w > 0) ? item.w : (typeof item._w === 'number' ? item._w : 0);
+      const dimH = (typeof item.h === 'number' && item.h > 0) ? item.h : (typeof item._h === 'number' ? item._h : 0);
+      if (dimW > 0 && dimH > 0) {
+        try { img.setAttribute('width', String(dimW)); img.setAttribute('height', String(dimH)); } catch {}
+        if (isMobilePortrait()) {
+          try { figure.style.aspectRatio = `${dimW} / ${dimH}`; } catch {}
+        }
+      }
       if (idxGlobal < chunkSize) { img.loading = 'eager'; img.setAttribute('fetchpriority', 'high'); }
       else { img.loading = 'lazy'; img.setAttribute('fetchpriority', 'auto'); }
       img.decoding = 'async';
-      img.tabIndex = 0;
-      img.classList.add('lazy');
+  img.tabIndex = 0;
       const fallbacks = buildFallbacks(item.src);
       if (fallbacks.length) img.dataset.fallbackIndex = '0';
-      img.addEventListener('load', () => { img.classList.add('loaded'); }, { once: true });
+  img.addEventListener('load', () => { loadedSrcSet.add(srcKey(item.src)); }, { once: true });
       const handleError = () => {
-        img.classList.add('loaded');
         const idx = parseInt(img.dataset.fallbackIndex || '0', 10);
         if (!Number.isNaN(idx) && idx < fallbacks.length) {
           img.dataset.fallbackIndex = String(idx + 1);
@@ -285,6 +301,10 @@ document.addEventListener('DOMContentLoaded', function() {
       figure.appendChild(picture);
       picture.appendChild(img);
       enhanceResponsive(img);
+      // If we've already loaded this image earlier in the session, mark it loaded immediately
+      if (loadedSrcSet.has(srcKey(item.src)) || (img.complete && img.naturalWidth > 0)) {
+        loadedSrcSet.add(srcKey(item.src));
+      }
       galleryContainer.appendChild(figure);
 
       img.addEventListener('keydown', (e) => {
@@ -292,37 +312,23 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
 
-    function renderChunk() {
-      const end = Math.min(rendered + chunkSize, working.length);
-      for (let i = rendered; i < end; i++) appendOne(working[i], i);
-      rendered = end;
-      initLightboxForCurrentGallery();
-      if (rendered >= working.length) {
-        // all done
-        if (sentinel && observer) observer.unobserve(sentinel);
-        if (sentinel && sentinel.parentElement) sentinel.parentElement.removeChild(sentinel);
+    // Render all items up-front so the scroll bar and layout are stable
+    for (let i = 0; i < working.length; i++) {
+      appendOne(working[i], i);
+    }
+    initLightboxForCurrentGallery();
+
+    // After re-render, restore the previous viewport offset relative to the gallery
+    try {
+      const newTop = galleryContainer.getBoundingClientRect().top || 0;
+      const newAbsTop = (window.scrollY || window.pageYOffset || 0) + newTop;
+      const delta = newAbsTop - prevAbsTop;
+      if (Math.abs(delta) > 1) {
+        window.scrollTo({ top: (window.scrollY || window.pageYOffset || 0) - delta });
       }
-    }
+    } catch (_) { /* no-op if metrics unavailable */ }
 
-    // Initial chunk
-    renderChunk();
-
-    // Progressive chunks on scroll
-    let sentinel = document.createElement('div');
-    sentinel.className = 'gallery-sentinel';
-    sentinel.setAttribute('aria-hidden', 'true');
-    galleryContainer.appendChild(sentinel);
-    let observer = null;
-    if ('IntersectionObserver' in window) {
-      observer = new IntersectionObserver((entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting && rendered < working.length) {
-            renderChunk();
-          }
-        }
-      }, { rootMargin: '100px 0px' });
-      observer.observe(sentinel);
-    }
+    // No scroll-reveal here to avoid any visibility pop-in. Images will fade in individually onload.
   }
 
   function initLightboxForCurrentGallery() {
@@ -506,6 +512,7 @@ document.addEventListener('DOMContentLoaded', function() {
           const toProcess = Array.from(galleryContainer.querySelectorAll('img'));
           // Try to fetch manifest to get span hints
           let spanMap = new Map();
+          let dimsMap = new Map();
           try {
             const res = await fetch(encodeURI(manifestUrl), { cache: 'no-cache' });
             if (res.ok) {
@@ -514,9 +521,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 data.images.forEach(item => {
                   const src = (item && typeof item.src === 'string') ? item.src.trim() : '';
                   const span = (item && typeof item.span === 'string') ? item.span.trim() : '';
-                  if (!src || !span) return;
+                  const w = (item && typeof item.w === 'number') ? item.w : undefined;
+                  const h = (item && typeof item.h === 'number') ? item.h : undefined;
+                  if (!src) return;
                   const base = src.split(/[\\\/]/).pop().toLowerCase();
-                  spanMap.set(base, span);
+                  if (span) spanMap.set(base, span);
+                  if (w && h) dimsMap.set(base, { w, h });
                 });
               }
             }
@@ -546,7 +556,19 @@ document.addEventListener('DOMContentLoaded', function() {
               if (span === 'tall') figure.classList.add('tile-tall');
               else if (span === 'wide') figure.classList.add('tile-wide');
               else if (span === 'big') figure.classList.add('tile-big');
+              const d = dimsMap.get(base);
+              if (d && d.w && d.h) {
+                try { img.setAttribute('width', String(d.w)); img.setAttribute('height', String(d.h)); } catch {}
+                try { if (window.matchMedia && window.matchMedia('(max-width: 600px) and (orientation: portrait)').matches) { figure.style.aspectRatio = `${d.w} / ${d.h}`; } } catch {}
+              }
             } catch (_) { /* ignore */ }
+
+            // Track loaded images in session cache only; no fade class toggling
+            if (img.complete && img.naturalWidth > 0) {
+              loadedSrcSet.add(srcKey(img.getAttribute('src') || ''));
+            } else {
+              img.addEventListener('load', () => { loadedSrcSet.add(srcKey(img.getAttribute('src') || '')); }, { once: true });
+            }
           });
 
           // Initialize slideshow from authored hero + gallery so arrows work, preserving current hero as first slide
@@ -574,28 +596,20 @@ document.addEventListener('DOMContentLoaded', function() {
           return; // do not rebuild or rearrange beyond this
         } catch (_) { /* fall through to default path if something goes wrong */ }
       }
-      // Compute a stable per-page image version from manifest image list (for caching)
-      try {
-        const joined = images.map(i => i && i.src ? i.src : '').join('|');
-        let h = 0; for (let i = 0; i < joined.length; i++) { h = (h * 31 + joined.charCodeAt(i)) >>> 0; }
-        IMG_CACHE_VER = 'v=' + h.toString(36);
-      } catch (e) { IMG_CACHE_VER = 'v=1'; }
+      // No-op: we don't mutate URLs for caching anymore.
 
-      // Fast-first render: show slideshow and grid immediately without waiting for metrics
+      // If spans are already provided (projects 2–4), do a single render only (skip early render)
+      const hasPrecomputedSpans = images.every(it => typeof it._span !== 'undefined');
       slideshowImages = images.slice();
       showSlide(0);
       resetTimer();
-      renderGallery(images);
-      initLightboxForCurrentGallery();
-
-      // If spans are already provided (projects 2–4), skip runtime measurement and arrangement
-      const hasPrecomputedSpans = images.every(it => typeof it._span !== 'undefined');
       if (hasPrecomputedSpans) {
-        // Keep original order and render immediately
         renderGallery(images);
         initLightboxForCurrentGallery();
-        return; // skip dynamic metrics/arrangement
+        return; // single pass render; skip dynamic metrics/arrangement
       }
+
+      // No early render: proceed to compute metrics, arrange, and then render once
 
       // Image metrics cache to avoid remeasuring images (aspect + dimensions)
       const metricsCache = new Map();
@@ -783,12 +797,16 @@ document.addEventListener('DOMContentLoaded', function() {
     renderGallery(arranged);
     initLightboxForCurrentGallery();
 
-      // Debounced resize reflow: recompute tile ARs and reassign boxes when layout changes
+      // Debounced resize reflow: only when container width changes significantly
       let _reflowTimer = null;
+      let _lastWidth = galleryContainer.clientWidth || 0;
       window.addEventListener('resize', () => {
         clearTimeout(_reflowTimer);
         _reflowTimer = setTimeout(() => {
           try {
+            const w = galleryContainer.clientWidth || 0;
+            if (Math.abs(w - _lastWidth) < 24) return; // ignore tiny changes
+            _lastWidth = w;
             arranged = arrangeFromMetrics(withMetrics);
             renderGallery(arranged);
             initLightboxForCurrentGallery();

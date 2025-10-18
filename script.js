@@ -795,6 +795,18 @@ document.addEventListener('DOMContentLoaded', function() {
     siteName.replaceWith(link);
   }
 
+  // Register a simple service worker to cache images for snappy back/forward navigation
+  (function registerServiceWorker(){
+    try {
+      if ('serviceWorker' in navigator) {
+        // Avoid registering on file:// where SW isn't supported
+        if (location.protocol === 'http:' || location.protocol === 'https:') {
+          navigator.serviceWorker.register('sw.js').catch(function(){});
+        }
+      }
+    } catch(e) { /* no-op */ }
+  })();
+
   // Delegated click handler for all book-arrow buttons to ensure navigation works
   document.addEventListener('click', function(e) {
     var btn = e.target.closest && e.target.closest('.book-arrow');

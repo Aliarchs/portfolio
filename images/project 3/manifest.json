@@ -4,58 +4,72 @@
     {
       "src": "FACADE 2.2.png",
       "alt": "FACADE 2.2",
-      "span": "wide"
+      "span": "wide",
+      "w": 1200,
+      "h": 675
     },
     {
       "src": "facade design 1.jpg",
-      "alt": "facade design 1"
+      "alt": "facade design 1",
+      "w": 1200,
+      "h": 1506
     },
     {
       "src": "GJHKJLKL.jpg",
       "alt": "GJHKJLKL",
-      "span": "big"
+      "span": "big",
+      "w": 1200,
+      "h": 1200
     },
     {
       "src": "Illustration3.jpg",
-      "alt": "Illustration3"
+      "alt": "Illustration3",
+      "w": 1200,
+      "h": 900
     },
     {
       "src": "Illustration4.jpg",
-      "alt": "Illustration4"
+      "alt": "Illustration4",
+      "w": 1200,
+      "h": 1028
     },
     {
       "src": "l9nx500e.png",
       "alt": "l9nx500e",
-      "span": "wide"
+      "span": "wide",
+      "w": 1200,
+      "h": 675
     },
     {
       "src": "muhiounhiou.jpg",
       "alt": "muhiounhiou",
-      "span": "big"
+      "span": "big",
+      "w": 1200,
+      "h": 1200
     },
     {
       "src": "SDCVB MN.png",
-      "alt": "SDCVB MN"
+      "alt": "SDCVB MN",
+      "w": 1200,
+      "h": 1200
     },
     {
       "src": "Untitled-1.webp",
-      "alt": "Untitled 1"
-    },
-    {
-      "src": "Untitled-1.webp",
-      "alt": "Untitled 1"
-    },
-    {
-      "src": "Untitled-2 (1)Asset 12.webp",
-      "alt": "Untitled 2 (1)Asset 12"
+      "alt": "Untitled 1",
+      "w": 1200,
+      "h": 885
     },
     {
       "src": "Untitled-2 (1)Asset 12.webp",
-      "alt": "Untitled 2 (1)Asset 12"
+      "alt": "Untitled 2 (1)Asset 12",
+      "w": 1200,
+      "h": 813
     },
     {
       "src": "xfbxcfv zcv.jpg",
-      "alt": "xfbxcfv zcv"
+      "alt": "xfbxcfv zcv",
+      "w": 1200,
+      "h": 1200
     }
   ]
 }

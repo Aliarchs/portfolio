@@ -3,143 +3,193 @@
   "images": [
     {
       "src": "20230321_034346.webp",
-      "alt": "20230321 034346"
-    },
-    {
-      "src": "20230321_034346.webp",
-      "alt": "20230321 034346"
-    },
-    {
-      "src": "20230329_201036.webp",
-      "alt": "20230329 201036"
+      "alt": "20230321 034346",
+      "w": 1200,
+      "h": 1020
     },
     {
       "src": "20230329_201036.webp",
-      "alt": "20230329 201036"
+      "alt": "20230329 201036",
+      "w": 1200,
+      "h": 895
     },
     {
       "src": "Asset 1.png",
       "alt": "Asset 1",
-      "span": "big"
+      "span": "big",
+      "w": 1200,
+      "h": 1200
     },
     {
       "src": "Asset 2.png",
       "alt": "Asset 2",
-      "span": "big"
+      "span": "big",
+      "w": 1200,
+      "h": 1200
     },
     {
       "src": "Asset 3.png",
       "alt": "Asset 3",
-      "span": "big"
+      "span": "big",
+      "w": 1200,
+      "h": 1200
     },
     {
       "src": "Asset 4.png",
-      "alt": "Asset 4"
+      "alt": "Asset 4",
+      "w": 1200,
+      "h": 1191
     },
     {
       "src": "Asset 5.png",
       "alt": "Asset 5",
-      "span": "big"
+      "span": "big",
+      "w": 1200,
+      "h": 1194
     },
     {
       "src": "Asset 6.png",
-      "alt": "Asset 6"
+      "alt": "Asset 6",
+      "w": 1200,
+      "h": 1134
     },
     {
       "src": "CORRIDOR 1.jpg",
       "alt": "CORRIDOR 1",
-      "span": "wide"
+      "span": "wide",
+      "w": 1200,
+      "h": 675
     },
     {
       "src": "DSVF.png",
-      "alt": "DSVF"
+      "alt": "DSVF",
+      "w": 1200,
+      "h": 829
     },
     {
       "src": "facade s.png",
       "alt": "facade s",
-      "span": "wide"
+      "span": "wide",
+      "w": 1200,
+      "h": 547
     },
     {
       "src": "FGJHKBJ.png",
-      "alt": "FGJHKBJ"
+      "alt": "FGJHKBJ",
+      "w": 1200,
+      "h": 937
     },
     {
       "src": "frying my gpu.jpg",
       "alt": "Frying my GPU",
-      "span": "wide"
+      "span": "wide",
+      "w": 1200,
+      "h": 675
     },
     {
       "src": "gjhkbj.png",
-      "alt": "gjhkbj"
+      "alt": "gjhkbj",
+      "w": 1200,
+      "h": 956
     },
     {
       "src": "gtfrerdthu.png",
-      "alt": "gtfrerdthu"
+      "alt": "gtfrerdthu",
+      "w": 1200,
+      "h": 885
     },
     {
       "src": "hgjkjxhfgjhm.png",
-      "alt": "hgjkjxhfgjhm"
+      "alt": "hgjkjxhfgjhm",
+      "w": 1200,
+      "h": 854
     },
     {
       "src": "horizontL SECTION.png",
       "alt": "horizontL SECTION",
-      "span": "wide"
+      "span": "wide",
+      "w": 1200,
+      "h": 547
     },
     {
       "src": "jvgfgnv.png",
       "alt": "jvgfgnv",
-      "span": "wide"
+      "span": "wide",
+      "w": 1200,
+      "h": 675
     },
     {
       "src": "Layer 2 copy.png",
-      "alt": "Layer 2 copy"
+      "alt": "Layer 2 copy",
+      "w": 1200,
+      "h": 1065
     },
     {
       "src": "Layer 2.png",
-      "alt": "Layer 2"
+      "alt": "Layer 2",
+      "w": 1200,
+      "h": 1065
     },
     {
       "src": "north facade.png",
       "alt": "north facade",
-      "span": "wide"
+      "span": "wide",
+      "w": 1200,
+      "h": 642
     },
     {
       "src": "NW section long.png",
       "alt": "NW section long",
-      "span": "wide"
+      "span": "wide",
+      "w": 1200,
+      "h": 530
     },
     {
       "src": "NW section.png",
       "alt": "NW section",
-      "span": "wide"
+      "span": "wide",
+      "w": 1200,
+      "h": 438
     },
     {
       "src": "page.png",
       "alt": "page",
-      "span": "wide"
+      "span": "wide",
+      "w": 1200,
+      "h": 467
     },
     {
       "src": "SE SECTION.png",
       "alt": "SE SECTION",
-      "span": "wide"
+      "span": "wide",
+      "w": 1200,
+      "h": 540
     },
     {
       "src": "section NE.png",
       "alt": "section NE",
-      "span": "wide"
+      "span": "wide",
+      "w": 1200,
+      "h": 615
     },
     {
       "src": "Untitled (1).png",
       "alt": "Untitled (1)",
-      "span": "tall"
+      "span": "tall",
+      "w": 1200,
+      "h": 2133
     },
     {
       "src": "viewing area 1.jpg",
-      "alt": "viewing area 1"
+      "alt": "viewing area 1",
+      "w": 1200,
+      "h": 800
     },
     {
       "src": "ytufygukh.jpg",
-      "alt": "ytufygukh"
+      "alt": "ytufygukh",
+      "w": 1200,
+      "h": 813
     }
   ]
 }
