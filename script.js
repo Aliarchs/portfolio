@@ -321,19 +321,56 @@ document.addEventListener('DOMContentLoaded', function() {
             const src = img.getAttribute('data-src');
             if (src) {
               img.src = src;
-              // If this image is part of the project grid, add responsive candidates
+              // If this image is part of the project grid, add responsive candidates and upgrade to <picture> with WebP if possible
               const inProjectGrid = !!img.closest('.project-grid');
-              const m = src.match(/images\/(?!resized\/)([^\/]+\.(?:jpe?g|png))/i);
-              if (inProjectGrid && m) {
-                const fname = m[1];
-                const jpg400 = `images/resized/400/${fname}`;
-                const jpg800 = `images/resized/800/${fname}`;
-                const jpg1200 = `images/resized/1200/${fname}`;
-                // Provide a conservative sizes hint: nearly full width on small screens,
-                // about a third on medium, a quarter on large.
+              // But DO NOT alter images inside the hover preview overlay to preserve original look
+              const inPreviewOverlay = !!img.closest('.project-item .preview');
+              // Support nested paths under images/ (but exclude images/resized/)
+              const m = src.match(/^images\/(?!resized\/)(.+?)\.(jpe?g|png)$/i);
+              if (inProjectGrid && !inPreviewOverlay && m) {
+                const rel = m[1]; // path under images/
+                const ext = (m[2] || '').toLowerCase();
+                const jpg400 = `images/resized/400/${rel}.${ext}`;
+                const jpg800 = `images/resized/800/${rel}.${ext}`;
+                const jpg1200 = `images/resized/1200/${rel}.${ext}`;
+                const webp400 = `images/resized/400/${rel}.webp`;
+                const webp800 = `images/resized/800/${rel}.webp`;
+                const webp1200 = `images/resized/1200/${rel}.webp`;
                 const sizes = '(max-width: 500px) 95vw, (max-width: 1100px) 33vw, 25vw';
-                img.setAttribute('sizes', sizes);
-                img.setAttribute('srcset', `${jpg400} 400w, ${jpg800} 800w, ${jpg1200} 1200w`);
+
+                // Create <picture> wrapper with <source> elements, reusing the same <img>
+                try {
+                  if (!img.parentElement || img.parentElement.tagName.toLowerCase() === 'picture') {
+                    // already a picture or detached; just set srcset/sizes
+                    img.setAttribute('sizes', sizes);
+                    img.setAttribute('srcset', `${jpg400} 400w, ${jpg800} 800w, ${jpg1200} 1200w`);
+                  } else {
+                    const picture = document.createElement('picture');
+                    const sWebp = document.createElement('source');
+                    sWebp.type = 'image/webp';
+                    sWebp.setAttribute('srcset', `${webp400} 400w, ${webp800} 800w, ${webp1200} 1200w`);
+                    sWebp.setAttribute('sizes', sizes);
+                    const sJpg = document.createElement('source');
+                    sJpg.type = (ext === 'png') ? 'image/png' : 'image/jpeg';
+                    sJpg.setAttribute('srcset', `${jpg400} 400w, ${jpg800} 800w, ${jpg1200} 1200w`);
+                    sJpg.setAttribute('sizes', sizes);
+                    img.setAttribute('sizes', sizes);
+                    img.setAttribute('srcset', `${jpg400} 400w, ${jpg800} 800w, ${jpg1200} 1200w`);
+                    img.loading = img.loading || 'lazy';
+                    img.decoding = img.decoding || 'async';
+
+                    // Insert picture before img and move img inside
+                    const parent = img.parentElement;
+                    parent.insertBefore(picture, img);
+                    picture.appendChild(sWebp);
+                    picture.appendChild(sJpg);
+                    picture.appendChild(img);
+                  }
+                } catch (e) {
+                  // Fallback: at least add JPEG srcset
+                  img.setAttribute('sizes', sizes);
+                  img.setAttribute('srcset', `${jpg400} 400w, ${jpg800} 800w, ${jpg1200} 1200w`);
+                }
               }
               if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
               if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
@@ -388,6 +425,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // initialize lazy loading after a short delay so initial layout isn't blocked
   setTimeout(initLazyLoading, 120);
+
+  // Back to top button behavior (works on pages that include this script)
+  (function initBackToTop(){
+    const btn = document.querySelector('.back-to-top');
+    if (!btn) return;
+    function update() {
+      const y = window.scrollY || document.documentElement.scrollTop || 0;
+      if (y > 400) btn.classList.add('show'); else btn.classList.remove('show');
+    }
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  })();
 
   // Force-reveal pictures inside a container by copying data-srcset/data-src into real attributes
   // Useful when dynamic UI (like opening a book) should immediately display images without
@@ -686,7 +739,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // ...book navigation handled in flipbook blocks above (avoid duplicate bindings)
 
-  // Make project grid items clickable
+  // Make project grid items clickable (divs with data-link)
   document.querySelectorAll('.project-item[data-link]').forEach(function(item) {
     item.addEventListener('click', function() {
       const link = item.getAttribute('data-link');
@@ -790,11 +843,9 @@ document.addEventListener('DOMContentLoaded', function() {
   }, true);
 
 
-    window.addEventListener('DOMContentLoaded', () => {
-      if (isMobile()) {
-          // hide the cover on mobile; blank page no longer exists
-          document.querySelector('.cover-page')?.classList.add('hidden');
-          document.querySelector('.first-page')?.classList.remove('hidden');
-      }
-    });
+    // This code runs within DOMContentLoaded already; just execute
+    if (isMobile()) {
+      document.querySelector('.cover-page')?.classList.add('hidden');
+      document.querySelector('.first-page')?.classList.remove('hidden');
+    }
   });

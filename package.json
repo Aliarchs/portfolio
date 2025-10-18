@@ -7,7 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "gen:manifests": "node ./scripts/generate-manifests.mjs",
     "watch:manifests": "node ./scripts/watch-manifests.mjs",
-    "convert:tif": "node ./scripts/convert-tif.mjs"
+    "convert:tif": "node ./scripts/convert-tif.mjs",
+    "images:resize": "node ./scripts/resize-images.js",
+    "images:manifests": "node ./scripts/generate-manifests.mjs",
+    "images:all": "npm run images:resize && npm run images:manifests"
   },
   "repository": {
     "type": "git",

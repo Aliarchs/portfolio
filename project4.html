@@ -8,8 +8,11 @@
   <link rel="stylesheet" href="style.css?v=20251008">
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="canonical" href="https://alishabestary.com/project4.html">
+  <!-- Preload hero image to improve LCP on this page -->
+  <link rel="preload" as="image" href="images/project 4/BAKEY final jpg.jpg">
 </head>
 <body class="projects-page">
+  <a class="skip-link" href="#main">Skip to content</a>
   <header>
     <a href="index.html" class="site-name" aria-label="Home">ALI SHABESTARY</a>
     <nav class="nav-dropdown" role="navigation" aria-label="Main navigation">
@@ -19,20 +22,30 @@
     </nav>
   </header>
 
-  <main class="content-page">
+  <main id="main" class="content-page">
   <h1 class="main-title">St. Andrews Bakery</h1>
   <p class="text-center" id="main-title-muted">Concept visuals and photography for a local bakery in St. Andrews.</p>
 
     <section class="slideshow-container" aria-label="Hero slideshow">
-      <img class="slideshow-image" src="images/project 4/20220428_114628-3.jpg" alt="St. Andrews Bakery hero image" loading="eager" decoding="async">
+      <img class="slideshow-image" src="images/project 4/BAKEY final jpg.jpg" alt="St. Andrews Bakery elevation illustration" loading="eager" decoding="async">
       <div class="slideshow-arrows-mobile">
         <button class="slideshow-arrow" aria-label="Previous image" onclick="changeSlide(-1)">‹</button>
         <button class="slideshow-arrow" aria-label="Next image" onclick="changeSlide(1)">›</button>
       </div>
     </section>
 
-    <section class="gallery" aria-label="Project gallery">
-      <img src="images/project 4/20220428_114537-2.jpg" alt="St. Andrews Bakery study models" loading="lazy" decoding="async">
+    <section class="gallery" aria-label="Project gallery" data-source="html">
+      <!-- Order intentionally matches user-specified list -->
+      <img src="images/project 4/BAKEY final jpg.jpg" alt="St. Andrews Bakery – final elevation graphic" loading="lazy" decoding="async">
+      <img src="images/project 4/DSCF1074-2.jpg" alt="St. Andrews Bakery – photo (DSCF1074-2)" loading="lazy" decoding="async">
+      <img src="images/project 4/mdmylafm.png" alt="St. Andrews Bakery – diagram (mdmylafm)" loading="lazy" decoding="async">
+      <img src="images/project 4/20220428_114537-2.jpg" alt="St. Andrews Bakery – study models (114537-2)" loading="lazy" decoding="async">
+      <img src="images/project 4/20220428_114628-3-2.jpg" alt="St. Andrews Bakery – study models (114628-3-2)" loading="lazy" decoding="async">
+      <img src="images/project 4/20220428_114657.jpg" alt="St. Andrews Bakery – study models (114657)" loading="lazy" decoding="async">
+      <img src="images/project 4/20220428_114729-2.jpg" alt="St. Andrews Bakery – study models (114729-2)" loading="lazy" decoding="async">
+      <img src="images/project 4/20220428_121445-2.jpg" alt="St. Andrews Bakery – study models (121445-2)" loading="lazy" decoding="async">
+      <img src="images/project 4/20220428_125022.jpg" alt="St. Andrews Bakery – study models (125022)" loading="lazy" decoding="async">
+      <img src="images/project 4/20220428_125556.jpg" alt="St. Andrews Bakery – study models (125556)" loading="lazy" decoding="async">
     </section>
 
     <nav class="content-nav" aria-label="Project navigation">
@@ -46,8 +59,9 @@
     <img id="lightbox-img" class="lightbox-img" alt="">
   </div>
 
-  <script src="gallery.js?v=20251008"></script>
+  <script src="gallery.js?v=20251018a"></script>
   <!-- Cloudflare Web Analytics -->
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "2bf51f27e97d4e239093462e66dd4b5f"}'></script>
+  <a href="#top" class="back-to-top" aria-label="Back to top" title="Back to top">↑</a>
 </body>
 </html>

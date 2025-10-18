@@ -26,6 +26,10 @@ document.addEventListener('DOMContentLoaded', function() {
   const folderPath = `images/project ${projectNum}`; // note the space per your folder names
   const manifestUrl = `${folderPath}/manifest.json`;
 
+  // Allow per-page override: if the gallery declares data-source="html", we use the images from the markup
+  const gallerySource = (galleryContainer.getAttribute('data-source') || '').toLowerCase();
+  const isHtmlSource = gallerySource === 'html';
+
   // Default/fallback images (current ones in repo)
   const defaultSets = {
     '2': [
@@ -69,6 +73,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Fetch manifest if present; otherwise use defaults
   async function loadProjectImages() {
+    // If this page opts out of manifest loading, read images from the HTML in the current order
+    if (gallerySource === 'html') {
+      try {
+        const imgs = Array.from(galleryContainer.querySelectorAll('img'));
+        const mapped = imgs.map(img => ({
+          src: img.getAttribute('src') || '',
+          alt: img.getAttribute('alt') || `${projectNames[projectNum] || 'Project'} image`
+        })).filter(it => !!it.src);
+        if (mapped.length) return mapped;
+      } catch (_) { /* fall through to manifest/defaults */ }
+    }
     try {
       // Encode URL (handles spaces in folder names). Allow HTTP cache revalidation for speed.
       const res = await fetch(encodeURI(manifestUrl), { cache: 'no-cache' });
@@ -106,6 +121,13 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function enhanceResponsive(imgEl) {
+    // If this page uses HTML-sourced gallery, don't attach srcset/WebP derived variants.
+    // This guarantees we show exactly the files authored in the HTML, avoiding 404s.
+    if (isHtmlSource) {
+      if (!imgEl.hasAttribute('decoding')) imgEl.setAttribute('decoding', 'async');
+      if (!imgEl.hasAttribute('loading')) imgEl.setAttribute('loading', 'lazy');
+      return;
+    }
     const raw = imgEl.getAttribute('src') || '';
     const src = raw.split('?')[0]; // strip cache-busting for detection
     // Support either images/resized/{w}/<path>.<ext> or images/project X/<file>.<ext>
@@ -217,9 +239,9 @@ document.addEventListener('DOMContentLoaded', function() {
       } catch {}
       return 4; // sensible default
     }
-    const eagerRows = 2;
-    const approxCols = getApproxColumns();
-    const chunkSize = Math.max(8, approxCols * eagerRows);
+  const eagerRows = 2;
+  const approxCols = getApproxColumns();
+  const chunkSize = isHtmlSource ? images.length : Math.max(8, approxCols * eagerRows);
     let rendered = 0;
 
     function appendOne(item, idxGlobal) {
@@ -468,6 +490,90 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize
   loadProjectImages()
     .then(async (images) => {
+      // If page opts out of manifest (uses HTML-defined images), render gallery only and keep hero as authored
+      if (isHtmlSource) {
+        try {
+          // Leave authored gallery DOM intact. Just add lazy/decoding hints and wire up lightbox.
+          const authoredImgs = Array.from(galleryContainer.querySelectorAll('img'));
+          authoredImgs.forEach(img => {
+            if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
+            if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
+          });
+          initLightboxForCurrentGallery();
+
+          // Normalize DOM structure to match JS-rendered galleries: wrap images in <figure class="gallery-item">
+          // and apply tile spans (wide/tall/big) using the manifest, while preserving authored order/content.
+          const toProcess = Array.from(galleryContainer.querySelectorAll('img'));
+          // Try to fetch manifest to get span hints
+          let spanMap = new Map();
+          try {
+            const res = await fetch(encodeURI(manifestUrl), { cache: 'no-cache' });
+            if (res.ok) {
+              const data = await res.json();
+              if (Array.isArray(data?.images)) {
+                data.images.forEach(item => {
+                  const src = (item && typeof item.src === 'string') ? item.src.trim() : '';
+                  const span = (item && typeof item.span === 'string') ? item.span.trim() : '';
+                  if (!src || !span) return;
+                  const base = src.split(/[\\\/]/).pop().toLowerCase();
+                  spanMap.set(base, span);
+                });
+              }
+            }
+          } catch (_) { /* no-op; spans remain empty */ }
+
+          toProcess.forEach(img => {
+            const parent = img.parentElement;
+            const isFigure = parent && parent.tagName === 'FIGURE';
+            let figure = isFigure ? parent : null;
+            if (!isFigure) {
+              figure = document.createElement('figure');
+              figure.className = 'gallery-item';
+              // Insert the figure at the image's position and move the image inside
+              parent.insertBefore(figure, img);
+              figure.appendChild(img);
+            } else {
+              if (!figure.classList.contains('gallery-item')) figure.classList.add('gallery-item');
+              // Remove any previous span classes to avoid duplicates
+              figure.classList.remove('tile-tall', 'tile-wide', 'tile-big');
+            }
+            // Apply span class from manifest if available
+            try {
+              const raw = img.getAttribute('src') || '';
+              const clean = raw.split('?')[0];
+              const base = clean.split(/[\\\/]/).pop().toLowerCase();
+              const span = spanMap.get(base);
+              if (span === 'tall') figure.classList.add('tile-tall');
+              else if (span === 'wide') figure.classList.add('tile-wide');
+              else if (span === 'big') figure.classList.add('tile-big');
+            } catch (_) { /* ignore */ }
+          });
+
+          // Initialize slideshow from authored hero + gallery so arrows work, preserving current hero as first slide
+          const heroSrc = (slideshowImg && slideshowImg.getAttribute('src')) || '';
+          const heroAlt = (slideshowImg && slideshowImg.getAttribute('alt')) || `${projectNames[projectNum] || 'Project'} Slide 1`;
+          const authoredList = authoredImgs
+            .map(img => ({
+              src: img.getAttribute('src') || '',
+              alt: img.getAttribute('alt') || `${projectNames[projectNum] || 'Project'} image`
+            }))
+            .filter(it => !!it.src);
+          // Deduplicate while keeping hero first
+          const seen = new Set();
+          const combined = [];
+          if (heroSrc) { combined.push({ src: heroSrc, alt: heroAlt }); seen.add(heroSrc.toLowerCase()); }
+          for (const it of authoredList) {
+            const key = it.src.toLowerCase();
+            if (!seen.has(key)) { combined.push(it); seen.add(key); }
+          }
+          if (combined.length) {
+            slideshowImages = combined.slice();
+            showSlide(0); // keeps the authored hero as the initial slide
+            resetTimer();
+          }
+          return; // do not rebuild or rearrange beyond this
+        } catch (_) { /* fall through to default path if something goes wrong */ }
+      }
       // Compute a stable per-page image version from manifest image list (for caching)
       try {
         const joined = images.map(i => i && i.src ? i.src : '').join('|');

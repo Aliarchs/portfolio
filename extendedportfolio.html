@@ -6,6 +6,9 @@
 	<title>Extended Portfolio – ALI SHABESTARY</title>
 	<link rel="stylesheet" href="style.css?v=20251008">
 	<link rel="icon" href="favicon.png" type="image/png">
+	<link rel="canonical" href="https://alishabestary.com/extendedportfolio.html">
+	<!-- Preload cover image to improve LCP on this page -->
+	<link rel="preload" as="image" href="images/resized/1200/project1-1.jpg">
 	<style>
 		/* Extended Portfolio scroll-snap styles */
 		.portfolio-container {
@@ -278,6 +281,8 @@
 	</style>
 </head>
 <body>
+	<a class="skip-link" href="#portfolioContainer">Skip to content</a>
+	<a class="skip-link" href="#main">Skip to content</a>
 	<header>
 		<a href="index.html" class="site-name" aria-label="Home">ALI SHABESTARY</a>
 		<nav class="nav-dropdown" role="navigation" aria-label="Main navigation">
@@ -286,7 +291,7 @@
 			<a href="contact.html#contact-form" aria-label="Contact page">Contact</a>
 		</nav>
 	</header>
-	<div class="portfolio-container" id="portfolioContainer">
+	<div class="portfolio-container" id="portfolioContainer" role="main" aria-label="Extended portfolio" tabindex="-1">
     
 		<!-- Cover Page (stands alone) -->
 		<div class="portfolio-cover">
@@ -397,6 +402,12 @@
 		<button class="portfolio-nav next" id="nextBtn" aria-label="Next page">›</button>
 	</div>
 
+	<a href="#top" class="back-to-top" aria-label="Back to top" title="Back to top">↑</a>
+
+	<!-- Cloudflare Web Analytics -->
+	<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "2bf51f27e97d4e239093462e66dd4b5f"}'></script>
+	</body>
+</html>
 	<script>
 		const container = document.getElementById('portfolioContainer');
 		const prevBtn = document.getElementById('prevBtn');
@@ -604,5 +615,3 @@
 	</script>
 </body>
 </html>
-<!-- Cloudflare Web Analytics -->
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "2bf51f27e97d4e239093462e66dd4b5f"}'></script>
