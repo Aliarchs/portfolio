@@ -268,6 +268,8 @@
   /* Canonical arrow sizing (site-wide) */
   --arrow-size: 2.6rem;          /* primary diameter to use everywhere */
   --arrow-font-size: 1rem;       /* chevron glyph size */
+  /* Fixed slideshow viewport height so container doesn’t jump per image */
+  --slideshow-height: clamp(320px, 62vh, 820px);
 }
 /* Uniformly scale down all rem-based typography across the site */
 html { font-size: 15px; }
@@ -426,20 +428,6 @@ body.projects-page main {
   padding-top: 3.2rem; /* adjust if your header height changes */
 }
 
-/* 2) Arrow transition and hidden state */
-.book-arrow.always-visible {
-  transition: opacity 220ms ease, transform 220ms ease;
-  /* keep baseline centered so hover only scales and doesn't shift vertically */
-  transform: translateY(-50%) scale(1);
-  transform-origin: center center;
-  will-change: transform;
-}
-.book-arrow.always-visible.arrow-hidden {
-  opacity: 0;
-  /* keep the same vertical centering when hidden to avoid jump on show/hide */
-  transform: translateY(-50%) scale(0.98);
-  pointer-events: none;
-}
 
 /* 3) Arrow contrast on double-spread: 20% dark overlay */
 .book-container.double-spread .book-arrow.always-visible,
@@ -817,15 +805,6 @@ body.other-page {
 picture img, .page img {
   pointer-events: auto;
 }
-.book-controls button.book-arrow:not(.always-visible):hover,
-.book-controls button.book-arrow:not(.always-visible):focus,
-.book-controls button.book-arrow:not(.always-visible):active {
-  background: #eee;
-  color: #7b7b7b;
-  /* only scale, keep vertical position for non-fixed arrows */
-  transform: translateY(0) scale(1.02);
-  cursor: url('images/cursor-hover.svg'), pointer;
-}
 
 /* Show mobile flipbook only on mobile, desktop flipbook only on desktop */
 .book-mobile { display: none; }
@@ -1049,11 +1028,10 @@ textarea:focus,
 .slideshow-image {
   width: 100%;
   max-width: 1400px;
-  height: auto;              /* let the image control height for sharpness */
-  max-height: 70vh;          /* prevent overly tall images */
+  height: var(--slideshow-height); /* fixed viewport for images */
   border-radius: 0;
   box-shadow: none;
-  object-fit: contain;
+  object-fit: contain;            /* contain inside the fixed viewport */
   background: none;
   border: none;
   display: block;
@@ -1606,6 +1584,7 @@ body.landing .site-name {
     max-width: 100% !important;
     margin-bottom: 1rem;
     box-sizing: border-box;
+    height: clamp(240px, 48vh, 560px) !important; /* smaller fixed height for phones */
   }
   .slideshow-arrows-mobile {
     display: flex;
@@ -1656,6 +1635,7 @@ body.landing .site-name {
     margin-left: auto !important;
     margin-right: auto !important;
   }
+  .slideshow-image { height: clamp(220px, 46vh, 520px) !important; }
 }
 
 /* Lazy-loading placeholders */
