@@ -327,10 +327,10 @@ document.addEventListener('DOMContentLoaded', function() {
       if (isMobilePortrait() && dimW > 0 && dimH > 0) {
         try { figure.style.aspectRatio = `${dimW} / ${dimH}`; } catch {}
       }
-    // Use native lazy-loading; only exact first row should be eager/high priority
-    const isFirstRow = firstRowSet.has(srcKey(item.src));
-    img.loading = isFirstRow ? 'eager' : 'lazy';
-    img.setAttribute('fetchpriority', isFirstRow ? 'high' : 'low');
+  // Eagerly load all gallery images so they are ready even during fast scrolling
+  const isFirstRow = true; // keep variable for potential future tuning
+  img.loading = 'eager';
+  img.setAttribute('fetchpriority', 'auto');
       img.decoding = 'async';
   img.tabIndex = 0;
       const fallbacks = buildFallbacks(item.src);
@@ -411,60 +411,12 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
       const widths = [800]; // good balance of quality vs. size when preloading
       const seen = new Set();
-  // Determine approxCols to prioritize only the first row
-      function getApproxColumns() {
-        try {
-          const probe = document.createElement('figure');
-          probe.className = 'gallery-item';
-          probe.style.visibility = 'hidden';
-          probe.style.margin = '0';
-          galleryContainer.appendChild(probe);
-          const colPx = probe.clientWidth || 0;
-          const contW = galleryContainer.clientWidth || 0;
-          galleryContainer.removeChild(probe);
-          if (colPx > 0 && contW > 0) return Math.max(1, Math.round(contW / colPx));
-        } catch {}
-        return 4;
-      }
-  const approxCols = getApproxColumns();
-  // Build an exact set of items that occupy the first row, considering tile spans
-  function getColSpan(it) {
-        const span = it && it._span;
-        return (span === 'wide' || span === 'big') ? 2 : 1;
-      }
-      const used = new Set();
-      let remaining = approxCols;
-      const firstRow = [];
-      // First pass: take items in order that fit
-      for (let i = 0; i < items.length && remaining > 0; i++) {
-        const it = items[i];
-        const cs = getColSpan(it);
-        if (cs <= remaining) {
-          firstRow.push(it);
-          used.add(i);
-          remaining -= cs;
-        }
-      }
-      // Second pass (dense-like): fill any leftover space with later 1x1s
-      if (remaining > 0) {
-        for (let i = 0; i < items.length && remaining > 0; i++) {
-          if (used.has(i)) continue;
-          const it = items[i];
-          const cs = getColSpan(it);
-          if (cs <= remaining) {
-            firstRow.push(it);
-            used.add(i);
-            remaining -= cs;
-          }
-        }
-      }
-
       const urlsForSW = [];
-  // Only consider the tiles that actually occupy the first row
-  firstRow.forEach((it) => {
+      // Preload all gallery items to ensure availability during fast scrolling
+      items.forEach((it) => {
         const src = (it && it.src) ? it.src.split('?')[0] : '';
         if (!src) return;
-  const priority = 'high';
+        const priority = 'high';
         // Project folder detection
         const mProj = src.match(/^images\/(project\s+(\d+))\/([^\.?]+)\.(jpg|jpeg|png|webp)$/i);
         if (mProj) {
@@ -522,15 +474,9 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch {}
         return 4;
       }
-  const approxCols = getApproxColumns();
-  const eagerRows = 1;
-  // Only warm-decode roughly the first row
-  const highPriorityCount = Math.max(approxCols, 4);
-
-      const ordered = items.slice();
-      // Decode high-priority items first
-      const high = ordered.slice(0, highPriorityCount);
-      const rest = ordered.slice(highPriorityCount);
+    const approxCols = getApproxColumns();
+    // Decode all items to guarantee instant paint while fast scrolling
+    const ordered = items.slice();
 
       async function decodeList(list) {
         await Promise.all(list.map(async (it) => {
@@ -550,8 +496,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }));
       }
 
-      await decodeList(high);
-      // Skip decoding the rest to save resources; browser will decode on demand
+      await decodeList(ordered);
+      // Optional idle callback to yield back to main thread
       if (typeof window.requestIdleCallback === 'function') {
         window.requestIdleCallback(() => {}, { timeout: 300 });
       }
@@ -744,7 +690,9 @@ document.addEventListener('DOMContentLoaded', function() {
           const authoredImgs = Array.from(galleryContainer.querySelectorAll('img'));
           authoredImgs.forEach(img => {
             if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
-            if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
+            // Force eager loading for all authored gallery images to ensure instant availability
+            img.setAttribute('loading', 'eager');
+            try { img.setAttribute('fetchpriority', 'auto'); } catch (_) {}
             try { img.classList.add('lazy'); } catch (_) {}
             if (img.complete && img.naturalWidth > 0) {
               try { img.classList.add('loaded'); img.classList.remove('lazy'); } catch (_) {}
