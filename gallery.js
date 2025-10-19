@@ -22,6 +22,17 @@ document.addEventListener('DOMContentLoaded', function() {
     picture.appendChild(slideshowImg);
   }
 
+  // Seed LQIP shimmer for hero until it paints
+  if (slideshowImg) {
+    try { slideshowImg.classList.add('lazy'); } catch (_) {}
+    try {
+      const onHeroLoad = () => {
+        try { slideshowImg.classList.add('loaded'); slideshowImg.classList.remove('lazy'); } catch (_) {}
+      };
+      slideshowImg.addEventListener('load', onHeroLoad, { once: true });
+    } catch (_) { /* ignore */ }
+  }
+
   const folderPath = `images/project ${projectNum}`; // note the space per your folder names
   const manifestUrl = `${folderPath}/manifest.json`;
   // Allow per-page override: if the gallery declares data-source="html", we use the images from the markup
@@ -119,6 +130,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Always set lightweight hints first
     if (!imgEl.hasAttribute('decoding')) imgEl.setAttribute('decoding', 'async');
     if (!imgEl.hasAttribute('loading')) imgEl.setAttribute('loading', 'lazy');
+    // Determine context to choose an appropriate sizes attribute
+    const isSlideshow = imgEl.classList.contains('slideshow-image') || !!(imgEl.closest && imgEl.closest('.slideshow-container'));
+    const isGalleryImg = !isSlideshow && !!(imgEl.closest && imgEl.closest('.gallery'));
     // For HTML-sourced galleries we still add responsive candidates when we know
     // resized variants exist (projects 2,3,4). Otherwise, we keep the original only.
     const raw = imgEl.getAttribute('src') || '';
@@ -149,8 +163,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const projectFolderMatch = relPath.match(/^project\s+(\d+)\//i);
     const resizedExistsForProject = projectFolderMatch ? ['2','3','4'].includes(projectFolderMatch[1]) : false;
 
-  const widths = [400, 800, 1200];
-    const sizes = '(max-width: 900px) 100vw, 1200px';
+    const widths = [400, 800, 1200];
+    // Tailored sizes: much smaller for gallery tiles than for the hero slideshow
+    const sizesGallery = '(max-width: 600px) 88vw, (max-width: 760px) 48vw, (max-width: 1100px) 30vw, (max-width: 1400px) 22vw, 18vw';
+    const sizesSlideshow = '(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px';
+    const sizes = isGalleryImg ? sizesGallery : sizesSlideshow;
 
     let legacyCandidates = [];
     let webpCandidates = [];
@@ -253,12 +270,37 @@ document.addEventListener('DOMContentLoaded', function() {
       } catch {}
       return 4; // sensible default
     }
-  const eagerRows = 1;
-  const approxCols = getApproxColumns();
-  // Only keep roughly the first row eager; everything else should be lazy
-  const initialChunk = isHtmlSource
-    ? Math.min(images.length, Math.max(approxCols, 4))
-    : Math.min(images.length, Math.max(approxCols, 6));
+    const approxCols = getApproxColumns();
+    // Compute exact first-row items considering spans (wide/big span 2 columns)
+    function getColSpan(it) {
+      const s = it && it._span;
+      return (s === 'wide' || s === 'big') ? 2 : 1;
+    }
+    const firstRowSet = new Set();
+    {
+      let remaining = approxCols;
+      // First pass: take in-order items that fit in remaining cols
+      for (let i = 0; i < working.length && remaining > 0; i++) {
+        const it = working[i];
+        const cs = getColSpan(it);
+        if (cs <= remaining) {
+          firstRowSet.add(srcKey(it.src));
+          remaining -= cs;
+        }
+      }
+      // Second pass: try to fill any leftover slots with 1x1s later in the sequence
+      if (remaining > 0) {
+        for (let i = 0; i < working.length && remaining > 0; i++) {
+          const it = working[i];
+          if (firstRowSet.has(srcKey(it.src))) continue;
+          const cs = getColSpan(it);
+          if (cs <= remaining) {
+            firstRowSet.add(srcKey(it.src));
+            remaining -= cs;
+          }
+        }
+      }
+    }
 
     function appendOne(item, idxGlobal) {
       const figure = document.createElement('figure');
@@ -267,29 +309,36 @@ document.addEventListener('DOMContentLoaded', function() {
       if (item._span === 'wide') figure.classList.add('tile-wide');
       if (item._span === 'big') figure.classList.add('tile-big');
 
-      const picture = document.createElement('picture');
+  const picture = document.createElement('picture');
       const img = document.createElement('img');
       img.src = withBust(item.src);
       img.alt = item.alt || '';
+  // Start with shimmer/blur until loaded
+  try { img.classList.add('lazy'); } catch (_) {}
       // Reserve space to prevent layout shift using known dimensions.
       // Prefer manifest-provided w/h; fallback to runtime metrics (_w/_h) if available.
       const dimW = (typeof item.w === 'number' && item.w > 0) ? item.w : (typeof item._w === 'number' ? item._w : 0);
       const dimH = (typeof item.h === 'number' && item.h > 0) ? item.h : (typeof item._h === 'number' ? item._h : 0);
+      // Always set width/height when we have any dimensions; prevents grid shifts as images decode
       if (dimW > 0 && dimH > 0) {
         try { img.setAttribute('width', String(dimW)); img.setAttribute('height', String(dimH)); } catch {}
-        if (isMobilePortrait()) {
-          try { figure.style.aspectRatio = `${dimW} / ${dimH}`; } catch {}
-        }
       }
-  // Use native lazy-loading for most images; keep a small initial set as eager/high-priority
-  img.loading = (idxGlobal < initialChunk) ? 'eager' : 'lazy';
-  if (idxGlobal < initialChunk) { img.setAttribute('fetchpriority', 'high'); }
-  else { img.setAttribute('fetchpriority', 'low'); }
+      // On mobile portrait where gallery becomes a single-column stack, reserve aspect-ratio space
+      if (isMobilePortrait() && dimW > 0 && dimH > 0) {
+        try { figure.style.aspectRatio = `${dimW} / ${dimH}`; } catch {}
+      }
+    // Use native lazy-loading; only exact first row should be eager/high priority
+    const isFirstRow = firstRowSet.has(srcKey(item.src));
+    img.loading = isFirstRow ? 'eager' : 'lazy';
+    img.setAttribute('fetchpriority', isFirstRow ? 'high' : 'low');
       img.decoding = 'async';
   img.tabIndex = 0;
       const fallbacks = buildFallbacks(item.src);
       if (fallbacks.length) img.dataset.fallbackIndex = '0';
-  img.addEventListener('load', () => { loadedSrcSet.add(srcKey(item.src)); }, { once: true });
+  img.addEventListener('load', () => {
+        loadedSrcSet.add(srcKey(item.src));
+        try { img.classList.add('loaded'); img.classList.remove('lazy'); } catch (_) {}
+      }, { once: true });
       const handleError = () => {
         const idx = parseInt(img.dataset.fallbackIndex || '0', 10);
         if (!Number.isNaN(idx) && idx < fallbacks.length) {
@@ -314,6 +363,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // If we've already loaded this image earlier in the session, mark it loaded immediately
       if (loadedSrcSet.has(srcKey(item.src)) || (img.complete && img.naturalWidth > 0)) {
         loadedSrcSet.add(srcKey(item.src));
+        try { img.classList.add('loaded'); img.classList.remove('lazy'); } catch (_) {}
       }
       galleryContainer.appendChild(figure);
 
@@ -377,13 +427,41 @@ document.addEventListener('DOMContentLoaded', function() {
         return 4;
       }
   const approxCols = getApproxColumns();
-  const eagerRows = 1;
-  // Only preload roughly the first row
-  const highPriorityCount = Math.max(approxCols, 4);
+  // Build an exact set of items that occupy the first row, considering tile spans
+  function getColSpan(it) {
+        const span = it && it._span;
+        return (span === 'wide' || span === 'big') ? 2 : 1;
+      }
+      const used = new Set();
+      let remaining = approxCols;
+      const firstRow = [];
+      // First pass: take items in order that fit
+      for (let i = 0; i < items.length && remaining > 0; i++) {
+        const it = items[i];
+        const cs = getColSpan(it);
+        if (cs <= remaining) {
+          firstRow.push(it);
+          used.add(i);
+          remaining -= cs;
+        }
+      }
+      // Second pass (dense-like): fill any leftover space with later 1x1s
+      if (remaining > 0) {
+        for (let i = 0; i < items.length && remaining > 0; i++) {
+          if (used.has(i)) continue;
+          const it = items[i];
+          const cs = getColSpan(it);
+          if (cs <= remaining) {
+            firstRow.push(it);
+            used.add(i);
+            remaining -= cs;
+          }
+        }
+      }
 
       const urlsForSW = [];
-  // Only consider the first N items for preloading
-  items.slice(0, highPriorityCount).forEach((it, idx) => {
+  // Only consider the tiles that actually occupy the first row
+  firstRow.forEach((it) => {
         const src = (it && it.src) ? it.src.split('?')[0] : '';
         if (!src) return;
   const priority = 'high';
@@ -620,10 +698,16 @@ document.addEventListener('DOMContentLoaded', function() {
     let item = slideshowImages[slideIndex];
   // Encode spaces and append cache-busting param for slideshow image as well
   const setSlideSrc = (src) => { slideshowImg.src = withBust(src); };
+  // Re-apply shimmer for the new slide
+  try { slideshowImg.classList.remove('loaded'); slideshowImg.classList.add('lazy'); } catch (_) {}
   setSlideSrc(item.src);
     slideshowImg.alt = `${projectNames[projectNum]} Slide ${slideIndex + 1}`;
     enhanceResponsive(slideshowImg);
     try { slideshowImg.setAttribute('fetchpriority', 'high'); } catch (e) {}
+    try {
+      const onSlideLoad = () => { try { slideshowImg.classList.add('loaded'); slideshowImg.classList.remove('lazy'); } catch (_) {} };
+      slideshowImg.addEventListener('load', onSlideLoad, { once: true });
+    } catch (_) { /* ignore */ }
     // If slideshow image fails, skip to the next available one
     const onErr = () => {
       const maxHops = slideshowImages.length;
@@ -661,6 +745,12 @@ document.addEventListener('DOMContentLoaded', function() {
           authoredImgs.forEach(img => {
             if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
             if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
+            try { img.classList.add('lazy'); } catch (_) {}
+            if (img.complete && img.naturalWidth > 0) {
+              try { img.classList.add('loaded'); img.classList.remove('lazy'); } catch (_) {}
+            } else {
+              img.addEventListener('load', () => { try { img.classList.add('loaded'); img.classList.remove('lazy'); } catch (_) {} }, { once: true });
+            }
           });
           initLightboxForCurrentGallery();
 
@@ -723,8 +813,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Track loaded images in session cache only; no fade class toggling
             if (img.complete && img.naturalWidth > 0) {
               loadedSrcSet.add(srcKey(img.getAttribute('src') || ''));
+              try { img.classList.add('loaded'); img.classList.remove('lazy'); } catch (_) {}
             } else {
-              img.addEventListener('load', () => { loadedSrcSet.add(srcKey(img.getAttribute('src') || '')); }, { once: true });
+              img.addEventListener('load', () => {
+                loadedSrcSet.add(srcKey(img.getAttribute('src') || ''));
+                try { img.classList.add('loaded'); img.classList.remove('lazy'); } catch (_) {}
+              }, { once: true });
             }
           });
 
