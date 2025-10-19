@@ -116,22 +116,21 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function enhanceResponsive(imgEl) {
-    // If this page uses HTML-sourced gallery, don't attach srcset/WebP derived variants.
-    // This guarantees we show exactly the files authored in the HTML, avoiding 404s.
-    if (isHtmlSource) {
-      if (!imgEl.hasAttribute('decoding')) imgEl.setAttribute('decoding', 'async');
-      if (!imgEl.hasAttribute('loading')) imgEl.setAttribute('loading', 'lazy');
-      return;
-    }
+    // Always set lightweight hints first
+    if (!imgEl.hasAttribute('decoding')) imgEl.setAttribute('decoding', 'async');
+    if (!imgEl.hasAttribute('loading')) imgEl.setAttribute('loading', 'lazy');
+    // For HTML-sourced galleries we still add responsive candidates when we know
+    // resized variants exist (projects 2,3,4). Otherwise, we keep the original only.
     const raw = imgEl.getAttribute('src') || '';
     const src = raw.split('?')[0]; // strip cache-busting for detection
     // Support either images/resized/{w}/<path>.<ext> or images/project X/<file>.<ext>
     let relPath = '';
     let ext = '';
-    let m = src.match(/^images\/resized\/(?:400|800|1200)\/(.+)\.(jpg|jpeg|png|webp)$/i);
+    let m = src.match(/^images\/resized\/(400|800|1200)\/(.+)\.(jpg|jpeg|png|webp)$/i);
+    const resizedWidthDetected = m ? parseInt(m[1], 10) : null;
     if (m) {
-      relPath = m[1];
-      ext = (m[2] || '').toLowerCase();
+      relPath = m[2];
+      ext = (m[3] || '').toLowerCase();
     } else {
       m = src.match(/^images\/(project\s+\d+)\/([^\.?]+)\.(jpg|jpeg|png|webp)$/i);
       if (m) {
@@ -150,33 +149,43 @@ document.addEventListener('DOMContentLoaded', function() {
     const projectFolderMatch = relPath.match(/^project\s+(\d+)\//i);
     const resizedExistsForProject = projectFolderMatch ? ['2','3','4'].includes(projectFolderMatch[1]) : false;
 
-    const widths = [400, 800, 1200];
+  const widths = [400, 800, 1200];
     const sizes = '(max-width: 900px) 100vw, 1200px';
-    let legacyCandidates = [];
-    if (!projectFolderMatch || resizedExistsForProject) {
-  legacyCandidates = widths.map(w => `images/resized/${w}/${relPath}.${ext} ${w}w`);
-    }
-    // Add original as the largest candidate to guarantee a working fallback if resized files are missing
-    if (imgEl.src) {
-      legacyCandidates.push(`${imgEl.src} 2000w`);
-    }
-    const legacySrcset = legacyCandidates.join(', ');
-    const webpSrcset = (!projectFolderMatch || resizedExistsForProject)
-  ? widths.map(w => `images/resized/${w}/${relPath}.webp ${w}w`).join(', ')
-      : '';
 
-  // Always add legacy srcset on the <img> (only for non-project paths)
-    imgEl.setAttribute('srcset', legacySrcset);
-    imgEl.setAttribute('sizes', sizes);
-    if (!imgEl.hasAttribute('decoding')) imgEl.setAttribute('decoding', 'async');
-    if (!imgEl.hasAttribute('loading')) imgEl.setAttribute('loading', 'lazy');
+    let legacyCandidates = [];
+    let webpCandidates = [];
+    if (projectFolderMatch && resizedExistsForProject) {
+      // Safe to advertise all three sizes for known project folders with resized pipelines
+      legacyCandidates = widths.map(w => `images/resized/${w}/${relPath}.${ext} ${w}w`);
+      webpCandidates = widths.map(w => `images/resized/${w}/${relPath}.webp ${w}w`);
+    } else if (resizedWidthDetected) {
+      // Only advertise the width we actually detected to avoid 404s for missing sizes
+      legacyCandidates = [`images/resized/${resizedWidthDetected}/${relPath}.${ext} ${resizedWidthDetected}w`];
+      webpCandidates = [`images/resized/${resizedWidthDetected}/${relPath}.webp ${resizedWidthDetected}w`];
+    } else {
+      // Unknown path: don't add resized candidates; keep original only
+      legacyCandidates = [];
+      webpCandidates = [];
+    }
+    // Always append original as a last, large candidate so the browser has a guaranteed source
+    if (imgEl.src) legacyCandidates.push(`${imgEl.src} 2000w`);
+
+    const legacySrcset = legacyCandidates.join(', ');
+    const webpSrcset = webpCandidates.join(', ');
+
+    // Only set srcset/sizes if we actually have candidates beyond the original
+    if (legacyCandidates.length > 1) {
+      imgEl.setAttribute('srcset', legacySrcset);
+      imgEl.setAttribute('sizes', sizes);
+    }
+  // decoding/loading already set above
 
     // If wrapped in <picture>, prepend a WebP <source>
     const picture = imgEl.parentElement && imgEl.parentElement.tagName === 'PICTURE' ? imgEl.parentElement : null;
     if (picture) {
       // Remove any previous sources to avoid duplication on re-renders
       Array.from(picture.querySelectorAll('source')).forEach(s => s.remove());
-      if (webpSrcset) {
+      if (webpSrcset && webpCandidates.length > 0) {
         const sWebp = document.createElement('source');
         sWebp.type = 'image/webp';
         sWebp.setAttribute('srcset', webpSrcset);
@@ -249,8 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   const eagerRows = 2;
   const approxCols = getApproxColumns();
-  const chunkSize = isHtmlSource ? images.length : Math.max(8, approxCols * eagerRows);
-    let rendered = 0;
+  const initialChunk = isHtmlSource ? images.length : Math.max(8, approxCols * eagerRows);
 
     function appendOne(item, idxGlobal) {
       const figure = document.createElement('figure');
@@ -273,8 +281,11 @@ document.addEventListener('DOMContentLoaded', function() {
           try { figure.style.aspectRatio = `${dimW} / ${dimH}`; } catch {}
         }
       }
-      if (idxGlobal < chunkSize) { img.loading = 'eager'; img.setAttribute('fetchpriority', 'high'); }
-      else { img.loading = 'lazy'; img.setAttribute('fetchpriority', 'auto'); }
+  // Eager-load all gallery images so they're ready before the user scrolls.
+  // Keep higher priority for the first rows; use low priority for the rest.
+  img.loading = 'eager';
+  if (idxGlobal < initialChunk) { img.setAttribute('fetchpriority', 'high'); }
+  else { img.setAttribute('fetchpriority', 'low'); }
       img.decoding = 'async';
   img.tabIndex = 0;
       const fallbacks = buildFallbacks(item.src);
@@ -312,7 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
 
-    // Render all items up-front so the scroll bar and layout are stable
+    // Render all items up-front so everything is in the DOM and loading starts immediately
     for (let i = 0; i < working.length; i++) {
       appendOne(working[i], i);
     }
@@ -328,10 +339,152 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     } catch (_) { /* no-op if metrics unavailable */ }
 
-    // No scroll-reveal here to avoid any visibility pop-in. Images will fade in individually onload.
+    // No scroll-reveal here to avoid any visibility pop-in. Images are all loading eagerly.
+  }
+
+  // Preload helpers: add <link rel="preload" as="image"> for gallery images
+  function addImagePreload(href, priority) {
+    try {
+      if (!href) return;
+      const head = document.head || document.getElementsByTagName('head')[0];
+      if (!head) return;
+      const existing = head.querySelector(`link[rel="preload"][as="image"][href="${CSS.escape(href)}"]`);
+      if (existing) return;
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = href;
+      if (priority) link.setAttribute('fetchpriority', priority);
+      head.appendChild(link);
+    } catch (_) { /* ignore */ }
+  }
+  function preloadGalleryImages(items) {
+    try {
+      const widths = [800]; // good balance of quality vs. size when preloading
+      const seen = new Set();
+      // Determine approxCols to prioritize the first two rows higher
+      function getApproxColumns() {
+        try {
+          const probe = document.createElement('figure');
+          probe.className = 'gallery-item';
+          probe.style.visibility = 'hidden';
+          probe.style.margin = '0';
+          galleryContainer.appendChild(probe);
+          const colPx = probe.clientWidth || 0;
+          const contW = galleryContainer.clientWidth || 0;
+          galleryContainer.removeChild(probe);
+          if (colPx > 0 && contW > 0) return Math.max(1, Math.round(contW / colPx));
+        } catch {}
+        return 4;
+      }
+      const approxCols = getApproxColumns();
+      const eagerRows = 2;
+      const highPriorityCount = Math.max(8, approxCols * eagerRows);
+
+      const urlsForSW = [];
+      items.forEach((it, idx) => {
+        const src = (it && it.src) ? it.src.split('?')[0] : '';
+        if (!src) return;
+        const priority = idx < highPriorityCount ? 'high' : 'low';
+        // Project folder detection
+        const mProj = src.match(/^images\/(project\s+(\d+))\/([^\.?]+)\.(jpg|jpeg|png|webp)$/i);
+        if (mProj) {
+          const projNum = mProj[2];
+          const baseRel = `${mProj[1]}/${mProj[3]}`;
+          const ext = (mProj[4] || '').toLowerCase();
+          if (['2','3','4'].includes(projNum)) {
+            widths.forEach(w => {
+              const jpg = `images/resized/${w}/${baseRel}.${ext}`;
+              const webp = `images/resized/${w}/${baseRel}.webp`;
+              if (!seen.has(jpg)) { addImagePreload(jpg, priority); seen.add(jpg); }
+              if (!seen.has(webp)) { addImagePreload(webp, priority); seen.add(webp); }
+              urlsForSW.push(jpg, webp);
+            });
+            // Also preload the authored/original as a fallback
+            if (!seen.has(src)) { addImagePreload(src, priority); seen.add(src); urlsForSW.push(src); }
+            return;
+          }
+        }
+        // images/resized path: just preload the detected src
+        const mRes = src.match(/^images\/resized\/(400|800|1200)\/(.+)\.(jpg|jpeg|png|webp)$/i);
+        if (mRes) {
+          if (!seen.has(src)) { addImagePreload(src, priority); seen.add(src); urlsForSW.push(src); }
+          return;
+        }
+        // default: preload original only
+        if (!seen.has(src)) { addImagePreload(src, priority); seen.add(src); urlsForSW.push(src); }
+      });
+      // Ask the service worker to cache these URLs once
+      try {
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller && urlsForSW.length) {
+          const uniq = Array.from(new Set(urlsForSW));
+          navigator.serviceWorker.controller.postMessage({ type: 'PRECACHE_URLS', urls: uniq });
+        }
+      } catch (_) { /* ignore */ }
+    } catch (_) { /* ignore */ }
+  }
+
+  // Decode images in the background so when the user scrolls, they are already decoded and paint instantly
+  async function warmDecodeGallery(items, rows) {
+    try {
+      const seen = new Set();
+      // Prioritize first two rows using same column estimate
+      function getApproxColumns() {
+        try {
+          const probe = document.createElement('figure');
+          probe.className = 'gallery-item';
+          probe.style.visibility = 'hidden';
+          probe.style.margin = '0';
+          galleryContainer.appendChild(probe);
+          const colPx = probe.clientWidth || 0;
+          const contW = galleryContainer.clientWidth || 0;
+          galleryContainer.removeChild(probe);
+          if (colPx > 0 && contW > 0) return Math.max(1, Math.round(contW / colPx));
+        } catch {}
+        return 4;
+      }
+  const approxCols = getApproxColumns();
+  const eagerRows = Math.max(2, (typeof rows === 'number' && rows > 0 ? Math.floor(rows) : 6));
+  const highPriorityCount = Math.max(24, approxCols * eagerRows);
+
+      const ordered = items.slice();
+      // Decode high-priority items first
+      const high = ordered.slice(0, highPriorityCount);
+      const rest = ordered.slice(highPriorityCount);
+
+      async function decodeList(list) {
+        await Promise.all(list.map(async (it) => {
+          const src = (it && it.src) ? it.src.split('?')[0] : '';
+          if (!src || seen.has(src)) return;
+          seen.add(src);
+          try {
+            const im = new Image();
+            im.src = src;
+            // Use decode where supported to complete before paint
+            if (typeof im.decode === 'function') {
+              await im.decode();
+            } else {
+              await new Promise((res, rej) => { im.onload = res; im.onerror = res; });
+            }
+          } catch (_) { /* ignore individual failures */ }
+        }));
+      }
+
+      await decodeList(high);
+      // Decode the rest when the browser is idle (or shortly after)
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(() => { decodeList(rest); }, { timeout: 600 });
+      } else {
+        setTimeout(() => { decodeList(rest); }, 25);
+      }
+    } catch (_) { /* ignore */ }
   }
 
   function initLightboxForCurrentGallery() {
+    // Avoid attaching duplicate global handlers on re-renders
+    if (!window.__lightboxHandlersAttached__) {
+      try { Object.defineProperty(window, '__lightboxHandlersAttached__', { value: false, writable: true, configurable: true }); } catch (_) {}
+    }
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightbox-img');
     const lightboxClose = document.querySelector('.lightbox-close');
@@ -351,52 +504,56 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
 
-    window.changeLightboxImage = function(direction) {
-      const cur = lightboxImg.src;
-      const list = Array.from(galleryContainer.querySelectorAll('img'));
-      const idx = list.findIndex(i => i.src === cur);
-      if (idx !== -1) {
-        const nextIdx = (idx + direction + list.length) % list.length;
-        lightboxImg.src = list[nextIdx].src;
-        lightboxImg.alt = list[nextIdx].alt;
-      }
-    };
-    window.closeLightbox = function() {
-      lightbox.style.display = 'none';
-      lightbox.setAttribute('aria-hidden', 'true');
-      lightboxImg.src = '';
-      lightboxImg.alt = '';
-      try { if (lightbox._opener) lightbox._opener.focus(); } catch (e) {}
-      try { galleryContainer.classList.remove('lightbox-active'); } catch (e) {}
-    };
-    lightboxClose.addEventListener('click', window.closeLightbox);
-    lightbox.addEventListener('click', (e) => { if (e.target === lightbox) window.closeLightbox(); });
-    document.addEventListener('keydown', (e) => {
-      if (lightbox.style.display === 'flex') {
-        if (e.key === 'Escape' || e.key === 'Esc') window.closeLightbox();
-        if (e.key === 'ArrowLeft') window.changeLightboxImage(-1);
-        if (e.key === 'ArrowRight') window.changeLightboxImage(1);
-      }
-    });
+    // Define helpers once and bind global listeners once
+    if (!window.__lightboxHandlersAttached__) {
+      window.changeLightboxImage = function(direction) {
+        const cur = lightboxImg.src;
+        const list = Array.from(galleryContainer.querySelectorAll('img'));
+        const idx = list.findIndex(i => i.src === cur);
+        if (idx !== -1) {
+          const nextIdx = (idx + direction + list.length) % list.length;
+          lightboxImg.src = list[nextIdx].src;
+          lightboxImg.alt = list[nextIdx].alt;
+        }
+      };
+      window.closeLightbox = function() {
+        lightbox.style.display = 'none';
+        lightbox.setAttribute('aria-hidden', 'true');
+        lightboxImg.src = '';
+        lightboxImg.alt = '';
+        try { if (lightbox._opener) lightbox._opener.focus(); } catch (e) {}
+        try { galleryContainer.classList.remove('lightbox-active'); } catch (e) {}
+      };
+      lightboxClose.addEventListener('click', window.closeLightbox);
+      lightbox.addEventListener('click', (e) => { if (e.target === lightbox) window.closeLightbox(); });
+      document.addEventListener('keydown', (e) => {
+        if (lightbox.style.display === 'flex') {
+          if (e.key === 'Escape' || e.key === 'Esc') window.closeLightbox();
+          if (e.key === 'ArrowLeft') window.changeLightboxImage(-1);
+          if (e.key === 'ArrowRight') window.changeLightboxImage(1);
+        }
+      });
 
-    // Minimal focus trap: keep focus inside the lightbox when open
-    function trapFocus(e) {
-      if (lightbox.style.display !== 'flex') return;
-      const focusable = [lightboxClose, lightboxImg].filter(Boolean);
-      if (!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (e.key === 'Tab') {
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
+      // Minimal focus trap: keep focus inside the lightbox when open
+      function trapFocus(e) {
+        if (lightbox.style.display !== 'flex') return;
+        const focusable = [lightboxClose, lightboxImg].filter(Boolean);
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.key === 'Tab') {
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
         }
       }
+      document.addEventListener('keydown', trapFocus);
+      window.__lightboxHandlersAttached__ = true;
     }
-    document.addEventListener('keydown', trapFocus);
 
     // Basic swipe support on lightbox (mobile)
     let touchStartX = null;
@@ -593,6 +750,9 @@ document.addEventListener('DOMContentLoaded', function() {
             showSlide(0); // keeps the authored hero as the initial slide
             resetTimer();
           }
+          // Start preloading gallery images so they are ready before scroll
+          try { preloadGalleryImages(authoredList); } catch (_) {}
+          try { warmDecodeGallery(authoredList, 8); } catch (_) {}
           return; // do not rebuild or rearrange beyond this
         } catch (_) { /* fall through to default path if something goes wrong */ }
       }
@@ -605,6 +765,9 @@ document.addEventListener('DOMContentLoaded', function() {
       resetTimer();
       if (hasPrecomputedSpans) {
         renderGallery(images);
+  // Preload + warm-decode determined images
+  try { preloadGalleryImages(images); } catch (_) {}
+  try { warmDecodeGallery(images, 8); } catch (_) {}
         initLightboxForCurrentGallery();
         return; // single pass render; skip dynamic metrics/arrangement
       }
@@ -792,9 +955,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Arrange and re-render once metrics are available
   let arranged = arrangeFromMetrics(withMetrics);
-    slideshowImages = arranged.slice();
+  slideshowImages = arranged.slice();
     showSlide(slideIndex);
     renderGallery(arranged);
+  try { preloadGalleryImages(arranged); } catch (_) {}
+  try { warmDecodeGallery(arranged, 8); } catch (_) {}
     initLightboxForCurrentGallery();
 
       // Debounced resize reflow: only when container width changes significantly

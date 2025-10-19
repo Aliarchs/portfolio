@@ -1136,6 +1136,7 @@ textarea:focus,
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
   margin: 0;
+  /* Ensure figures render up front (no deferred visibility) */
 }
 .gallery img {
   inline-size: 100%;
@@ -1156,6 +1157,7 @@ textarea:focus,
 
 /* Ensure no captions/labels render over images */
 .gallery figcaption { display: none !important; }
+
 
 @media (width > 600px) {
   /* Class-based spans defining the four tile types */
