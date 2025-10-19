@@ -167,14 +167,11 @@ document.addEventListener('DOMContentLoaded', function() {
       legacyCandidates = [];
       webpCandidates = [];
     }
-    // Always append original as a last, large candidate so the browser has a guaranteed source
-    if (imgEl.src) legacyCandidates.push(`${imgEl.src} 2000w`);
-
     const legacySrcset = legacyCandidates.join(', ');
     const webpSrcset = webpCandidates.join(', ');
 
     // Only set srcset/sizes if we actually have candidates beyond the original
-    if (legacyCandidates.length > 1) {
+    if (legacyCandidates.length > 0) {
       imgEl.setAttribute('srcset', legacySrcset);
       imgEl.setAttribute('sizes', sizes);
     }
@@ -241,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Clear existing content
     galleryContainer.innerHTML = '';
 
-    // Estimate number of columns to eagerly load first ~2 rows on larger screens
+    // Estimate number of columns to eagerly load only the first row on larger screens
     function getApproxColumns() {
       try {
         const probe = document.createElement('figure');
@@ -256,9 +253,12 @@ document.addEventListener('DOMContentLoaded', function() {
       } catch {}
       return 4; // sensible default
     }
-  const eagerRows = 2;
+  const eagerRows = 1;
   const approxCols = getApproxColumns();
-  const initialChunk = isHtmlSource ? images.length : Math.max(8, approxCols * eagerRows);
+  // Only keep roughly the first row eager; everything else should be lazy
+  const initialChunk = isHtmlSource
+    ? Math.min(images.length, Math.max(approxCols, 4))
+    : Math.min(images.length, Math.max(approxCols, 6));
 
     function appendOne(item, idxGlobal) {
       const figure = document.createElement('figure');
@@ -281,9 +281,8 @@ document.addEventListener('DOMContentLoaded', function() {
           try { figure.style.aspectRatio = `${dimW} / ${dimH}`; } catch {}
         }
       }
-  // Eager-load all gallery images so they're ready before the user scrolls.
-  // Keep higher priority for the first rows; use low priority for the rest.
-  img.loading = 'eager';
+  // Use native lazy-loading for most images; keep a small initial set as eager/high-priority
+  img.loading = (idxGlobal < initialChunk) ? 'eager' : 'lazy';
   if (idxGlobal < initialChunk) { img.setAttribute('fetchpriority', 'high'); }
   else { img.setAttribute('fetchpriority', 'low'); }
       img.decoding = 'async';
@@ -362,7 +361,7 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
       const widths = [800]; // good balance of quality vs. size when preloading
       const seen = new Set();
-      // Determine approxCols to prioritize the first two rows higher
+  // Determine approxCols to prioritize only the first row
       function getApproxColumns() {
         try {
           const probe = document.createElement('figure');
@@ -377,15 +376,17 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch {}
         return 4;
       }
-      const approxCols = getApproxColumns();
-      const eagerRows = 2;
-      const highPriorityCount = Math.max(8, approxCols * eagerRows);
+  const approxCols = getApproxColumns();
+  const eagerRows = 1;
+  // Only preload roughly the first row
+  const highPriorityCount = Math.max(approxCols, 4);
 
       const urlsForSW = [];
-      items.forEach((it, idx) => {
+  // Only consider the first N items for preloading
+  items.slice(0, highPriorityCount).forEach((it, idx) => {
         const src = (it && it.src) ? it.src.split('?')[0] : '';
         if (!src) return;
-        const priority = idx < highPriorityCount ? 'high' : 'low';
+  const priority = 'high';
         // Project folder detection
         const mProj = src.match(/^images\/(project\s+(\d+))\/([^\.?]+)\.(jpg|jpeg|png|webp)$/i);
         if (mProj) {
@@ -428,7 +429,7 @@ document.addEventListener('DOMContentLoaded', function() {
   async function warmDecodeGallery(items, rows) {
     try {
       const seen = new Set();
-      // Prioritize first two rows using same column estimate
+  // Prioritize only the first row using same column estimate
       function getApproxColumns() {
         try {
           const probe = document.createElement('figure');
@@ -444,8 +445,9 @@ document.addEventListener('DOMContentLoaded', function() {
         return 4;
       }
   const approxCols = getApproxColumns();
-  const eagerRows = Math.max(2, (typeof rows === 'number' && rows > 0 ? Math.floor(rows) : 6));
-  const highPriorityCount = Math.max(24, approxCols * eagerRows);
+  const eagerRows = 1;
+  // Only warm-decode roughly the first row
+  const highPriorityCount = Math.max(approxCols, 4);
 
       const ordered = items.slice();
       // Decode high-priority items first
@@ -471,11 +473,9 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       await decodeList(high);
-      // Decode the rest when the browser is idle (or shortly after)
+      // Skip decoding the rest to save resources; browser will decode on demand
       if (typeof window.requestIdleCallback === 'function') {
-        window.requestIdleCallback(() => { decodeList(rest); }, { timeout: 600 });
-      } else {
-        setTimeout(() => { decodeList(rest); }, 25);
+        window.requestIdleCallback(() => {}, { timeout: 300 });
       }
     } catch (_) { /* ignore */ }
   }
