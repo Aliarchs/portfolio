@@ -327,10 +327,10 @@ document.addEventListener('DOMContentLoaded', function() {
       if (isMobilePortrait() && dimW > 0 && dimH > 0) {
         try { figure.style.aspectRatio = `${dimW} / ${dimH}`; } catch {}
       }
-  // Eagerly load all gallery images so they are ready even during fast scrolling
-  const isFirstRow = true; // keep variable for potential future tuning
-  img.loading = 'eager';
-  img.setAttribute('fetchpriority', 'auto');
+  // Load strategy: eager for first row, lazy for the rest
+  const isFirstRow = firstRowSet.has(srcKey(item.src));
+  img.loading = isFirstRow ? 'eager' : 'lazy';
+  img.setAttribute('fetchpriority', isFirstRow ? 'high' : 'low');
       img.decoding = 'async';
   img.tabIndex = 0;
       const fallbacks = buildFallbacks(item.src);
@@ -412,8 +412,36 @@ document.addEventListener('DOMContentLoaded', function() {
       const widths = [800]; // good balance of quality vs. size when preloading
       const seen = new Set();
       const urlsForSW = [];
-      // Preload all gallery items to ensure availability during fast scrolling
-      items.forEach((it) => {
+      // Preload an initial small set (first row) synchronously; others are handled by IO below
+      const initial = (() => {
+        // Estimate columns
+        function getApproxColumns() {
+          try {
+            const probe = document.createElement('figure');
+            probe.className = 'gallery-item';
+            probe.style.visibility = 'hidden';
+            probe.style.margin = '0';
+            galleryContainer.appendChild(probe);
+            const colPx = probe.clientWidth || 0;
+            const contW = galleryContainer.clientWidth || 0;
+            galleryContainer.removeChild(probe);
+            if (colPx > 0 && contW > 0) return Math.max(1, Math.round(contW / colPx));
+          } catch {}
+          return 4;
+        }
+        const approxCols = getApproxColumns();
+        const first = [];
+        let remaining = approxCols;
+        const getColSpan = (it) => ((it && (it._span === 'wide' || it._span === 'big')) ? 2 : 1);
+        for (let i = 0; i < items.length && remaining > 0; i++) {
+          const it = items[i];
+          const cs = getColSpan(it);
+          if (cs <= remaining) { first.push(it); remaining -= cs; }
+        }
+        return first;
+      })();
+
+      initial.forEach((it) => {
         const src = (it && it.src) ? it.src.split('?')[0] : '';
         if (!src) return;
         const priority = 'high';
@@ -474,9 +502,13 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch {}
         return 4;
       }
-    const approxCols = getApproxColumns();
-    // Decode all items to guarantee instant paint while fast scrolling
-    const ordered = items.slice();
+  const approxCols = getApproxColumns();
+  // Choose rowsAhead dynamically based on columns: target ~24 tiles ahead
+  const targetTiles = 24; // heuristic budget
+  const computedRows = Math.max(2, Math.ceil(targetTiles / Math.max(1, approxCols)));
+  const rowsAhead = Math.max(2, Math.min(5, rows || computedRows));
+  const highPriorityCount = Math.max(approxCols * rowsAhead, 8);
+  const ordered = items.slice(0, highPriorityCount);
 
       async function decodeList(list) {
         await Promise.all(list.map(async (it) => {
@@ -501,6 +533,94 @@ document.addEventListener('DOMContentLoaded', function() {
       if (typeof window.requestIdleCallback === 'function') {
         window.requestIdleCallback(() => {}, { timeout: 300 });
       }
+    } catch (_) { /* ignore */ }
+  }
+
+  // IntersectionObserver: prefetch and warm-decode images 2–3 rows ahead of viewport
+  function setupAheadOfViewportPrefetch(items) {
+    if (!('IntersectionObserver' in window)) return; // fallback is first-row preloads only
+    const widths = [800];
+    const seen = new Set();
+    // Estimate row height from CSS grid metrics
+    function getRowPx() {
+      try {
+        const cs = getComputedStyle(galleryContainer);
+        const rowPx = parseFloat(cs.gridAutoRows) || 200;
+        const rowGap = parseFloat(cs.rowGap) || 0;
+        return rowPx + rowGap;
+      } catch (_) { return 240; }
+    }
+    function getApproxColumns() {
+      try {
+        const probe = document.createElement('figure');
+        probe.className = 'gallery-item';
+        probe.style.visibility = 'hidden';
+        probe.style.margin = '0';
+        galleryContainer.appendChild(probe);
+        const colPx = probe.clientWidth || 0;
+        const contW = galleryContainer.clientWidth || 0;
+        galleryContainer.removeChild(probe);
+        if (colPx > 0 && contW > 0) return Math.max(1, Math.round(contW / colPx));
+      } catch {}
+      return 4;
+    }
+    const approxCols = getApproxColumns();
+    const targetTiles = 24;
+    const computedRows = Math.max(2, Math.ceil(targetTiles / Math.max(1, approxCols)));
+    const rowsAhead = Math.max(2, Math.min(5, computedRows));
+    const marginY = Math.max(800, Math.round(getRowPx() * (rowsAhead + 1)));
+    const opts = { root: null, rootMargin: `${marginY}px 0px`, threshold: 0.01 };
+    const io = new IntersectionObserver((entries) => {
+      const toDecode = [];
+      const urlsForSW = [];
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const img = entry.target;
+        const src = (img.currentSrc || img.src || '').split('?')[0];
+        if (!src) return;
+        if (seen.has(src)) return;
+        seen.add(src);
+        toDecode.push(src);
+        // Try to infer resized variants for caching/preload
+        const mProj = src.match(/^images\/(project\s+(\d+))\/([^\.?]+)\.(jpg|jpeg|png|webp)$/i);
+        if (mProj && ['2','3','4'].includes(mProj[2])) {
+          const baseRel = `${mProj[1]}/${mProj[3]}`;
+          widths.forEach(w => {
+            urlsForSW.push(`images/resized/${w}/${baseRel}.webp`, `images/resized/${w}/${baseRel}.${(mProj[4]||'').toLowerCase()}`);
+          });
+        } else {
+          const mRes = src.match(/^images\/resized\/(400|800|1200)\/(.+)\.(jpg|jpeg|png|webp)$/i);
+          if (mRes) urlsForSW.push(src);
+          else urlsForSW.push(src);
+        }
+      });
+      if (toDecode.length) {
+        // Warm-decode these sources
+        Promise.all(toDecode.map(async (u) => {
+          try {
+            const im = new Image();
+            im.src = u;
+            if (typeof im.decode === 'function') {
+              await im.decode();
+            } else {
+              await new Promise((res) => { im.onload = res; im.onerror = res; });
+            }
+          } catch (_) { /* ignore */ }
+        })).catch(() => {});
+      }
+      if (urlsForSW.length) {
+        try {
+          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            const uniq = Array.from(new Set(urlsForSW));
+            navigator.serviceWorker.controller.postMessage({ type: 'PRECACHE_URLS', urls: uniq });
+          }
+        } catch (_) { /* ignore */ }
+      }
+    }, opts);
+    // Observe gallery images
+    try {
+      const imgs = galleryContainer.querySelectorAll('img');
+      imgs.forEach(img => io.observe(img));
     } catch (_) { /* ignore */ }
   }
 
@@ -690,9 +810,9 @@ document.addEventListener('DOMContentLoaded', function() {
           const authoredImgs = Array.from(galleryContainer.querySelectorAll('img'));
           authoredImgs.forEach(img => {
             if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
-            // Force eager loading for all authored gallery images to ensure instant availability
-            img.setAttribute('loading', 'eager');
-            try { img.setAttribute('fetchpriority', 'auto'); } catch (_) {}
+            // Use lazy + IO-based prefetch/decoding instead of global eager
+            img.setAttribute('loading', 'lazy');
+            try { img.setAttribute('fetchpriority', 'low'); } catch (_) {}
             try { img.classList.add('lazy'); } catch (_) {}
             if (img.complete && img.naturalWidth > 0) {
               try { img.classList.add('loaded'); img.classList.remove('lazy'); } catch (_) {}
@@ -792,9 +912,10 @@ document.addEventListener('DOMContentLoaded', function() {
             showSlide(0); // keeps the authored hero as the initial slide
             resetTimer();
           }
-          // Start preloading gallery images so they are ready before scroll
+          // Preload just the first row and set up ahead-of-viewport prefetch/decoding
           try { preloadGalleryImages(authoredList); } catch (_) {}
-          try { warmDecodeGallery(authoredList, 8); } catch (_) {}
+          try { warmDecodeGallery(authoredList, 3); } catch (_) {}
+          try { setupAheadOfViewportPrefetch(authoredList); } catch (_) {}
           return; // do not rebuild or rearrange beyond this
         } catch (_) { /* fall through to default path if something goes wrong */ }
       }
@@ -806,10 +927,11 @@ document.addEventListener('DOMContentLoaded', function() {
       showSlide(0);
       resetTimer();
       if (hasPrecomputedSpans) {
-        renderGallery(images);
-  // Preload + warm-decode determined images
-  try { preloadGalleryImages(images); } catch (_) {}
-  try { warmDecodeGallery(images, 8); } catch (_) {}
+    renderGallery(images);
+    // Preload first row; IO handles ahead-of-viewport
+    try { preloadGalleryImages(images); } catch (_) {}
+    try { warmDecodeGallery(images, 3); } catch (_) {}
+    try { setupAheadOfViewportPrefetch(images); } catch (_) {}
         initLightboxForCurrentGallery();
         return; // single pass render; skip dynamic metrics/arrangement
       }
@@ -1000,8 +1122,9 @@ document.addEventListener('DOMContentLoaded', function() {
   slideshowImages = arranged.slice();
     showSlide(slideIndex);
     renderGallery(arranged);
-  try { preloadGalleryImages(arranged); } catch (_) {}
-  try { warmDecodeGallery(arranged, 8); } catch (_) {}
+    try { preloadGalleryImages(arranged); } catch (_) {}
+    try { warmDecodeGallery(arranged, 3); } catch (_) {}
+    try { setupAheadOfViewportPrefetch(arranged); } catch (_) {}
     initLightboxForCurrentGallery();
 
       // Debounced resize reflow: only when container width changes significantly
