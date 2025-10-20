@@ -13,6 +13,21 @@ document.addEventListener('mousemove', function(e) {
   const grid = document.querySelector('.gallery .grid, .read-gallery .grid');
   if (!grid) return;
   const onlyProject = (grid.getAttribute('data-project') || '').trim();
+  // Optional: mark specific 3-across rows (md-4 group) as compact/shorter.
+  // Use data-compact-thirds="1,3" to shorten the 1st and 3rd such rows.
+  const compactList = (grid.getAttribute('data-compact-thirds') || '')
+    .split(',')
+    .map(s => parseInt(s.trim(), 10))
+    .filter(n => Number.isFinite(n) && n > 0);
+
+  // Optional: mark specific 2-across square rows (md-6 tile-square) as shorter.
+  // Accept comma-separated indices (1-based) and/or keyword 'last'.
+  const __compactSquaresRaw = (grid.getAttribute('data-compact-squares') || '').trim();
+  const __compactSquaresWantLast = /(^|,|\s)last(,|\s|$)/i.test(__compactSquaresRaw);
+  const __compactSquaresIdx = __compactSquaresRaw
+    .split(',')
+    .map(s => parseInt(s.trim(), 10))
+    .filter(n => Number.isFinite(n) && n > 0);
 
   // Derive a version token from the simple-gallery.js script query (?v=YYYYMMDDx)
   function getGalleryVersion() {
@@ -157,21 +172,29 @@ document.addEventListener('mousemove', function(e) {
   grid.innerHTML = '';
   let idx = 0;
   let useTallBlock = true; // alternate each time we reach Group C
+  let thirdRowIndex = 0; // counts how many 3-across groups (md-4 rows) we've output
+  let squaresRowIndex = 0; // counts how many 2-across (md-6 tile-square) rows we've output
   while ((L.length + S.length + P.length) > 0) {
     // Group A: 3 thirds
+    thirdRowIndex++;
+    const makeShort = compactList.includes(thirdRowIndex);
     for (let k = 0; k < 3 && (L.length + S.length + P.length) > 0; k++) {
       // Prefer landscape for wide-ish thirds; fallback any
       const pick = popBest(L) || popBest(S) || popBest(P);
       if (!pick) break;
-      grid.appendChild(makeTile(pick, 'column-xs-12 column-md-4'));
+      const extraCls = makeShort ? ' md4-short' : '';
+      grid.appendChild(makeTile(pick, 'column-xs-12 column-md-4' + extraCls));
     }
     // Group B: 2 squares
+    squaresRowIndex++;
+    const __makeSquaresShort = __compactSquaresIdx.includes(squaresRowIndex);
     for (let k = 0; k < 2 && (L.length + S.length + P.length) > 0; k++) {
       // Prefer near-square; fallback closest to 1.0
       let pick = popBest(S, 1.0);
       if (!pick) pick = fallbackPick(1.0);
       if (!pick) break;
-      grid.appendChild(makeTile(pick, 'column-xs-12 column-md-6 tile-square'));
+      const extraSquaresCls = __makeSquaresShort ? ' md6-short' : '';
+      grid.appendChild(makeTile(pick, 'column-xs-12 column-md-6 tile-square' + extraSquaresCls));
     }
     // Group C: alternate between a full-width wide tile and the special two-row block
     if ((L.length + S.length + P.length) > 0) {
@@ -213,6 +236,27 @@ document.addEventListener('mousemove', function(e) {
       useTallBlock = !useTallBlock;
     }
   }
+
+  // If 'last' was requested for compact squares, tag the last 2-across row now
+  try {
+    if (__compactSquaresWantLast) {
+      const items = Array.from(grid.children);
+      // Identify consecutive pairs of column-md-6 tile-square that are not inside .rt-block
+      const squarePairs = [];
+      for (let i = 0; i < items.length - 1; i++) {
+        const a = items[i];
+        const b = items[i + 1];
+        if (!a || !b) continue;
+        if (!(a.classList && b.classList)) continue;
+        if (a.closest('.rt-block') || b.closest('.rt-block')) continue;
+        const isA = a.classList.contains('column-md-6') && a.classList.contains('tile-square');
+        const isB = b.classList.contains('column-md-6') && b.classList.contains('tile-square');
+        if (isA && isB) { squarePairs.push([a, b]); i++; }
+      }
+      const last = squarePairs[squarePairs.length - 1];
+      if (last) { last[0].classList.add('md6-short'); last[1].classList.add('md6-short'); }
+    }
+  } catch {}
 
   // Refresh hover nodes for the new elements
   __hoverNodes = document.querySelectorAll('.img-content-hover');

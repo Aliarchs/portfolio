@@ -175,6 +175,17 @@ export async function updateManifestForProject(projectDirName) {
     }
   }
 
+  // Deduplicate while preserving order (handles cases where both .tif and .webp map to the same basename)
+  {
+    const seen = new Set();
+    const uniq = [];
+    for (const n of processed) {
+      if (!seen.has(n)) { seen.add(n); uniq.push(n); }
+    }
+    // eslint-disable-next-line no-param-reassign
+    processed.length = 0; processed.push(...uniq);
+  }
+
   // Build responsive assets in parallel (best-effort)
   await Promise.all(
     processed.map(name => ensureResponsiveVariants(projectDirName, name).catch(() => false))

@@ -2,4 +2,8 @@
 User-agent: *
 Allow: /
 
+# Do not index demo/sample pages
+Disallow: /simple-gallery.html
+Disallow: /read%20these/
+
 Sitemap: https://alishabestary.com/sitemap.xml

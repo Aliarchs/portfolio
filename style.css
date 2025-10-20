@@ -1219,7 +1219,11 @@ textarea:focus,
 /* shorter height for thirds */
 @media (min-width: 768px) {
   .read-gallery .column-md-4 .img-container { height: 360px; }
+  /* Optional shorter variant for selected 3-across rows */
+  .read-gallery .column-md-4.md4-short .img-container { height: 280px; }
   .read-gallery .column-md-6.tile-square .img-container { aspect-ratio: 1 / 1; height: auto; }
+  /* Optional shorter variant for selected 2-across square rows */
+  .read-gallery .column-md-6.tile-square.md6-short .img-container { aspect-ratio: 2 / 1; height: auto; }
   .read-gallery .column-md-6.tile-square .img-container img { height: 100%; }
   /* Make the tall-left tile actually fill both grid rows */
   .read-gallery .tile-tall2 .img-container { aspect-ratio: auto; height: 100%; }

@@ -43,7 +43,6 @@
     {
       "src": "Asset 5.png",
       "alt": "Asset 5",
-      "span": "big",
       "w": 1200,
       "h": 1194
     },
@@ -103,13 +102,6 @@
       "alt": "hgjkjxhfgjhm",
       "w": 1200,
       "h": 854
-    },
-    {
-      "src": "horizontL SECTION.png",
-      "alt": "horizontL SECTION",
-      "span": "wide",
-      "w": 1200,
-      "h": 547
     },
     {
       "src": "jvgfgnv.png",
