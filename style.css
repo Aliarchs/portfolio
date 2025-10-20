@@ -1203,6 +1203,38 @@ textarea:focus,
   }
 }
 
+/* Read-these gallery wrapper on project pages (shares many rules with .gallery) */
+.read-gallery { padding: 0 0 2rem; }
+.read-gallery .container { max-width: 1400px; margin: 0 auto; padding: 0 16px; }
+.read-gallery .grid { display: grid; grid-template-columns: repeat(12, 1fr); grid-gap: 16px; }
+.read-gallery .rt-block { display: grid; grid-template-columns: repeat(12, 1fr); grid-gap: 16px; }
+.read-gallery .column-xs-12 { grid-column: span 12; }
+@media (min-width: 768px) {
+  .read-gallery .column-md-4 { grid-column: span 4; }
+  .read-gallery .column-md-6 { grid-column: span 6; }
+  .read-gallery .tile-tall2 { grid-row: span 2; }
+}
+.read-gallery .img-container { width: 100%; height: 500px; position: relative; overflow: hidden; }
+.read-gallery .img-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* shorter height for thirds */
+@media (min-width: 768px) {
+  .read-gallery .column-md-4 .img-container { height: 360px; }
+  .read-gallery .column-md-6.tile-square .img-container { aspect-ratio: 1 / 1; height: auto; }
+  .read-gallery .column-md-6.tile-square .img-container img { height: 100%; }
+  /* Make the tall-left tile actually fill both grid rows */
+  .read-gallery .tile-tall2 .img-container { aspect-ratio: auto; height: 100%; }
+  .read-gallery .tile-tall2 .img-container img { height: 100%; object-fit: cover; }
+}
+@media (max-width: 640px) {
+  .read-gallery .grid { grid-template-columns: 1fr; grid-gap: 12px; }
+  .read-gallery .rt-block { grid-template-columns: 1fr; grid-gap: 12px; }
+  .read-gallery .img-container { height: auto; }
+  .read-gallery .img-container img { width: 100%; height: auto; object-fit: contain; }
+}
+
+/* Ensure project lightbox image contains neatly in viewport */
+.lightbox-img { max-width: 92vw; max-height: 88vh; width: auto; height: auto; object-fit: contain; display: block; }
+
 /* --- Simple placeholder/coming-soon state --- */
 .placeholder-state {
   min-height: calc(100vh - 6rem);

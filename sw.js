@@ -1,5 +1,5 @@
 // Minimal service worker: offline fallback for navigation and cache-first for images/manifests
-const CACHE_NAME = 'site-cache-v1';
+const CACHE_NAME = 'site-cache-v2';
 // Match images and manifests under images/ including resized variants
 const IMG_REGEX = /^(?:https?:)?\/\/[^/]+\/(?:.+)?images\//i;
 const LOCAL_IMG_REGEX = /^(?:\.\.\/)?images\//i;
@@ -55,7 +55,8 @@ self.addEventListener('fetch', (event) => {
   if (isImage || isManifest) {
     event.respondWith((async () => {
       const cache = await caches.open(CACHE_NAME);
-      const cached = await cache.match(req, { ignoreSearch: true });
+      // Respect URL search params (e.g., ?v=20251019c) so versioned URLs fetch fresh
+      const cached = await cache.match(req);
       if (cached) {
         // Update in background
         event.waitUntil(fetch(req.clone()).then(res => { if (res && res.ok) cache.put(req, res.clone()); }).catch(() => {}));

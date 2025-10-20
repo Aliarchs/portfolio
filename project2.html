@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="RSPB concept visuals by Ali Shabestary — selected renders and studies.">
   <title>RSPB – ALI SHABESTARY</title>
-  <link rel="stylesheet" href="style.css?v=20251008">
+  <link rel="stylesheet" href="style.css?v=20251019c">
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="canonical" href="https://alishabestary.com/project2.html">
   <!-- Preload hero + first-row gallery candidates for instant feel -->
@@ -60,29 +60,10 @@
       </div>
     </section>
 
-    <section class="gallery" aria-label="Project gallery">
-      <!-- Fallback thumbnails for no-JS; main gallery is manifest-driven via gallery.js -->
-      <img
-        src="images/resized/400/project 2/Asset 2.png"
-        srcset="images/resized/400/project 2/Asset 2.png 400w, images/resized/800/project 2/Asset 2.png 800w, images/resized/1200/project 2/Asset 2.png 1200w"
-        sizes="(max-width: 900px) 50vw, 360px"
-        width="1200" height="1200"
-        alt="RSPB visual Asset 2"
-        loading="lazy" decoding="async">
-      <img
-        src="images/resized/400/project 2/Asset 3.png"
-        srcset="images/resized/400/project 2/Asset 3.png 400w, images/resized/800/project 2/Asset 3.png 800w, images/resized/1200/project 2/Asset 3.png 1200w"
-        sizes="(max-width: 900px) 50vw, 360px"
-        width="1200" height="1200"
-        alt="RSPB visual Asset 3"
-        loading="lazy" decoding="async">
-      <img
-        src="images/resized/400/project 2/CORRIDOR 1.jpg"
-        srcset="images/resized/400/project 2/CORRIDOR 1.jpg 400w, images/resized/800/project 2/CORRIDOR 1.jpg 800w, images/resized/1200/project 2/CORRIDOR 1.jpg 1200w"
-        sizes="(max-width: 900px) 50vw, 360px"
-        width="1200" height="675"
-        alt="RSPB visual CORRIDOR 1"
-        loading="lazy" decoding="async">
+    <section class="read-gallery" aria-label="Project gallery">
+      <div class="container">
+        <div class="grid" data-project="2"><!-- filled by simple-gallery.js --></div>
+      </div>
     </section>
 
     <nav class="content-nav" aria-label="Project navigation">
@@ -97,7 +78,7 @@
     <img id="lightbox-img" class="lightbox-img" alt="">
   </div>
 
-  <script defer src="gallery.js?v=20251019a"></script>
+  <script defer src="simple-gallery.js?v=20251019c"></script>
   <!-- Cloudflare Web Analytics -->
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "2bf51f27e97d4e239093462e66dd4b5f"}'></script>
   <a href="#top" class="back-to-top" aria-label="Back to top" title="Back to top">↑</a>

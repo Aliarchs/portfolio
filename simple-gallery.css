@@ -1,0 +1,198 @@
+/* Read-these style: light theme, 12-col grid, fixed 500px tiles */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: #fff;
+  color: #2e2e2e;
+  font-family: 'Barlow', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+}
+
+/* Basic nav/footer styling (minimal) */
+nav { padding: 2.5rem 0; }
+nav ul { display: flex; justify-content: flex-start; list-style: none; padding-left: 0; }
+nav li { margin-right: 1.5rem; font-size: 1.05rem; }
+#highlight { color: #ea8478; font-size: 1.1rem; margin: 0; }
+
+.gallery { padding: 0 0 4rem 0; }
+
+/* Grid system */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+.grid { display: grid; grid-template-columns: repeat(12, 1fr); grid-gap: 16px; }
+
+/* default: xs */
+.column-xs-12 { grid-column: span 12; }
+
+/* md breakpoint */
+@media (min-width: 768px) {
+  .column-md-2  { grid-column: span 2; }
+  .column-md-4  { grid-column: span 4; }
+  .column-md-6  { grid-column: span 6; }
+  .column-md-10 { grid-column: span 10; }
+}
+
+/* Tiles */
+.img-container { width: 100%; height: 500px; cursor: pointer; overflow: hidden; position: relative; }
+.img-container img { width: 100%; height: 100%; object-fit: cover; transform: scale(1); transition: transform 0.3s ease-in-out; display: block; }
+.img-container:hover img { transform: scale(1.05); }
+
+/* Captions */
+.img-content { display: none; }
+.img-content-hover { position: absolute; top: 0; left: 0; display: none; padding: 1rem; background: #fff; font-weight: 400; margin-top: 1.25rem; margin-left: -2rem; white-space: nowrap; }
+.img-container:hover .img-content-hover { display: block; }
+.title { color: #2e2e2e; font-size: 1.5rem; font-weight: 700; margin: 0 0 0.2rem; }
+.category { font-size: 1rem; color: #787878; margin: 0; }
+
+/* Footer */
+footer { padding: 1rem 0; background: #f7f7f7; text-align: center; }
+.social { list-style: none; padding-left: 0; }
+.social li { display: inline-block; margin: 0 0.75rem; }
+
+/* On small screens show inline captions and stack columns */
+@media (max-width: 1024px) {
+  .grid { grid-template-columns: repeat(6, 1fr); }
+}
+@media (max-width: 640px) {
+  .grid { grid-template-columns: repeat(1, 1fr); grid-gap: 12px; }
+  .img-container { height: 100%; }
+  .img-container img { height: 100%; }
+  .img-content { display: block; padding: 12px 0; }
+  .img-content-hover { display: none !important; }
+}
+
+/* Bespoke tweak: make the 2-in-a-row tiles perfectly square on desktop */
+@media (min-width: 768px) {
+  .column-md-6 .img-container { aspect-ratio: 1 / 1; height: auto; }
+  .column-md-6 .img-container img { height: 100%; }
+  /* Make 3-up rows shorter */
+  .column-md-4 .img-container { height: 360px; }
+  .column-md-4 .img-container img { height: 100%; }
+}
+
+/* Keep even gaps by relying solely on .grid gap; remove any extra margins */
+.img-container, .img-container img { margin: 0; }
+
+/* Two-row pattern helpers */
+@media (min-width: 768px) {
+  .tile-tall2 { grid-row: span 2; }
+  .tile-tall2 .img-container { aspect-ratio: auto; height: 100%; }
+  .tile-tall2 .img-container img { height: 100%; }
+  .tile-square .img-container { aspect-ratio: 1 / 1; height: auto; }
+}
+@media (max-width: 767.98px) {
+  /* On small screens stack naturally */
+  .tile-tall2 { grid-row: auto; }
+  .tile-tall2 .img-container { height: auto; }
+}
+
+/* Lightbox */
+.lb { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); z-index: 1000; padding: 24px; }
+.lb[aria-hidden="false"] { display: flex; }
+.lb img { max-width: 92vw; max-height: 88vh; border-radius: 8px; display: block; }
+.lb button { position: absolute; border: 0; background: rgba(255,255,255,0.12); color: #fff; width: 40px; height: 40px; border-radius: 20px; cursor: pointer; }
+.lb button:hover { background: rgba(255,255,255,0.18); }
+.lb-close { top: 20px; right: 20px; font-size: 20px; }
+.lb-prev { left: 16px; top: 50%; transform: translateY(-50%); font-size: 22px; }
+.lb-next { right: 16px; top: 50%; transform: translateY(-50%); font-size: 22px; }
+/* Simple Gallery Styles */
+:root {
+  --sg-bg: #0e0e0e;
+  --sg-fg: #f3f3f3;
+  --sg-muted: #9aa0a6;
+  --sg-card: #171717;
+  --sg-gap: 12px;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--sg-bg);
+  color: var(--sg-fg);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+.sg-header {
+  padding: 24px 16px 8px;
+}
+.sg-header h1 {
+  margin: 0 0 4px;
+  font-size: 28px;
+  font-weight: 600;
+}
+.sg-sub { margin: 0; color: var(--sg-muted); font-size: 14px; }
+
+.sg-wrap {
+  padding: 8px 12px 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.sg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-auto-rows: 150px; /* base row height for mosaic math */
+  gap: var(--sg-gap);
+  align-items: stretch;
+  grid-auto-flow: dense; /* pack tiles tightly */
+}
+
+.sg-tile {
+  position: relative;
+  background: var(--sg-card);
+  border-radius: 10px;
+  overflow: hidden;
+  min-height: 120px;
+}
+
+/* Mosaic spans */
+.sg-tile.tile-wide { grid-column: span 2; }
+.sg-tile.tile-tall { grid-row: span 2; }
+.sg-tile.tile-big  { grid-area: span 2 / span 2; }
+
+.sg-tile img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover; /* Key: makes images fill tiles neatly */
+}
+
+.sg-tile .sg-cap {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.55), rgba(0,0,0,0));
+  color: #fff;
+  padding: 36px 12px 10px;
+  font-size: 13px;
+}
+
+.sg-empty { color: var(--sg-muted); text-align: center; padding: 32px 0; }
+
+/* Lightbox */
+.sg-lightbox {
+  position: fixed; inset: 0; display: none;
+  background: rgba(0,0,0,.85);
+  justify-content: center; align-items: center;
+  z-index: 1000; padding: 24px;
+}
+.sg-lightbox[aria-hidden="false"] { display: flex; }
+.sg-lightbox img { max-width: 92vw; max-height: 88vh; border-radius: 8px; }
+.sg-lightbox button {
+  position: absolute; border: 0; background: rgba(255,255,255,.12);
+  color: #fff; width: 40px; height: 40px; border-radius: 20px; cursor: pointer;
+}
+.sg-lightbox button:hover { background: rgba(255,255,255,.18); }
+.sg-lightbox-close { top: 20px; right: 20px; font-size: 20px; }
+.sg-lightbox-prev { left: 16px; top: 50%; transform: translateY(-50%); font-size: 22px; }
+.sg-lightbox-next { right: 16px; top: 50%; transform: translateY(-50%); font-size: 22px; }
+
+@media (max-width: 600px) {
+  .sg-header { padding: 20px 12px 6px; }
+  .sg-header h1 { font-size: 22px; }
+  .sg-sub { font-size: 13px; }
+  .sg-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); grid-auto-rows: 140px; }
+  /* Drop spans on small screens for a clean single-size grid */
+  .sg-tile.tile-wide { grid-column: auto; }
+  .sg-tile.tile-tall { grid-row: auto; }
+  .sg-tile.tile-big  { grid-area: auto; }
+}
