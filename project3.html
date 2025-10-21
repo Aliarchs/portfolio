@@ -8,8 +8,16 @@
   <link rel="stylesheet" href="style.css?v=20251020a">
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="canonical" href="https://alishabestary.com/project3.html">
-  <!-- Preload hero image to improve LCP on this page -->
+  <!-- Preload hero image(s) to improve LCP on this page -->
+  <link rel="preload" as="image"
+    href="images/resized/800/preview3.avif"
+    imagesrcset="images/resized/400/preview3.avif 400w, images/resized/800/preview3.avif 800w, images/resized/1200/preview3.avif 1200w"
+    imagesizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px">
   <link rel="preload" as="image" href="images/resized/1200/preview3.jpg">
+  <!-- Preload a few early gallery tiles to reduce initial scroll jank (balanced at 800w) -->
+  <link rel="preload" as="image" href="images/resized/800/project 3/FACADE 2.2.webp">
+  <link rel="preload" as="image" href="images/resized/800/project 3/facade design 1.webp">
+  <link rel="preload" as="image" href="images/resized/800/project 3/GJHKJLKL.webp">
 </head>
 <body class="projects-page">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -27,7 +35,20 @@
     <p class="text-center" id="main-title-muted">Facade retrofit concept with phase change facade module.</p>
 
     <section class="slideshow-container" aria-label="Hero slideshow">
-      <img class="slideshow-image" src="images/resized/1200/preview3.jpg" alt="Facade Retrofit Slide 1" loading="eager" decoding="async">
+      <picture>
+        <source type="image/avif"
+                srcset="images/resized/400/preview3.avif 400w, images/resized/800/preview3.avif 800w, images/resized/1200/preview3.avif 1200w"
+                sizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px">
+        <source type="image/webp"
+                srcset="images/resized/400/preview3.webp 400w, images/resized/800/preview3.webp 800w, images/resized/1200/preview3.webp 1200w"
+                sizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px">
+        <img class="slideshow-image"
+             src="images/resized/1200/preview3.jpg"
+             srcset="images/resized/400/preview3.jpg 400w, images/resized/800/preview3.jpg 800w, images/resized/1200/preview3.jpg 1200w"
+             sizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px"
+             loading="eager" decoding="async" fetchpriority="high"
+             alt="Facade Retrofit Slide 1">
+      </picture>
       <div class="slideshow-arrows-mobile">
         <button class="slideshow-arrow" aria-label="Previous image" onclick="changeSlide(-1)">‹</button>
         <button class="slideshow-arrow" aria-label="Next image" onclick="changeSlide(1)">›</button>

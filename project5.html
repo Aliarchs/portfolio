@@ -8,7 +8,11 @@
   <link rel="stylesheet" href="style.css?v=20251020a">
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="canonical" href="https://alishabestary.com/project5.html">
-  <!-- Preload hero image to improve LCP on this page -->
+  <!-- Preload hero image(s) to improve LCP on this page -->
+  <link rel="preload" as="image"
+    href="images/resized/800/preview5.avif"
+    imagesrcset="images/resized/400/preview5.avif 400w, images/resized/800/preview5.avif 800w, images/resized/1200/preview5.avif 1200w"
+    imagesizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px">
   <link rel="preload" as="image" href="images/resized/1200/preview5.jpg">
 </head>
 <body class="projects-page">
@@ -27,7 +31,20 @@
     <p class="text-center" id="main-title-muted">Assorted explorations and renders.</p>
 
     <section class="slideshow-container" aria-label="Hero slideshow">
-      <img class="slideshow-image" src="images/resized/1200/preview5.jpg" alt="Personal Works Slide 1" loading="eager" decoding="async">
+      <picture>
+        <source type="image/avif"
+                srcset="images/resized/400/preview5.avif 400w, images/resized/800/preview5.avif 800w, images/resized/1200/preview5.avif 1200w"
+                sizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px">
+        <source type="image/webp"
+                srcset="images/resized/400/preview5.webp 400w, images/resized/800/preview5.webp 800w, images/resized/1200/preview5.webp 1200w"
+                sizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px">
+        <img class="slideshow-image"
+             src="images/resized/1200/preview5.jpg"
+             srcset="images/resized/400/preview5.jpg 400w, images/resized/800/preview5.jpg 800w, images/resized/1200/preview5.jpg 1200w"
+             sizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px"
+             loading="eager" decoding="async" fetchpriority="high"
+             alt="Personal Works Slide 1">
+      </picture>
       <div class="slideshow-arrows-mobile">
         <button class="slideshow-arrow" aria-label="Previous image" onclick="changeSlide(-1)">‹</button>
         <button class="slideshow-arrow" aria-label="Next image" onclick="changeSlide(1)">›</button>

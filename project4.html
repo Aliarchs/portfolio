@@ -8,8 +8,16 @@
   <link rel="stylesheet" href="style.css?v=20251020a">
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="canonical" href="https://alishabestary.com/project4.html">
-  <!-- Preload hero image to improve LCP on this page -->
+  <!-- Preload hero image(s) to improve LCP on this page -->
+  <link rel="preload" as="image"
+    href="images/resized/800/project 4/BAKEY final jpg.avif"
+    imagesrcset="images/resized/400/project 4/BAKEY final jpg.avif 400w, images/resized/800/project 4/BAKEY final jpg.avif 800w, images/resized/1200/project 4/BAKEY final jpg.avif 1200w"
+    imagesizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px">
   <link rel="preload" as="image" href="images/project 4/BAKEY final jpg.jpg">
+  <!-- Preload a few early gallery tiles to reduce initial scroll jank (balanced at 800w) -->
+  <link rel="preload" as="image" href="images/resized/800/project 4/20220428_114537-2.webp">
+  <link rel="preload" as="image" href="images/resized/800/project 4/20220428_114628-3-2.webp">
+  <link rel="preload" as="image" href="images/resized/800/project 4/20220428_114657.webp">
 </head>
 <body class="projects-page">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -27,7 +35,20 @@
   <p class="text-center" id="main-title-muted">Concept visuals and photography for a local bakery in St. Andrews.</p>
 
     <section class="slideshow-container" aria-label="Hero slideshow">
-      <img class="slideshow-image" src="images/project 4/BAKEY final jpg.jpg" alt="St. Andrews Bakery elevation illustration" loading="eager" decoding="async">
+      <picture>
+        <source type="image/avif"
+                srcset="images/resized/400/project 4/BAKEY final jpg.avif 400w, images/resized/800/project 4/BAKEY final jpg.avif 800w, images/resized/1200/project 4/BAKEY final jpg.avif 1200w"
+                sizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px">
+        <source type="image/webp"
+                srcset="images/resized/400/project 4/BAKEY final jpg.webp 400w, images/resized/800/project 4/BAKEY final jpg.webp 800w, images/resized/1200/project 4/BAKEY final jpg.webp 1200w"
+                sizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px">
+        <img class="slideshow-image"
+             src="images/project 4/BAKEY final jpg.jpg"
+             srcset="images/resized/400/project 4/BAKEY final jpg.jpg 400w, images/resized/800/project 4/BAKEY final jpg.jpg 800w, images/resized/1200/project 4/BAKEY final jpg.jpg 1200w"
+             sizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px"
+             loading="eager" decoding="async" fetchpriority="high"
+             alt="St. Andrews Bakery elevation illustration">
+      </picture>
       <div class="slideshow-arrows-mobile">
         <button class="slideshow-arrow" aria-label="Previous image" onclick="changeSlide(-1)">‹</button>
         <button class="slideshow-arrow" aria-label="Next image" onclick="changeSlide(1)">›</button>
