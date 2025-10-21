@@ -1212,7 +1212,7 @@ textarea:focus,
 /* Never show captions/hover overlays in read-gallery; prevents filenames appearing between tiles */
 .read-gallery figcaption,
 .read-gallery .img-content,
-.read-gallery .img-content-hover { display: none !important; }
+.read-gallery .img-content-hover { display: none !important; visibility: hidden !important; opacity: 0 !important; height: 0 !important; overflow: hidden !important; }
 @media (min-width: 768px) {
   .read-gallery .column-md-4 { grid-column: span 4; }
   .read-gallery .column-md-6 { grid-column: span 6; }

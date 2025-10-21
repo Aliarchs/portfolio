@@ -13,6 +13,7 @@ document.addEventListener('mousemove', function(e) {
   const grid = document.querySelector('.gallery .grid, .read-gallery .grid');
   if (!grid) return;
   const onlyProject = (grid.getAttribute('data-project') || '').trim();
+  const isReadGallery = !!grid.closest('.read-gallery');
   // Optional: mark specific 3-across rows (md-4 group) as compact/shorter.
   // Use data-compact-thirds="1,3" to shorten the 1st and 3rd such rows.
   const compactList = (grid.getAttribute('data-compact-thirds') || '')
@@ -236,15 +237,18 @@ document.addEventListener('mousemove', function(e) {
     } catch {}
     pic.appendChild(img);
 
-    const fc = document.createElement('figcaption');
-    fc.className = 'img-content';
-    fc.innerHTML = `<h2 class="title">${(it.title || '').toString()}</h2><h3 class="category">Showcase</h3>`;
-    const hover = document.createElement('span');
-    hover.className = 'img-content-hover';
-    hover.innerHTML = `<h2 class=\"title\">${(it.title || '').toString()}</h2><h3 class=\"category\">Showcase</h3>`;
     fig.appendChild(pic);
-    fig.appendChild(fc);
-    fig.appendChild(hover);
+    // Do not render captions/hover overlays on read-gallery pages
+    if (!isReadGallery) {
+      const fc = document.createElement('figcaption');
+      fc.className = 'img-content';
+      fc.innerHTML = `<h2 class="title">${(it.title || '').toString()}</h2><h3 class="category">Showcase</h3>`;
+      const hover = document.createElement('span');
+      hover.className = 'img-content-hover';
+      hover.innerHTML = `<h2 class=\"title\">${(it.title || '').toString()}</h2><h3 class=\"category\">Showcase</h3>`;
+      fig.appendChild(fc);
+      fig.appendChild(hover);
+    }
     col.appendChild(fig);
     if (extra) col.classList.add(...extra.split(' ').filter(Boolean));
     // Lightbox open on click
