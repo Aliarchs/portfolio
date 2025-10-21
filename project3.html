@@ -57,7 +57,7 @@
 
     <section class="read-gallery" aria-label="Project gallery">
       <div class="container">
-        <div class="grid" data-project="3"><!-- filled by simple-gallery.js --></div>
+  <div class="grid" data-project="3" data-no-candidates><!-- filled by simple-gallery.js --></div>
       </div>
     </section>
 
@@ -72,7 +72,26 @@
     <img id="lightbox-img" class="lightbox-img" alt="">
   </div>
 
-  <script defer src="simple-gallery.js?v=20251021c"></script>
+  <script defer src="simple-gallery.js?v=20251021k"></script>
+  <!-- Inline manifest to avoid initial network fetch delay for gallery -->
+  <script type="application/json" data-gallery-manifest data-project="3">
+  {
+    "title": "Facade Retrofit",
+    "images": [
+      {"src":"FACADE 2.2.png","alt":"FACADE 2.2","span":"wide","w":1200,"h":675},
+      {"src":"facade design 1.jpg","alt":"facade design 1","w":1200,"h":1506},
+      {"src":"GJHKJLKL.jpg","alt":"GJHKJLKL","span":"big","w":1200,"h":1200},
+      {"src":"Illustration3.jpg","alt":"Illustration3","w":1200,"h":900},
+      {"src":"Illustration4.jpg","alt":"Illustration4","w":1200,"h":1028},
+      {"src":"l9nx500e.png","alt":"l9nx500e","span":"wide","w":1200,"h":675},
+      {"src":"muhiounhiou.jpg","alt":"muhiounhiou","w":1200,"h":1200},
+      {"src":"SDCVB MN.png","alt":"SDCVB MN","w":1200,"h":1200},
+      {"src":"Untitled-1.webp","alt":"Untitled 1","w":1200,"h":885},
+      {"src":"Untitled-2 (1)Asset 12.webp","alt":"Untitled 2 (1)Asset 12","w":1200,"h":813},
+      {"src":"xfbxcfv zcv.jpg","alt":"xfbxcfv zcv","w":1200,"h":1157}
+    ]
+  }
+  </script>
   <!-- Cloudflare Web Analytics -->
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "2bf51f27e97d4e239093462e66dd4b5f"}'></script>
   <a href="#top" class="back-to-top" aria-label="Back to top" title="Back to top">↑</a>

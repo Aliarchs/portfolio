@@ -14,6 +14,7 @@ document.addEventListener('mousemove', function(e) {
   if (!grid) return;
   const onlyProject = (grid.getAttribute('data-project') || '').trim();
   const isReadGallery = !!grid.closest('.read-gallery');
+  const noCandidates = grid.hasAttribute('data-no-candidates');
   // Optional: mark specific 3-across rows (md-4 group) as compact/shorter.
   // Use data-compact-thirds="1,3" to shorten the 1st and 3rd such rows.
   const compactList = (grid.getAttribute('data-compact-thirds') || '')
@@ -92,6 +93,27 @@ document.addEventListener('mousemove', function(e) {
   } else {
     all = (await Promise.all([2,3,4,5].map(loadManifest))).flat();
   }
+  // Deduplicate any accidental duplicates (same image under different extensions or query strings)
+  try {
+    const seen = new Set();
+    function normKey(u){
+      try {
+        if (!u) return '';
+        const clean = u.split('#')[0].split('?')[0];
+        let dec = clean; try { dec = decodeURI(clean); } catch {}
+        // Normalize to project/path without extension, lowercase
+        const m = dec.match(/^(.*\/images\/project\s+\d+\/)([^\/]+)\.[a-z0-9]+$/i);
+        if (m) return (m[1] + m[2]).toLowerCase();
+        return dec.toLowerCase();
+      } catch { return String(u || '').toLowerCase(); }
+    }
+    all = all.filter(it => {
+      const k = normKey(it && it.src);
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  } catch {}
   if (!all.length) return;
 
   // Measure missing dimensions to get aspect ratios
@@ -183,7 +205,7 @@ document.addEventListener('mousemove', function(e) {
     // Helper to percent-encode spaces and special chars in URL paths
     const enc = (u) => encodeURI(u);
     // images/project N/<file>.<ext>
-    let m = dec.match(/^images\/(project\s+\d+)\/([^\.]+)\.([a-z0-9]+)$/i);
+  let m = dec.match(/^images\/(project\s+\d+)\/([^\/]+)\.([a-z0-9]+)$/i);
     if (m) {
       const rel = `${m[1]}/${m[2]}`;
       const ext = (m[3] || '').toLowerCase();
@@ -219,8 +241,18 @@ document.addEventListener('mousemove', function(e) {
     const pic = document.createElement('picture');
     const img = document.createElement('img');
     img.alt = it.alt || '';
-    // Default src remains the authored original as a robust fallback
-    img.src = withVersion(it.src);
+    // Default src: if this gallery requested no responsive candidates, also avoid version/query
+    // and use the plain authored path to reduce chances of a mismatch.
+    (function setInitialSrc(){
+      try {
+        if (noCandidates) {
+          const clean = (it.src || '').split('#')[0].split('?')[0];
+          img.src = clean; // raw path like images/project 3/...
+        } else {
+          img.src = withVersion(it.src);
+        }
+      } catch { img.src = withVersion(it.src); }
+    })();
     // Reserve layout space to avoid shifts and half-rendered rows
     try {
       const w = (typeof it.w === 'number' && it.w > 0) ? it.w : undefined;
@@ -240,7 +272,7 @@ document.addEventListener('mousemove', function(e) {
     try { img.decoding = 'async'; } catch {}
     // Apply responsive candidates if our resized pipeline has produced them
     try {
-      const c = candidatesFor(it.src);
+      const c = noCandidates ? null : candidatesFor(it.src);
       if (c) {
         // Compute more accurate sizes for read-gallery tiles to avoid blurry selections
         let sizesStr = c.sizes;
@@ -275,6 +307,21 @@ document.addEventListener('mousemove', function(e) {
     pic.appendChild(img);
 
     fig.appendChild(pic);
+    // Robust network fallback: if any candidate fails to load, drop <source> elements
+    // and revert to the original authored image path to ensure something shows.
+    try {
+      img.addEventListener('error', () => {
+        try {
+          // Remove any <source> to force the <img src> fallback path
+          Array.from(pic.querySelectorAll('source')).forEach(s => s.remove());
+          img.removeAttribute('srcset');
+          img.removeAttribute('sizes');
+          // Reset to original asset (already versioned/encoded in it.src)
+          const clean = (it.src || '').split('#')[0].split('?')[0];
+          img.src = noCandidates ? clean : withVersion(it.src);
+        } catch {}
+      }, { once: true });
+    } catch {}
     // Do not render captions/hover overlays on read-gallery pages
     if (!isReadGallery) {
       const fc = document.createElement('figcaption');
@@ -558,12 +605,12 @@ function stepLightbox(dir) {
       return { legacySrcset, webpSrcset, avifSrcset, sizes };
     }
     // Case 2: images/project N/<file>.<ext> where resized pipeline likely exists (2,3,4)
-    m = dec.match(/^images\/(project\s+(\d+))\/([^\.]+)\.([a-z0-9]+)$/i);
+  m = dec.match(/^images\/(project\s+(\d+))\/([^\/]+)\.([a-z0-9]+)$/i);
     if (m) {
       const proj = (m[2] || '').trim();
       const rel = `${m[1]}/${m[3]}`; // project N/<file>
       const ext = (m[4] || '').toLowerCase();
-      if (['2','3','4'].includes(proj)) {
+  if (['2','3','4','5'].includes(proj)) {
         // If original is already webp/avif, we can't assume resized variants exist.
         // Skip responsive candidates so the slideshow uses the original <img src> reliably.
         if (ext === 'webp' || ext === 'avif') { return null; }

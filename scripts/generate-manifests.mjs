@@ -186,15 +186,34 @@ export async function updateManifestForProject(projectDirName) {
     }
   }
 
-  // Deduplicate while preserving order (handles cases where both .tif and .webp map to the same basename)
+  // 1) Deduplicate exact filenames while preserving order
   {
     const seen = new Set();
     const uniq = [];
     for (const n of processed) {
       if (!seen.has(n)) { seen.add(n); uniq.push(n); }
     }
-    // eslint-disable-next-line no-param-reassign
     processed.length = 0; processed.push(...uniq);
+  }
+
+  // 2) Collapse cross-extension duplicates by basename (e.g., foo.jpg + foo.png -> keep best)
+  //    Prefer formats in this order: jpg/jpeg > png > webp > avif (most broadly compatible wins).
+  {
+    const prio = { jpg: 4, jpeg: 4, png: 3, webp: 2, avif: 1 };
+    const pick = new Map(); // base -> { name, pr, firstIndex }
+    processed.forEach((name, idx) => {
+      const m = name.match(/^(.*)\.([^.]+)$/);
+      const base = (m ? m[1] : name).toLowerCase();
+      const ext = (m ? m[2] : '').toLowerCase();
+      const cur = pick.get(base);
+      const pr = prio[ext] || 0;
+      if (!cur) pick.set(base, { name, pr, firstIndex: idx });
+      else if (pr > cur.pr) pick.set(base, { name, pr, firstIndex: cur.firstIndex });
+    });
+    const collapsed = Array.from(pick.values())
+      .sort((a,b) => a.firstIndex - b.firstIndex)
+      .map(x => x.name);
+    processed.length = 0; processed.push(...collapsed);
   }
 
   // Build responsive assets in parallel (best-effort)
