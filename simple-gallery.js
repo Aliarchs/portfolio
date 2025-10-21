@@ -148,24 +148,107 @@ document.addEventListener('mousemove', function(e) {
   //   - Left: one tall tile spanning two rows (md-6 + tile-tall2) using first image
   //   - Right: two stacked squares (each md-6 + tile-square) using next two images
 
+  // Build responsive candidates (AVIF/WebP/legacy) for gallery tiles when files exist
+  function candidatesFor(url) {
+    if (!url) return null;
+    const clean = url.split('#')[0].split('?')[0];
+    const widths = [400, 800, 1200];
+    const sizes = '(max-width: 600px) 88vw, (max-width: 760px) 48vw, (max-width: 1100px) 30vw, (max-width: 1400px) 22vw, 18vw';
+    // images/project N/<file>.<ext>
+    let m = clean.match(/^images\/(project\s+\d+)\/([^\.]+)\.([a-z0-9]+)$/i);
+    if (m) {
+      const rel = `${m[1]}/${m[2]}`;
+      const ext = (m[3] || '').toLowerCase();
+      return {
+        sizes,
+        avifSrcset: widths.map(w => `images/resized/${w}/${rel}.avif ${w}w`).join(', '),
+        webpSrcset: widths.map(w => `images/resized/${w}/${rel}.webp ${w}w`).join(', '),
+        legacySrcset: widths.map(w => `images/resized/${w}/${rel}.${ext} ${w}w`).join(', '),
+        legacyType: (ext === 'png') ? 'image/png' : 'image/jpeg'
+      };
+    }
+    // images/resized/{w}/<rel>.<ext>
+    m = clean.match(/^images\/resized\/(400|800|1200)\/(.+)\.([a-z0-9]+)$/i);
+    if (m) {
+      const rel = m[2];
+      const ext = (m[3] || '').toLowerCase();
+      return {
+        sizes,
+        avifSrcset: widths.map(w => `images/resized/${w}/${rel}.avif ${w}w`).join(', '),
+        webpSrcset: widths.map(w => `images/resized/${w}/${rel}.webp ${w}w`).join(', '),
+        legacySrcset: widths.map(w => `images/resized/${w}/${rel}.${ext} ${w}w`).join(', '),
+        legacyType: (ext === 'png') ? 'image/png' : 'image/jpeg'
+      };
+    }
+    return null;
+  }
+
   function makeTile(it, classes, extra = '') {
     const col = document.createElement('div');
     col.className = classes;
-    col.innerHTML = `
-      <figure class="img-container">
-        <img src="${withVersion(it.src)}" alt="${it.alt || ''}">
-        <figcaption class="img-content">
-          <h2 class="title">${(it.title || '').toString()}</h2>
-          <h3 class="category">Showcase</h3>
-        </figcaption>
-        <span class="img-content-hover">
-          <h2 class="title">${(it.title || '').toString()}</h2>
-          <h3 class="category">Showcase</h3>
-        </span>
-      </figure>`;
+    const fig = document.createElement('figure');
+    fig.className = 'img-container';
+    const pic = document.createElement('picture');
+    const img = document.createElement('img');
+    img.alt = it.alt || '';
+    // Default src remains the authored original as a robust fallback
+    img.src = withVersion(it.src);
+    // Reserve layout space to avoid shifts and half-rendered rows
+    try {
+      const w = (typeof it.w === 'number' && it.w > 0) ? it.w : undefined;
+      const h = (typeof it.h === 'number' && it.h > 0) ? it.h : undefined;
+      if (w && h) {
+        img.setAttribute('width', String(w));
+        img.setAttribute('height', String(h));
+        // On narrow mobile portrait, reserve aspect-ratio space for smooth stacking
+        try {
+          if (window.matchMedia && window.matchMedia('(max-width: 600px) and (orientation: portrait)').matches) {
+            fig.style.aspectRatio = `${w} / ${h}`;
+          }
+        } catch {}
+      }
+    } catch {}
+    // Fast decode hint
+    try { img.decoding = 'async'; } catch {}
+    // Apply responsive candidates if our resized pipeline has produced them
+    try {
+      const c = candidatesFor(it.src);
+      if (c) {
+        // Prefer AVIF, then WebP, then legacy
+        const sAvif = document.createElement('source');
+        sAvif.type = 'image/avif';
+        sAvif.setAttribute('srcset', c.avifSrcset);
+        sAvif.setAttribute('sizes', c.sizes);
+        const sWebp = document.createElement('source');
+        sWebp.type = 'image/webp';
+        sWebp.setAttribute('srcset', c.webpSrcset);
+        sWebp.setAttribute('sizes', c.sizes);
+        const sLegacy = document.createElement('source');
+        sLegacy.type = c.legacyType;
+        sLegacy.setAttribute('srcset', c.legacySrcset);
+        sLegacy.setAttribute('sizes', c.sizes);
+        img.setAttribute('sizes', c.sizes);
+        img.setAttribute('srcset', c.legacySrcset);
+        pic.appendChild(sAvif);
+        pic.appendChild(sWebp);
+        pic.appendChild(sLegacy);
+      }
+    } catch {}
+    pic.appendChild(img);
+
+    const fc = document.createElement('figcaption');
+    fc.className = 'img-content';
+    fc.innerHTML = `<h2 class="title">${(it.title || '').toString()}</h2><h3 class="category">Showcase</h3>`;
+    const hover = document.createElement('span');
+    hover.className = 'img-content-hover';
+    hover.innerHTML = `<h2 class=\"title\">${(it.title || '').toString()}</h2><h3 class=\"category\">Showcase</h3>`;
+    fig.appendChild(pic);
+    fig.appendChild(fc);
+    fig.appendChild(hover);
+    col.appendChild(fig);
     if (extra) col.classList.add(...extra.split(' ').filter(Boolean));
     // Lightbox open on click
-    col.querySelector('img').addEventListener('click', () => openLightbox(it.src, it.alt || '', it));
+    img.addEventListener('click', () => openLightbox(it.src, it.alt || '', it));
     return col;
   }
 
@@ -194,7 +277,7 @@ document.addEventListener('mousemove', function(e) {
       if (!pick) pick = fallbackPick(1.0);
       if (!pick) break;
       const extraSquaresCls = __makeSquaresShort ? ' md6-short' : '';
-      grid.appendChild(makeTile(pick, 'column-xs-12 column-md-6 tile-square' + extraSquaresCls));
+  grid.appendChild(makeTile(pick, 'column-xs-12 column-md-6 tile-square' + extraSquaresCls));
     }
     // Group C: alternate between a full-width wide tile and the special two-row block
     if ((L.length + S.length + P.length) > 0) {
@@ -202,7 +285,7 @@ document.addEventListener('mousemove', function(e) {
         // Full-width row (one wide tile)
         // Prefer landscape; fallback any
         const pick = popBest(L) || popBest(S) || popBest(P);
-        if (pick) grid.appendChild(makeTile(pick, 'column-xs-12'));
+  if (pick) grid.appendChild(makeTile(pick, 'column-xs-12'));
       } else {
         // Special two-row block is atomic: require left tall + two right squares.
         // 1) Try to pick the left tall.
@@ -236,6 +319,18 @@ document.addEventListener('mousemove', function(e) {
       useTallBlock = !useTallBlock;
     }
   }
+
+  // After initial render, mark the first few tiles as eager/high priority so mobile fills instantly
+  try {
+    const tiles = Array.from(document.querySelectorAll('.read-gallery .grid img, .gallery .grid img'));
+    // Approximate first screenful: 8 images is a safe small budget
+    const eagerCount = Math.min(8, tiles.length);
+    for (let i = 0; i < eagerCount; i++) {
+      const im = tiles[i];
+      try { im.loading = 'eager'; } catch {}
+      try { im.setAttribute('fetchpriority', 'high'); } catch {}
+    }
+  } catch {}
 
   // If 'last' was requested for compact squares, tag the last 2-across row now
   try {
@@ -374,7 +469,7 @@ function stepLightbox(dir) {
   }
 
   function inferResizedCandidates(src) {
-    // Return { legacySrcset, webpSrcset, sizes } when we can infer responsive sources
+    // Return { legacySrcset, webpSrcset, avifSrcset, sizes } when we can infer responsive sources
     if (!src) return null;
     const clean = src.split('#')[0].split('?')[0];
     const sizes = '(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px';
@@ -386,7 +481,8 @@ function stepLightbox(dir) {
       const ext = (m[3] || '').toLowerCase();
       const legacySrcset = widths.map(w => `images/resized/${w}/${rel}.${ext} ${w}w`).join(', ');
       const webpSrcset = widths.map(w => `images/resized/${w}/${rel}.webp ${w}w`).join(', ');
-      return { legacySrcset, webpSrcset, sizes };
+      const avifSrcset = widths.map(w => `images/resized/${w}/${rel}.avif ${w}w`).join(', ');
+      return { legacySrcset, webpSrcset, avifSrcset, sizes };
     }
     // Case 2: images/project N/<file>.<ext> where resized pipeline likely exists (2,3,4)
     m = clean.match(/^images\/(project\s+(\d+))\/([^\.]+)\.([a-z0-9]+)$/i);
@@ -397,7 +493,8 @@ function stepLightbox(dir) {
       if (['2','3','4'].includes(proj)) {
         const legacySrcset = widths.map(w => `images/resized/${w}/${rel}.${ext} ${w}w`).join(', ');
         const webpSrcset = widths.map(w => `images/resized/${w}/${rel}.webp ${w}w`).join(', ');
-        return { legacySrcset, webpSrcset, sizes };
+        const avifSrcset = widths.map(w => `images/resized/${w}/${rel}.avif ${w}w`).join(', ');
+        return { legacySrcset, webpSrcset, avifSrcset, sizes };
       }
     }
     return null;
@@ -412,6 +509,13 @@ function stepLightbox(dir) {
       // Remove any existing sources to avoid stale candidates from previous slide
       Array.from(pic.querySelectorAll('source')).forEach(s => s.remove());
       if (info) {
+        if (info.avifSrcset) {
+          const sAvif = document.createElement('source');
+          sAvif.type = 'image/avif';
+          sAvif.setAttribute('srcset', info.avifSrcset);
+          sAvif.setAttribute('sizes', info.sizes);
+          pic.insertBefore(sAvif, heroImg);
+        }
         const sWebp = document.createElement('source');
         sWebp.type = 'image/webp';
         sWebp.setAttribute('srcset', info.webpSrcset);

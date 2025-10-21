@@ -11,6 +11,10 @@
   <!-- Preload hero + first-row gallery candidates for instant feel -->
   <!-- Hero: Asset 1 (has .webp and .png at 400/800/1200) -->
   <link rel="preload" as="image"
+    href="images/resized/800/project 2/Asset 1.avif"
+    imagesrcset="images/resized/400/project 2/Asset 1.avif 400w, images/resized/800/project 2/Asset 1.avif 800w, images/resized/1200/project 2/Asset 1.avif 1200w"
+    imagesizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px">
+  <link rel="preload" as="image"
     href="images/resized/800/project 2/Asset 1.webp"
     imagesrcset="images/resized/400/project 2/Asset 1.webp 400w, images/resized/800/project 2/Asset 1.webp 800w, images/resized/1200/project 2/Asset 1.webp 1200w"
     imagesizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px">
@@ -43,6 +47,9 @@
 
     <section class="slideshow-container" aria-label="Hero slideshow">
       <picture>
+  <source type="image/avif"
+    srcset="images/resized/400/project 2/Asset 1.avif 400w, images/resized/800/project 2/Asset 1.avif 800w, images/resized/1200/project 2/Asset 1.avif 1200w"
+    sizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px">
         <source type="image/webp"
                 srcset="images/resized/400/project 2/Asset 1.webp 400w, images/resized/800/project 2/Asset 1.webp 800w, images/resized/1200/project 2/Asset 1.webp 1200w"
                 sizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px">
@@ -51,7 +58,7 @@
              srcset="images/resized/400/project 2/Asset 1.png 400w, images/resized/800/project 2/Asset 1.png 800w, images/resized/1200/project 2/Asset 1.png 1200w"
              sizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px"
              width="1200" height="1200"
-             loading="eager" decoding="async"
+       loading="eager" decoding="async" fetchpriority="high"
              alt="RSPB Slide 1">
       </picture>
       <div class="slideshow-arrows-mobile">

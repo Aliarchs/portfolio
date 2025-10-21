@@ -1209,6 +1209,10 @@ textarea:focus,
 .read-gallery .grid { display: grid; grid-template-columns: repeat(12, 1fr); grid-gap: 16px; }
 .read-gallery .rt-block { display: grid; grid-template-columns: repeat(12, 1fr); grid-gap: 16px; }
 .read-gallery .column-xs-12 { grid-column: span 12; }
+/* Never show captions/hover overlays in read-gallery; prevents filenames appearing between tiles */
+.read-gallery figcaption,
+.read-gallery .img-content,
+.read-gallery .img-content-hover { display: none !important; }
 @media (min-width: 768px) {
   .read-gallery .column-md-4 { grid-column: span 4; }
   .read-gallery .column-md-6 { grid-column: span 6; }

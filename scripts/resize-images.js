@@ -44,6 +44,13 @@ async function processFile(filename) {
         .webp({ quality: 80 })
         .toFile(outWebp);
       console.log('Wrote', outWebp);
+      // also write an AVIF variant for best compression where supported
+      const outAvif = path.join(outDir, base + '.avif');
+      await sharp(inputPath)
+        .resize({ width: size })
+        .avif({ quality: 50 })
+        .toFile(outAvif);
+      console.log('Wrote', outAvif);
     } catch (err) {
       console.error('Failed to process', filename, '->', err.message);
     }

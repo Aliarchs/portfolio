@@ -120,6 +120,17 @@ async function ensureResponsiveVariants(projectDirName, filename) {
         // console.error(`[responsive] webp fail ${projectDirName}/${filename}@${size}:`, e.message);
       }
     }
+    // Write AVIF variant as well
+    const avifAbs = path.join(outDir, base + '.avif');
+    const needAvif = await needsRebuild(srcAbs, avifAbs);
+    if (needAvif) {
+      try {
+        await sharp(srcAbs).resize({ width: size }).avif({ quality: 50 }).toFile(avifAbs);
+        wroteAny = true;
+      } catch (e) {
+        // console.error(`[responsive] avif fail ${projectDirName}/${filename}@${size}:`, e.message);
+      }
+    }
   }
   return wroteAny;
 }
