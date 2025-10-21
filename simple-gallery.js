@@ -41,16 +41,38 @@ document.addEventListener('mousemove', function(e) {
   }
   const __verToken = getGalleryVersion();
   function withVersion(url) {
-    if (!__verToken) return url;
-    if (/([?&])v=/.test(url)) return url; // avoid double-appending
-    return url + (url.includes('?') ? '&' : '?') + 'v=' + encodeURIComponent(__verToken);
+    const raw = url || '';
+    const encoded = encodeURI(raw);
+    if (!__verToken) return encoded;
+    if (/([?&])v=/.test(encoded)) return encoded; // avoid double-appending
+    return encoded + (encoded.includes('?') ? '&' : '?') + 'v=' + encodeURIComponent(__verToken);
   }
 
   // Load manifests from project 2..5 if present
+  function getInlineManifest(n) {
+    try {
+      // Look for a script tag with inline JSON: <script type="application/json" data-gallery-manifest data-project="N">...</script>
+      const sel = `script[type="application/json"][data-gallery-manifest][data-project="${n}"]`;
+      const node = document.querySelector(sel);
+      if (!node || !node.textContent) return null;
+      const json = JSON.parse(node.textContent);
+      if (!json || !Array.isArray(json.images)) return null;
+      return json.images.map(it => ({
+        src: withVersion(it.src?.startsWith('images/') ? it.src : `images/project ${n}/` + it.src),
+        title: it.title || it.alt || `Project ${n}`,
+        alt: it.alt || `Project ${n} image`,
+        w: typeof it.w === 'number' ? it.w : undefined,
+        h: typeof it.h === 'number' ? it.h : undefined
+      }));
+    } catch { return null; }
+  }
   async function loadManifest(n) {
     const base = `images/project ${n}`;
+    // Inline fast path
+    const inline = getInlineManifest(n);
+    if (inline && inline.length) return inline;
     try {
-      const res = await fetch(withVersion(encodeURI(`${base}/manifest.json`)), { cache: 'no-cache' });
+      const res = await fetch(withVersion(encodeURI(`${base}/manifest.json`))); // allow cache/SW to serve instantly
       if (!res.ok) return [];
       const data = await res.json();
       if (!Array.isArray(data?.images)) return [];
@@ -153,31 +175,36 @@ document.addEventListener('mousemove', function(e) {
   function candidatesFor(url) {
     if (!url) return null;
     const clean = url.split('#')[0].split('?')[0];
+    // Work on a decoded view for pattern matching (paths may be percent-encoded)
+    let dec = clean;
+    try { dec = decodeURI(clean); } catch {}
     const widths = [400, 800, 1200];
     const sizes = '(max-width: 600px) 88vw, (max-width: 760px) 48vw, (max-width: 1100px) 30vw, (max-width: 1400px) 22vw, 18vw';
+    // Helper to percent-encode spaces and special chars in URL paths
+    const enc = (u) => encodeURI(u);
     // images/project N/<file>.<ext>
-    let m = clean.match(/^images\/(project\s+\d+)\/([^\.]+)\.([a-z0-9]+)$/i);
+    let m = dec.match(/^images\/(project\s+\d+)\/([^\.]+)\.([a-z0-9]+)$/i);
     if (m) {
       const rel = `${m[1]}/${m[2]}`;
       const ext = (m[3] || '').toLowerCase();
       return {
         sizes,
-        avifSrcset: widths.map(w => `images/resized/${w}/${rel}.avif ${w}w`).join(', '),
-        webpSrcset: widths.map(w => `images/resized/${w}/${rel}.webp ${w}w`).join(', '),
-        legacySrcset: widths.map(w => `images/resized/${w}/${rel}.${ext} ${w}w`).join(', '),
+        avifSrcset: widths.map(w => enc('images/resized/' + w + '/' + rel + '.avif') + ' ' + w + 'w').join(', '),
+        webpSrcset: widths.map(w => enc('images/resized/' + w + '/' + rel + '.webp') + ' ' + w + 'w').join(', '),
+        legacySrcset: widths.map(w => enc('images/resized/' + w + '/' + rel + '.' + ext) + ' ' + w + 'w').join(', '),
         legacyType: (ext === 'png') ? 'image/png' : 'image/jpeg'
       };
     }
     // images/resized/{w}/<rel>.<ext>
-    m = clean.match(/^images\/resized\/(400|800|1200)\/(.+)\.([a-z0-9]+)$/i);
+    m = dec.match(/^images\/resized\/(400|800|1200)\/(.+)\.([a-z0-9]+)$/i);
     if (m) {
       const rel = m[2];
       const ext = (m[3] || '').toLowerCase();
       return {
         sizes,
-        avifSrcset: widths.map(w => `images/resized/${w}/${rel}.avif ${w}w`).join(', '),
-        webpSrcset: widths.map(w => `images/resized/${w}/${rel}.webp ${w}w`).join(', '),
-        legacySrcset: widths.map(w => `images/resized/${w}/${rel}.${ext} ${w}w`).join(', '),
+        avifSrcset: widths.map(w => enc('images/resized/' + w + '/' + rel + '.avif') + ' ' + w + 'w').join(', '),
+        webpSrcset: widths.map(w => enc('images/resized/' + w + '/' + rel + '.webp') + ' ' + w + 'w').join(', '),
+        legacySrcset: widths.map(w => enc('images/resized/' + w + '/' + rel + '.' + ext) + ' ' + w + 'w').join(', '),
         legacyType: (ext === 'png') ? 'image/png' : 'image/jpeg'
       };
     }
@@ -215,20 +242,30 @@ document.addEventListener('mousemove', function(e) {
     try {
       const c = candidatesFor(it.src);
       if (c) {
+        // Compute more accurate sizes for read-gallery tiles to avoid blurry selections
+        let sizesStr = c.sizes;
+        if (isReadGallery) {
+          const hasMd6 = /\bcolumn-md-6\b/.test(classes);
+          const hasMd4 = /\bcolumn-md-4\b/.test(classes);
+          // Mobile first: use 88vw; on >=768px approximate guttered widths
+          if (hasMd6) sizesStr = '(max-width: 640px) 88vw, 46vw';
+          else if (hasMd4) sizesStr = '(max-width: 640px) 88vw, 30vw';
+          else sizesStr = '(max-width: 640px) 88vw, 92vw'; // full width rows
+        }
         // Prefer AVIF, then WebP, then legacy
         const sAvif = document.createElement('source');
         sAvif.type = 'image/avif';
         sAvif.setAttribute('srcset', c.avifSrcset);
-        sAvif.setAttribute('sizes', c.sizes);
+        sAvif.setAttribute('sizes', sizesStr);
         const sWebp = document.createElement('source');
         sWebp.type = 'image/webp';
         sWebp.setAttribute('srcset', c.webpSrcset);
-        sWebp.setAttribute('sizes', c.sizes);
+        sWebp.setAttribute('sizes', sizesStr);
         const sLegacy = document.createElement('source');
         sLegacy.type = c.legacyType;
         sLegacy.setAttribute('srcset', c.legacySrcset);
-        sLegacy.setAttribute('sizes', c.sizes);
-        img.setAttribute('sizes', c.sizes);
+        sLegacy.setAttribute('sizes', sizesStr);
+        img.setAttribute('sizes', sizesStr);
         img.setAttribute('srcset', c.legacySrcset);
         pic.appendChild(sAvif);
         pic.appendChild(sWebp);
@@ -313,6 +350,15 @@ document.addEventListener('mousemove', function(e) {
             const leftEl = makeTile(left, 'column-md-6 tile-tall2');
             const r1El = makeTile(r1, 'column-md-6 tile-square');
             const r2El = makeTile(r2, 'column-md-6 tile-square');
+            // If this special block's left image is the new aerial (ytufygukh),
+            // make the two right squares shorter to reduce the overall block height.
+            try {
+              const lsrc = (left && left.src) ? (left.src.split('#')[0].split('?')[0] || '') : '';
+              if (/ytufygukh\.(jpe?g|png|webp|avif)$/i.test(lsrc) || /images\/project\s*2\/ytufygukh/i.test(lsrc)) {
+                r1El.classList.add('md6-short');
+                r2El.classList.add('md6-short');
+              }
+            } catch {}
             wrap.appendChild(leftEl);
             wrap.appendChild(r1El);
             wrap.appendChild(r2El);
@@ -370,6 +416,8 @@ document.addEventListener('mousemove', function(e) {
       if (urls.length) navigator.serviceWorker.controller.postMessage({ type: 'PRECACHE_URLS', urls });
     }
   } catch (_) { /* ignore */ }
+  // Signal that the gallery has finished initial render so listeners (e.g., slideshow) can rebuild.
+  try { window.dispatchEvent(new CustomEvent('sg:gallery-ready')); } catch (_) {}
 })();
 
 // 3) Lightbox logic
@@ -460,44 +508,68 @@ function stepLightbox(dir) {
   const __sgVer = getScriptVersion();
   function withVer(url) {
     if (!url) return url;
-    if (!__sgVer) return url;
+    if (!__sgVer) return encodeURI(url);
     try {
       const u = new URL(url, location.href);
       if (!u.searchParams.get('v')) u.searchParams.set('v', __sgVer);
       return u.href;
     } catch {
       // Fallback for relative strings
-      if (/(\?|&)v=/.test(url)) return url;
-      return url + (url.includes('?') ? '&' : '?') + 'v=' + encodeURIComponent(__sgVer);
+      const encoded = encodeURI(url);
+      if (/(\?|&)v=/.test(encoded)) return encoded;
+      return encoded + (encoded.includes('?') ? '&' : '?') + 'v=' + encodeURIComponent(__sgVer);
     }
+  }
+
+  // Prefer using the inline manifest directly to assemble slides (avoids timing and DOM dependency)
+  function getInlineSlides() {
+    try {
+      const grid = document.querySelector('.read-gallery .grid[data-project], .gallery .grid[data-project]');
+      const proj = grid ? String(grid.getAttribute('data-project') || '').trim() : '';
+      if (!proj) return null;
+      const sel = `script[type="application/json"][data-gallery-manifest][data-project="${proj}"]`;
+      const node = document.querySelector(sel);
+      if (!node || !node.textContent) return null;
+      const json = JSON.parse(node.textContent);
+      if (!json || !Array.isArray(json.images)) return null;
+      return json.images.map(it => ({
+        src: withVer(encodeURI((it.src || '').startsWith('images/') ? it.src : `images/project ${proj}/` + it.src)),
+        alt: it.alt || it.title || `Project ${proj}`
+      }));
+    } catch { return null; }
   }
 
   function inferResizedCandidates(src) {
     // Return { legacySrcset, webpSrcset, avifSrcset, sizes } when we can infer responsive sources
     if (!src) return null;
     const clean = src.split('#')[0].split('?')[0];
+    let dec = clean; try { dec = decodeURI(clean); } catch {}
     const sizes = '(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px';
-    const widths = [400, 800, 1200];
+  const widths = [400, 800, 1200];
+  const enc = (u) => encodeURI(u);
     // Case 1: images/resized/{w}/<rel>.<ext>
-    let m = clean.match(/^images\/resized\/(400|800|1200)\/(.+)\.([a-z0-9]+)$/i);
+    let m = dec.match(/^images\/resized\/(400|800|1200)\/(.+)\.([a-z0-9]+)$/i);
     if (m) {
       const rel = m[2];
       const ext = (m[3] || '').toLowerCase();
-      const legacySrcset = widths.map(w => `images/resized/${w}/${rel}.${ext} ${w}w`).join(', ');
-      const webpSrcset = widths.map(w => `images/resized/${w}/${rel}.webp ${w}w`).join(', ');
-      const avifSrcset = widths.map(w => `images/resized/${w}/${rel}.avif ${w}w`).join(', ');
+  const legacySrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.' + ext) + ' ' + w + 'w').join(', ');
+  const webpSrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.webp') + ' ' + w + 'w').join(', ');
+  const avifSrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.avif') + ' ' + w + 'w').join(', ');
       return { legacySrcset, webpSrcset, avifSrcset, sizes };
     }
     // Case 2: images/project N/<file>.<ext> where resized pipeline likely exists (2,3,4)
-    m = clean.match(/^images\/(project\s+(\d+))\/([^\.]+)\.([a-z0-9]+)$/i);
+    m = dec.match(/^images\/(project\s+(\d+))\/([^\.]+)\.([a-z0-9]+)$/i);
     if (m) {
       const proj = (m[2] || '').trim();
       const rel = `${m[1]}/${m[3]}`; // project N/<file>
       const ext = (m[4] || '').toLowerCase();
       if (['2','3','4'].includes(proj)) {
-        const legacySrcset = widths.map(w => `images/resized/${w}/${rel}.${ext} ${w}w`).join(', ');
-        const webpSrcset = widths.map(w => `images/resized/${w}/${rel}.webp ${w}w`).join(', ');
-        const avifSrcset = widths.map(w => `images/resized/${w}/${rel}.avif ${w}w`).join(', ');
+        // If original is already webp/avif, we can't assume resized variants exist.
+        // Skip responsive candidates so the slideshow uses the original <img src> reliably.
+        if (ext === 'webp' || ext === 'avif') { return null; }
+  const legacySrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.' + ext) + ' ' + w + 'w').join(', ');
+  const webpSrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.webp') + ' ' + w + 'w').join(', ');
+  const avifSrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.avif') + ' ' + w + 'w').join(', ');
         return { legacySrcset, webpSrcset, avifSrcset, sizes };
       }
     }
@@ -567,14 +639,21 @@ function stepLightbox(dir) {
       list.push({ src: u, alt: alt || '' });
     };
     pushIf(heroImg.getAttribute('src') || heroImg.currentSrc || '', heroImg.getAttribute('alt') || '');
-    try {
-      if (Array.isArray(__lbList)) {
-        __lbList.forEach(it => pushIf(it && it.src, it && it.alt));
-      } else {
-        const imgs = Array.from(document.querySelectorAll('.read-gallery .grid img, .gallery .grid img'));
-        imgs.forEach(im => pushIf(im.getAttribute('src') || im.currentSrc || '', im.getAttribute('alt') || ''));
-      }
-    } catch {}
+    // Preferred source: inline manifest if available
+    const inline = getInlineSlides();
+    if (inline && inline.length) {
+      inline.forEach(it => pushIf(it.src, it.alt));
+    } else {
+      // Fallback to DOM render list
+      try {
+        if (Array.isArray(__lbList)) {
+          __lbList.forEach(it => pushIf(it && it.src, it && it.alt));
+        } else {
+          const imgs = Array.from(document.querySelectorAll('.read-gallery .grid img, .gallery .grid img'));
+          imgs.forEach(im => pushIf(im.getAttribute('src') || im.currentSrc || '', im.getAttribute('alt') || ''));
+        }
+      } catch {}
+    }
     return list;
   }
 
@@ -640,6 +719,10 @@ function stepLightbox(dir) {
 
   // Also rebuild once on DOMContentLoaded to catch late hero/generator timing
   try { if (document.readyState !== 'complete') { window.addEventListener('load', scheduleRebuild, { once: true }); } } catch {}
+
+  // Listen for explicit gallery-ready event from the gallery renderer and ensure at least one rebuild soon.
+  try { window.addEventListener('sg:gallery-ready', scheduleRebuild); } catch {}
+  try { setTimeout(scheduleRebuild, 500); } catch {}
 
   // Optional: ensure mobile inline arrow buttons actually hook to changeSlide if they were rendered before script
   try {
