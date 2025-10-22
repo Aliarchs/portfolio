@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="{{TITLE}} by Ali Shabestary — project gallery and slideshow.">
+  <title>{{TITLE}} – ALI SHABESTARY</title>
+  <link rel="stylesheet" href="style.css?v={{CSS_VERSION}}">
+  <link rel="icon" href="favicon.png" type="image/png">
+  <link rel="canonical" href="https://alishabestary.com/project{{PROJECT_NUM}}.html">
+  <!-- Preloads for hero and a few early tiles -->
+{{PRELOADS}}
+</head>
+<body class="projects-page">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header>
+    <a href="index.html" class="site-name" aria-label="Home">ALI SHABESTARY</a>
+    <nav class="nav-dropdown" role="navigation" aria-label="Main navigation">
+      <a href="projects.html" aria-label="Projects page">Projects</a>
+      <a href="about.html" aria-label="About page">About</a>
+      <a href="contact.html#contact-form" aria-label="Contact page">Contact</a>
+    </nav>
+  </header>
+
+  <main id="main" class="content-page">
+    <h1 class="main-title">{{TITLE}}</h1>
+    <p class="text-center" id="main-title-muted">Project gallery and lightbox below.</p>
+
+    <section class="slideshow-container" aria-label="Hero slideshow">
+      <picture>
+        <source type="image/avif"
+          srcset="images/resized/400/project%20{{PROJECT_NUM}}/{{HERO_BASE}}.avif 400w, images/resized/800/project%20{{PROJECT_NUM}}/{{HERO_BASE}}.avif 800w, images/resized/1200/project%20{{PROJECT_NUM}}/{{HERO_BASE}}.avif 1200w"
+          sizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px">
+        <source type="image/webp"
+          srcset="images/resized/400/project%20{{PROJECT_NUM}}/{{HERO_BASE}}.webp 400w, images/resized/800/project%20{{PROJECT_NUM}}/{{HERO_BASE}}.webp 800w, images/resized/1200/project%20{{PROJECT_NUM}}/{{HERO_BASE}}.webp 1200w"
+          sizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px">
+        <img class="slideshow-image"
+             src="images/resized/1200/project%20{{PROJECT_NUM}}/{{HERO_BASE}}.{{HERO_EXT}}"
+             srcset="images/resized/400/project%20{{PROJECT_NUM}}/{{HERO_BASE}}.{{HERO_EXT}} 400w, images/resized/800/project%20{{PROJECT_NUM}}/{{HERO_BASE}}.{{HERO_EXT}} 800w, images/resized/1200/project%20{{PROJECT_NUM}}/{{HERO_BASE}}.{{HERO_EXT}} 1200w"
+             sizes="(max-width: 600px) 88vw, (max-width: 900px) 92vw, 1400px"
+             loading="eager" decoding="async" fetchpriority="high"
+             alt="{{TITLE}} hero">
+      </picture>
+      <div class="slideshow-arrows-mobile">
+        <button class="slideshow-arrow" aria-label="Previous image" onclick="changeSlide(-1)">‹</button>
+        <button class="slideshow-arrow" aria-label="Next image" onclick="changeSlide(1)">›</button>
+      </div>
+    </section>
+    
+    <section class="project-text" aria-label="Project details">
+      <div class="container">
+        <div class="columns">
+          <div class="col">
+            <p><!-- Add project copy here (left column). --></p>
+          </div>
+          <div class="col">
+            <p><!-- Add project copy here (right column). --></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="read-gallery" aria-label="Project gallery">
+      <div class="container">
+        <div class="grid" data-project="{{PROJECT_NUM}}"><!-- filled by simple-gallery.js --></div>
+      </div>
+    </section>
+
+    <nav class="content-nav" aria-label="Project navigation">
+      <a href="projects.html">← Back to all projects</a>
+    </nav>
+  </main>
+
+  <div id="lightbox" class="lightbox" aria-hidden="true" aria-modal="true" role="dialog" aria-label="Image lightbox">
+    <button class="lightbox-close" aria-label="Close">&times;</button>
+    <img id="lightbox-img" class="lightbox-img" alt="">
+  </div>
+
+  <script defer src="simple-gallery.js?v={{SG_VERSION}}"></script>
+  <!-- Inline manifest to avoid initial network fetch delay for gallery -->
+  <script type="application/json" data-gallery-manifest data-project="{{PROJECT_NUM}}">
+{{INLINE_MANIFEST_JSON}}
+  </script>
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "2bf51f27e97d4e239093462e66dd4b5f"}'></script>
+  <a href="#top" class="back-to-top" aria-label="Back to top" title="Back to top">↑</a>
+</body>
+</html>

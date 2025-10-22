@@ -49,7 +49,7 @@ document.addEventListener('mousemove', function(e) {
     return encoded + (encoded.includes('?') ? '&' : '?') + 'v=' + encodeURIComponent(__verToken);
   }
 
-  // Load manifests from project 2..5 if present
+  // Load manifests for a specific project when requested via data-project
   function getInlineManifest(n) {
     try {
       // Look for a script tag with inline JSON: <script type="application/json" data-gallery-manifest data-project="N">...</script>
@@ -88,9 +88,10 @@ document.addEventListener('mousemove', function(e) {
   }
 
   let all = [];
-  if (onlyProject && /^(2|3|4|5)$/.test(onlyProject)) {
+  if (onlyProject && /^\d+$/.test(onlyProject)) {
     all = await loadManifest(onlyProject);
   } else {
+    // Fallback: load a small known set for non-project pages
     all = (await Promise.all([2,3,4,5].map(loadManifest))).flat();
   }
   // Deduplicate any accidental duplicates (same image under different extensions or query strings)
@@ -604,19 +605,17 @@ function stepLightbox(dir) {
   const avifSrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.avif') + ' ' + w + 'w').join(', ');
       return { legacySrcset, webpSrcset, avifSrcset, sizes };
     }
-    // Case 2: images/project N/<file>.<ext> where resized pipeline likely exists (2,3,4,5)
+    // Case 2: images/project N/<file>.<ext> where resized pipeline likely exists
     m = dec.match(/^images\/(project\s+(\d+))\/([^\/]+)\.([a-z0-9]+)$/i);
     if (m) {
       const proj = (m[2] || '').trim();
       const rel = `${m[1]}/${m[3]}`; // project N/<file>
       const ext = (m[4] || '').toLowerCase();
-      if (['2','3','4','5'].includes(proj)) {
-        // Build candidates for available formats. "legacySrcset" will use the original extension.
-        const legacySrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.' + ext) + ' ' + w + 'w').join(', ');
-        const webpSrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.webp') + ' ' + w + 'w').join(', ');
-        const avifSrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.avif') + ' ' + w + 'w').join(', ');
-        return { legacySrcset, webpSrcset, avifSrcset, sizes };
-      }
+      // Build candidates for available formats. "legacySrcset" will use the original extension.
+      const legacySrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.' + ext) + ' ' + w + 'w').join(', ');
+      const webpSrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.webp') + ' ' + w + 'w').join(', ');
+      const avifSrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.avif') + ' ' + w + 'w').join(', ');
+      return { legacySrcset, webpSrcset, avifSrcset, sizes };
     }
     return null;
   }

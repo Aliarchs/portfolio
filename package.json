@@ -10,7 +10,8 @@
     "convert:tif": "node ./scripts/convert-tif.mjs",
     "images:resize": "node ./scripts/resize-images.js",
     "images:manifests": "node ./scripts/generate-manifests.mjs",
-    "images:all": "npm run images:resize && npm run images:manifests"
+    "images:all": "npm run images:resize && npm run images:manifests",
+    "scaffold": "node ./scripts/scaffold-project.mjs"
   },
   "repository": {
     "type": "git",

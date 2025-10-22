@@ -1,0 +1,44 @@
+{
+  "projects": [
+    {
+      "num": 2,
+      "title": "RSPB",
+      "href": "project2.html",
+      "heroBase": "Asset 1",
+      "heroExt": "png",
+      "alt": "RSPB hero",
+      "thumb": "images/thumb2.png",
+      "preview": "images/preview2.png"
+    },
+    {
+      "num": 3,
+      "title": "Facade Retrofit",
+      "href": "project3.html",
+      "heroBase": "FACADE 2.2",
+      "heroExt": "png",
+      "alt": "Facade Retrofit hero",
+      "thumb": "images/thumb3.png",
+      "preview": "images/preview3.jpg"
+    },
+    {
+      "num": 4,
+      "title": "St. Andrews Bakery",
+      "href": "project4.html",
+      "heroBase": "BAKEY final jpg",
+      "heroExt": "jpg",
+      "alt": "St. Andrews Bakery hero",
+      "thumb": "images/project 4/20220428_114628-3.jpg",
+      "preview": "images/project 4/20220428_114537-2.jpg"
+    },
+    {
+      "num": 5,
+      "title": "Personal Works",
+      "href": "project5.html",
+      "heroBase": "IMG_3326-3",
+      "heroExt": "jpg",
+      "alt": "Personal Works hero",
+      "thumb": "images/thumb5.jpg",
+      "preview": "images/preview5.jpg"
+    }
+  ]
+}

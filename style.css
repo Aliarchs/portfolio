@@ -1205,7 +1205,9 @@ textarea:focus,
 
 /* Read-these gallery wrapper on project pages (shares many rules with .gallery) */
 .read-gallery { padding: 0 0 2rem; }
-.read-gallery .container { max-width: 1400px; margin: 0 auto; padding: 0 16px; }
+.read-gallery { --rg-container: min(78vw, 1100px); --rg-gap: 16px; --rg-cols: 12; --rg-col: calc((var(--rg-container) - ((var(--rg-cols) - 1) * var(--rg-gap))) / var(--rg-cols)); }
+/* Narrower project content width for gallery and text blocks */
+.read-gallery .container { width: min(78vw, 1100px); max-width: 1100px; margin: 0 auto; padding: 0 12px; }
 .read-gallery .grid { display: grid; grid-template-columns: repeat(12, 1fr); grid-gap: 16px; }
 .read-gallery .rt-block { display: grid; grid-template-columns: repeat(12, 1fr); grid-gap: 16px; }
 .read-gallery .column-xs-12 { grid-column: span 12; }
@@ -1218,27 +1220,40 @@ textarea:focus,
   .read-gallery .column-md-6 { grid-column: span 6; }
   .read-gallery .tile-tall2 { grid-row: span 2; }
 }
-.read-gallery .img-container { width: 100%; height: 500px; position: relative; overflow: hidden; }
+.read-gallery .img-container { width: 100%; height: auto; position: relative; overflow: hidden; }
 .read-gallery .img-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
 /* shorter height for thirds */
-@media (min-width: 768px) {
-  .read-gallery .column-md-4 .img-container { height: 360px; }
-  /* Optional shorter variant for selected 3-across rows */
-  .read-gallery .column-md-4.md4-short .img-container { height: 280px; }
-  .read-gallery .column-md-6.tile-square .img-container { aspect-ratio: 1 / 1; height: auto; }
-  /* Optional shorter variant for selected 2-across square rows */
-  .read-gallery .column-md-6.tile-square.md6-short .img-container { aspect-ratio: 2 / 1; height: auto; }
-  .read-gallery .column-md-6.tile-square .img-container img { height: 100%; }
-  /* Make the tall-left tile actually fill both grid rows */
-  .read-gallery .tile-tall2 .img-container { aspect-ratio: auto; height: 100%; }
-  .read-gallery .tile-tall2 .img-container img { height: 100%; object-fit: cover; }
+
+/* Desktop/tablet: derive heights from container-based column width for consistent scaling */
+@media (min-width: 641px) {
+  /* Three-across (md-4) rows: use a consistent aspect ratio (e.g., 4:3 = 0.75) */
+  .read-gallery .column-md-4 .img-container { height: calc(var(--rg-col) * 4 * 0.75); }
+  /* Shorter variant for selected 3-across rows */
+  .read-gallery .column-md-4.md4-short .img-container { height: calc(var(--rg-col) * 4 * 0.60); }
+  /* Full-width single wide tile rows */
+  .read-gallery .column-xs-12 .img-container { height: calc(var(--rg-col) * 12 * 0.28); }
 }
+.read-gallery .column-md-6.tile-square .img-container { aspect-ratio: 1 / 1; height: auto; }
+/* Optional shorter variant for selected 2-across square rows */
+.read-gallery .column-md-6.tile-square.md6-short .img-container { aspect-ratio: 2 / 1; height: auto; }
+.read-gallery .column-md-6.tile-square .img-container img { height: 100%; }
+/* Make the tall-left tile actually fill both grid rows */
+.read-gallery .tile-tall2 .img-container { aspect-ratio: auto; height: 100%; }
+.read-gallery .tile-tall2 .img-container img { height: 100%; object-fit: cover; }
 @media (max-width: 640px) {
   .read-gallery .grid { grid-template-columns: 1fr; grid-gap: 12px; }
   .read-gallery .rt-block { grid-template-columns: 1fr; grid-gap: 12px; }
   .read-gallery .img-container { height: auto; }
   .read-gallery .img-container img { width: 100%; height: auto; object-fit: contain; }
 }
+
+/* New: project text block below slideshow and above gallery, same width as gallery */
+.project-text { margin: 1.2rem auto 0 auto; }
+.project-text .container { width: min(78vw, 1100px); max-width: 1100px; margin: 0 auto; padding: 0 12px; }
+.project-text .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; align-items: start; }
+.project-text .col { font-size: 1.02rem; line-height: 1.6; color: #333; }
+.project-text p { margin: 0 0 0.8rem 0; }
+@media (max-width: 800px) { .project-text .columns { grid-template-columns: 1fr; } }
 
 /* Ensure project lightbox image contains neatly in viewport */
 .lightbox-img { max-width: 92vw; max-height: 88vh; width: auto; height: auto; object-fit: contain; display: block; }
