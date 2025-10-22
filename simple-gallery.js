@@ -604,19 +604,17 @@ function stepLightbox(dir) {
   const avifSrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.avif') + ' ' + w + 'w').join(', ');
       return { legacySrcset, webpSrcset, avifSrcset, sizes };
     }
-    // Case 2: images/project N/<file>.<ext> where resized pipeline likely exists (2,3,4)
-  m = dec.match(/^images\/(project\s+(\d+))\/([^\/]+)\.([a-z0-9]+)$/i);
+    // Case 2: images/project N/<file>.<ext> where resized pipeline likely exists (2,3,4,5)
+    m = dec.match(/^images\/(project\s+(\d+))\/([^\/]+)\.([a-z0-9]+)$/i);
     if (m) {
       const proj = (m[2] || '').trim();
       const rel = `${m[1]}/${m[3]}`; // project N/<file>
       const ext = (m[4] || '').toLowerCase();
-  if (['2','3','4','5'].includes(proj)) {
-        // If original is already webp/avif, we can't assume resized variants exist.
-        // Skip responsive candidates so the slideshow uses the original <img src> reliably.
-        if (ext === 'webp' || ext === 'avif') { return null; }
-  const legacySrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.' + ext) + ' ' + w + 'w').join(', ');
-  const webpSrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.webp') + ' ' + w + 'w').join(', ');
-  const avifSrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.avif') + ' ' + w + 'w').join(', ');
+      if (['2','3','4','5'].includes(proj)) {
+        // Build candidates for available formats. "legacySrcset" will use the original extension.
+        const legacySrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.' + ext) + ' ' + w + 'w').join(', ');
+        const webpSrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.webp') + ' ' + w + 'w').join(', ');
+        const avifSrcset = widths.map(w => enc('images/resized/' + w + '/' + rel + '.avif') + ' ' + w + 'w').join(', ');
         return { legacySrcset, webpSrcset, avifSrcset, sizes };
       }
     }
@@ -645,9 +643,9 @@ function stepLightbox(dir) {
         sWebp.setAttribute('sizes', info.sizes);
         pic.insertBefore(sWebp, heroImg);
         const sLegacy = document.createElement('source');
-        // Best-effort type inference from src extension
+        // Best-effort type inference from src extension (match srcset extension)
         const ext = (src.split('.').pop() || '').toLowerCase();
-        sLegacy.type = (ext === 'png') ? 'image/png' : 'image/jpeg';
+        sLegacy.type = (ext === 'png') ? 'image/png' : (ext === 'webp') ? 'image/webp' : (ext === 'avif') ? 'image/avif' : 'image/jpeg';
         sLegacy.setAttribute('srcset', info.legacySrcset);
         sLegacy.setAttribute('sizes', info.sizes);
         pic.insertBefore(sLegacy, heroImg);
@@ -671,6 +669,25 @@ function stepLightbox(dir) {
   heroImg.alt = alt || heroImg.alt || '';
   heroImg.src = withVer(src);
     heroImg.addEventListener('load', () => { try { heroImg.classList.add('loaded'); heroImg.classList.remove('lazy'); } catch {} }, { once: true });
+    // Robust fallback: if the chosen slide fails, try a resized 1200 path once; otherwise skip to next slide
+    heroImg.addEventListener('error', () => {
+      try {
+        const cur = (heroImg.getAttribute('src') || '').split('#')[0].split('?')[0];
+        if (/^images\/project\s+\d+\//i.test(cur) && !heroImg.__sgTriedResized) {
+          heroImg.__sgTriedResized = true;
+          // Transform to images/resized/1200/<rest>
+          const rest = cur.replace(/^images\//i, '');
+          const fallback = 'images/resized/1200/' + rest;
+          // Drop sources to force <img> path
+          const pic = heroImg.closest('picture');
+          if (pic) Array.from(pic.querySelectorAll('source')).forEach(s => s.remove());
+          heroImg.removeAttribute('srcset'); heroImg.removeAttribute('sizes');
+          heroImg.src = withVer(fallback);
+          return;
+        }
+      } catch {}
+      try { if (window && typeof window.changeSlide === 'function') { window.changeSlide(1); } } catch {}
+    }, { once: false });
     try { heroImg.setAttribute('fetchpriority', 'high'); } catch {}
   }
 
